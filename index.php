@@ -1,14 +1,9 @@
 <?php
 
-$host = "localhost";
-$username = "root";
-$password = "";
-$dbname = "agdb";
+$conn = new mysqli("localhost", "root", "", "agdb");
 
-$conn = new mysqli($host, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if (!($conn)) {
+    echo "Connected not successfully!!!";
 }
-echo "Connected successfully!!!";
+
 ?>

@@ -1,8 +1,7 @@
 <?php
-include 'db.php';
-$student_id = 1; 
-$student = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM students WHERE id=$student_id"));
-
+include 'index.php';
+$users1_id = 1; 
+$users1 = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM users1 WHERE id=$users1_id"));
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
@@ -11,16 +10,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $sid = $_POST['student_id'];
     $grad = $_POST['graduation'];
 
-    $cv = $student['cv'];
+    $cv = $users1['cv'];
     if (!empty($_FILES['cv']['name'])) {
         $cv = "uploads/" . basename($_FILES['cv']['name']);
         move_uploaded_file($_FILES['cv']['tmp_name'], $cv);
     }
 
-    $sql = "UPDATE students SET full_name='$name', email='$email', department='$dept', university='$univ',
-            student_id='$sid', graduation_year='$grad', cv='$cv' WHERE id=$student_id";
+    $sql = "UPDATE users1 SET full_name='$name', email='$email', department='$dept', university='$univ',
+            student_id='$sid', graduation_year='$grad', cv='$cv' WHERE id=$users1_id";
     mysqli_query($conn, $sql);
-    header("Location: profile.php");
+    header("Location: Student_Profile.php");
 }
 ?>
 <!DOCTYPE html>
