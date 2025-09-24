@@ -7,6 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Tweaks for older IEs-->
+   <link rel="stylesheet" href="css/owl.carousel.min.css">
+   <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
     <style>
         :root {
             --light-peach:#fdfaf5;
@@ -146,7 +149,7 @@
         }
         
         .footer-col a {
-            color: var(--light-gray);
+            color: var(--white);
             text-decoration: none;
             display: block;
             margin-bottom: 8px;
@@ -196,6 +199,8 @@
                     <li><a href="#about">About Us</a></li>
                     <li><a href="#faq">FAQ</a></li>
                     <li><a href="#contact">Contact Us</a></li>
+                      <li class="d_none"><a href="login.php"><i class="fa fa-user"
+                                    aria-hidden="true"></i></a></li>
                 </ul>
             </nav>
         </div>
@@ -237,12 +242,12 @@
             </div>
             <div class="footer-col">
                 <h4>Connect With Us</h4>
-                <div class="footer-socials">
+               <!-- <div class="footer-socials">
                     <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
                     <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
                     <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
                     <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                </div>
+                </div>-->
             </div>
         </div>
         <div class="footer-bottom">

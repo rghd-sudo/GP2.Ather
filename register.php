@@ -119,11 +119,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="field">
            <label for="email">Email:</label>
             <input type="email" id="email" name="email" required>
-</div>
-<div class="field">
+           </div>
+           <div class="field">
                <label for="password">Password:</label>
             <input type="password" id="password" name="paasword" required>
-</div>
+        </div>
 <div class="field">
             <label for="confirm_password">Confirm Password:</label>
             <input type="password" id="confirm_password" name="confirm_password" required>
