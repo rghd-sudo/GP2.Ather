@@ -4,6 +4,7 @@ session_start(); // لتخزين بيانات الجلسة
 
 $conn->set_charset("utf8mb4");
 $message = "";
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email    = $conn->real_escape_string($_POST['email'] ?? '');
     $paasword = $_POST['paasword'] ?? '';
@@ -37,28 +38,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
+    <title>Login</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="login-container">
-        <h2>Register</h2>
-        <form action="register.php" method="POST">
-           <br> <label for="email">Email:</label><br>
-            <input type="email" id="email" name="email" required>
+        <h2>Login</h2>
+        <form action="login.php" method="POST">
+            <label for="email">Email:</label><br>
+            <input type="email" id="email" name="email" required><br>
 
-               <label for="password">Password:</label>
-            <input type="password" id="password" name="paasword" required>
-           <button class="btn-primary" type="submit">login now</button>
-            <p class="small-text ">Don't have an account? <a href="register.php">Register here</a></p>
+            <label for="paasword">Password:</label><br>
+            <input type="password" id="paasword" name="paasword" required><br>
+
+            <button class="btn-primary" type="submit">Login now</button>
+            <p class="small-text">Don't have an account? <a href="register.php">Register here</a></p>
         </form>
-         <?php if(!empty($message)): ?>
-      <div class="message"><?= htmlspecialchars($message) ?></div>
-    <?php endif; ?>
+
+        <?php if(!empty($message)): ?>
+            <div class="message"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div>
+        <?php endif; ?>
     </div>
 </body>
 </html>
