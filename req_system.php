@@ -105,7 +105,7 @@
 <body>
   <!-- القائمة الجانبية -->
   <div class="sidebar">
-    <a href="#">profile</a>
+    <a href="Student_profile.php">profile</a>
     <a href="new_request.php">New Request</a>
     <a href="#">Track Request</a>
     <a href="#">Notifications</a>

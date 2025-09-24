@@ -1,7 +1,7 @@
 <?php
 include 'index.php';
-$users1_id = 1; 
-$users1 = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM users1 WHERE id=$users1_id"));
+$users_id = 1; 
+$users = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM users WHERE id=$users_id"));
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
@@ -10,13 +10,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $sid = $_POST['student_id'];
     $grad = $_POST['graduation'];
 
-    $cv = $users1['cv'];
+    $cv = $users['cv'];
     if (!empty($_FILES['cv']['name'])) {
         $cv = "uploads/" . basename($_FILES['cv']['name']);
         move_uploaded_file($_FILES['cv']['tmp_name'], $cv);
     }
 
-    $sql = "UPDATE users1 SET full_name='$name', email='$email', department='$dept', university='$univ',
+    $sql = "UPDATE users SET full_name='$name', email='$email', department='$dept', university='$univ',
             student_id='$sid', graduation_year='$grad', cv='$cv' WHERE id=$users1_id";
     mysqli_query($conn, $sql);
     header("Location: Student_Profile.php");
