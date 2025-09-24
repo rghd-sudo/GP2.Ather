@@ -68,12 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <title>Register</title>
     <style>
     body{ margin: 0;
   padding: 0;
   text-decoration: none;
-  font-family: Arial, sans-serif;
+  font-family: 'preconnect', sans-serif;
   background: #fdfaf5;display:flex;justify-content:center;align-items:center;}
     .card{background:#fff;padding:0px;border-radius:10px;background: #fdfaf5;width:400px}
     h2{text-align:center;margin-bottom:0px}
