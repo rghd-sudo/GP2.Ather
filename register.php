@@ -1,5 +1,26 @@
 <?php
 include 'index.php';
+$conn->query("CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(255),
+    email VARCHAR(100),
+    password VARCHAR(255),
+    National_ID VARCHAR(50),
+    department VARCHAR(100),
+    university VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+");
+$message = "";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = $conn->real_escape_string($_POST['name'] ?? '');
+    $email = $conn->real_escape_string($_POST['email'] ?? '');
+    $password = $conn->real_escape_string($_POST['password'] ?? '');
+    $confirm_password = $conn->real_escape_string($_POST['confirm_password'] ?? '');
+    $National_ID = $conn->real_escape_string($_POST['National_ID'] ?? '');
+    $department = $conn->real_escape_string($_POST['department'] ?? '');
+    $university = $conn->real_escape_string($_POST['university'] ?? '');
+    $type = $conn->real_escape_string($_POST['type'] ?? '');
+    $file_name = NULL;
 
 $msg='';
 if(isset($_POST['submit'])){
