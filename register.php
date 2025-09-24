@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     h2{text-align:center;margin-bottom:0px}
     .field{margin-bottom:8px}
     .field label{display:block;margin-bottom:5px;font-weight:regular;font-size:14px}
-    .field input{width:99%;padding:9px;border:1px solid #ccc;border-radius:5px}
+    .field input{width:99%;padding:9px;border:0px solid #ccc;border-radius:5px}
     /* أزرار */
 .btn-primary {
   background: #f27360;
@@ -100,7 +100,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   font-size: 12px;
   color: gray;
 }
-    .message{margin-top:15px;text-align:levt;font-weight:bold;color:#333}
+.input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            text-align: left;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 9px;
+            background-color: #ffffffff;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+    .message{margin-top:15px;text-align:left;font-weight:bold;color:#333}
     </style>
 </head>
 <body>
@@ -124,20 +145,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                <label for="password">Password:</label>
             <input type="password" id="password" name="paasword" required>
         </div>
-<div class="field">
+<div class="input-group">
             <label for="confirm_password">Confirm Password:</label>
             <input type="password" id="confirm_password" name="confirm_password" required>
 </div>
-<div class="field">
+<div class="input-group">
            <label for="National_ID">National ID:</label>
             <input type="text" id="National_ID" name="National_ID" required>
 </div>
-<div class="field">
-           
+<div class="input-group">
+
            <label for="university">University:</label>
             <input type="text" id="university" name="university" required>
             </div>
-<div class="field">
+<div class="input-group">
             <label for="department">Department:</label>
             <input type="text" id="department" name="department" required>
 </div>

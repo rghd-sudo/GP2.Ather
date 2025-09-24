@@ -38,17 +38,17 @@ body {
 
 /* صفحة تسجيل الدخول */
 .login-container {
-  width: 320px;
-  margin: 80px auto;
-  text-align: center;
+  width: 400px;
+  margin: 100px auto;
+  text-align: right;
 }
 
 .login-container input {
   display: block;
   width: 100%;
-  margin: 8px 0 15px;
+  margin: 10px 0 20px;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #ccc;
 }
 
@@ -57,7 +57,7 @@ body {
   color: gray;
 }
 
-/* صفحة البداية */
+/* صفحة البداية 
 .start-container {
   display: flex;
   justify-content: space-between;
@@ -77,5 +77,5 @@ body {
 
 .logo-section img {
   width: 120px;
-}
+}*/
 
