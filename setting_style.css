@@ -1,0 +1,193 @@
+* {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color:#fdfaf6;
+    margin: 0;
+    padding: 20px;
+    color: #222;
+}
+
+.back_btn {
+    display: inline-block;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #03060a;
+    text-decoration: none;
+}
+
+.header {
+    background:transparent;
+    color: rgb(16, 11, 11);
+    padding: 25px;
+    text-align: left;
+
+    margin-bottom: 20px;
+}
+
+.header h4 {
+    margin: 0;
+    font-size: 17px;
+}
+
+.header p {
+    margin-top: 8px;
+    font-size: 16px;
+}
+
+
+
+
+
+
+
+.content {
+   padding: 25px;
+}
+
+
+.item {
+    position: relative;   
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: block;       /
+}
+
+.item h3 {
+    margin: 0 0 5px 0;    
+    font-size: 17px;
+    color: #0c0c0d;
+}
+
+.item .desc {
+    display: block;    
+    margin: 0;           
+    font-size: 14px;
+    color: #444;
+}
+
+.item label.switch {
+    position: absolute; 
+    right: 0;
+    top: 0;             
+}
+
+
+.switch{
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input{
+  opacity: 0;
+  width: 0;
+  height: o;
+}
+
+.slider{
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #ccc;
+    border-radius: 24px;
+    cursor: pointer;
+}
+
+.slider:before{
+    content:"" ;
+    position: absolute;
+    width: 20px;
+    height: 20px;
+     left: 2px;
+     bottom: 2px;
+     background-color: rgb(243, 220, 220);
+     border-radius: 50%;
+     transition: 0.3s;
+}
+
+/*  حاله الزر اون او اوف*/
+
+input:checked + .slider{
+  transform: 26px;
+  background-color: #4caf50;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px); 
+  }
+
+
+
+/*    المدة والاشعار*/
+.choices_reminder{
+    margin: 20px 0; 
+    display: flex;
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    margin: 20px 0;
+}
+ 
+    
+
+.choices_reminder h4 {
+    color: #222325;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.choices_reminder .choices label {
+   
+    font-size: 14px;
+   color: #181414;
+}
+
+.choices_reminder .reminder label {
+   
+    font-size: 14px;
+   color: #000;
+}
+
+input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: #2575fc;
+}
+
+
+ .choices_reminder.reminder select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #3b1414;
+    background-color:#fff;
+    font-size: 14px;
+    color: #000000;
+}
+
+.save {
+    background-color: #41c9a3; /* أخضر */
+    color: rgb(252, 242, 242);
+    border: none;
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;   
+    display: block;      
+    margin: 20px auto 0 auto; 
+}
+
+
+.save:hover {
+    background-color: #41c9a3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}

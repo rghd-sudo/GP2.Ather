@@ -3,25 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Web Page</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="script.js" defer></script>
+    <title>Athar Graduate - The Digital Platform for Academic Recommendation Letters</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Tweaks for older IEs-->
+   <link rel="stylesheet" href="css/owl.carousel.min.css">
+   <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+    <style>
+        :root {
+            --light-peach:#fdfaf5;
+            --coral: #ff7f50;
+            --dark-gray: #333;
+            --light-gray: #777;
+            --white: #fff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-peach);
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* --- Header & Navigation Bar --- */
+        .header {
+            background-color: var(--white);
+            padding: 15px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo img {
+            height: 40px;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--coral);
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark-gray);
+            font-weight: 400;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--coral);
+        }
+
+        /* --- Hero Section --- */
+        .hero-section {
+            padding: 100px 0;
+            text-align: center;
+        }
+
+        .hero-section h1 {
+            font-size: 3rem;
+            color: var(--coral);
+            margin-bottom: 20px;
+        }
+
+        .hero-section p {
+            font-size: 1.2rem;
+            color: var(--dark-gray);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--coral);
+            color: var(--white);
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 700;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .cta-button:hover {
+            background-color: #e6603d;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            background-color: var(--dark-gray);
+            color: var(--white);
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            text-align: left;
+        }
+        
+        .footer-col {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 20px;
+        }
+        
+        .footer-col h4 {
+            font-size: 1.2rem;
+            color: var(--white);
+            margin-bottom: 15px;
+        }
+        
+        .footer-col a {
+            color: var(--white);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 8px;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-col a:hover {
+            color: var(--coral);
+        }
+
+        .footer-socials {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .footer-socials a {
+            color: var(--white);
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-socials a:hover {
+            color: var(--coral);
+        }
+
+        .footer-bottom {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--light-gray);
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
-    !--  اسم النظام -->
-<div class=" welcome-section">
-    <h3>Ather Graguate</h3>
-    <p>A digital platform specialized in faciliating the request and management of academic recommendation letters</p>
-  </div>
-  
+    <header class="header">
+        <div class="container">
+            <nav class="navbar">
+                <div class="logo">
+                    <img src="logo.jpg" alt="Athar Logo">
+                    <span class="logo-text">Athar Graduate</span>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#statistics">Statistics</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#about">About Us</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                    <li><a href="#contact">Contact Us</a></li>
+                      <li class="d_none"><a href="login.php"><i class="fa fa-user"
+                                    aria-hidden="true"></i></a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
     <main>
-        <section>
-            <h2>About Me</h2>
-            <p>This is a brief introduction about myself.</p>
+        <section class="hero-section">
+            <div class="container">
+                <h1>Athar Graduate</h1>
+                <p>"A digital platform specialized in facilitating the request and management of academic recommendation letters."</p>
+                <a href="login.php" class="cta-button">Get Started</a>
+            </div>
+        </section>
+
+        <section id="statistics" class="container" style="padding: 50px 0; text-align: center;">
+            <h2>Key Statistics</h2>
+            <p>Example content for the statistics section.</p>
+        </section>
+
+        <section id="services" class="container" style="padding: 50px 0; text-align: center;">
+            <h2>Our Services</h2>
+            <p>Example content for the services section.</p>
         </section>
     </main>
-    <footer>
-        <p>&copy; 2026 My Web Page</p>
+
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <a href="#services">Services</a>
+                <a href="#about">About Us</a>
+                <a href="#contact">Contact Us</a>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <a href="#faq">FAQ</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Use</a>
+            </div>
+            <div class="footer-col">
+                <h4>Connect With Us</h4>
+               <!-- <div class="footer-socials">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                </div>-->
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Athar Graduate. All Rights Reserved.</p>
+        </div>
     </footer>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </body>
 </html>
