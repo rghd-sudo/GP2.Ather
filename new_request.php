@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $file_name = NULL;
 
     if (!empty($_FILES['file']['name'])) {
-        $uploadDir = DIR . '/uploads/';
+        $uploadDir = __DIR__ . '/uploads/';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
         $safeName = time() . "_" . basename($_FILES['file']['name']);
