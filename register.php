@@ -1,5 +1,6 @@
 <?php
-// الاتصال بقاعدة البيانات
+session_start();
+//الاتصال بقاعدة البيانات
 $host = "localhost";
 $user = "root";
 $pass = "";
@@ -9,7 +10,7 @@ $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) {
     die("فشل الاتصال: " . $conn->connect_error);
 }
-session_start();
+
 
 // عرض الرسالة إذا موجودة
 if (isset($_SESSION['message'])) {
@@ -21,7 +22,7 @@ $conn->query("CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    paasword VARCHAR(255) NOT NULL,
     department VARCHAR(255),
     National_ID VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -100,7 +101,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   font-size: 12px;
   color: gray;
 }
-.input-group {
+        .shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .shape {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50px;
+            transform: rotate(-30deg);
+        }
+
+        .shape1 {
+            background-color: #63b999;
+            top: -100px;
+            left: -70px;
+        }
+
+        .shape2 {
+            background-color: #adc0d9;
+            top: 50px;
+            left: -50px;
+        }
+
+        .shape3 {
+            background-color:  #f27360;
+            top: 200px;
+            left: -150px;
+        }
+        
+        .input-group {
             margin-bottom: 20px;
         }
 
@@ -113,10 +150,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .input-group input {
             width: 100%;
-            padding: 10px;
+            padding: 15px;
             border: none;
-            border-radius: 9px;
-            background-color: #ffffffff;
+            border-radius: 10px;
+            background-color: #e0d9d3;
             box-sizing: border-box;
             font-size: 16px;
         }
@@ -125,7 +162,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
+     <div class="shapes">
+        <div class="shape shape1"></div>
+        <div class="shape shape2"></div>
+        <div class="shape shape3"></div>
+    </div>
     <div class="card">
+        
         
      <?php if($message): ?>
       <p style="margin:20px 0;padding:12px;background:#fff8e6;border-radius:6px;box-shadow:var(--shadow)"><?= $message; ?></p>
@@ -133,15 +176,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h2>Register</h2>
        
         <form action="register.php" method="POST">
-          <div class="field">
+           <div class="input-group">
             <label for="name">Full Name:</label>
             <input  type="text" id="name" name="name" required>
             </div>
-            <div class="field">
+            <div class="input-group">
            <label for="email">Email:</label>
             <input type="email" id="email" name="email" required>
            </div>
-           <div class="field">
+           <div class="input-group">
                <label for="password">Password:</label>
             <input type="password" id="password" name="paasword" required>
         </div>

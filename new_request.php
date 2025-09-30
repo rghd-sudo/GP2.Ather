@@ -1,5 +1,12 @@
 <?php
 // recommendation_form.php
+session_start(); // افتح السيشن أول شيء
+
+// تحقق من أن المستخدم مسجل دخول
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
 // الاتصال بقاعدة البيانات
 $host = "localhost";
@@ -15,8 +22,9 @@ if ($conn->connect_error) {
 // إنشاء جدول إذا لم يكن موجود
 $conn->query("CREATE TABLE IF NOT EXISTS requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    student_name VARCHAR(255),
-    student_id VARCHAR(50),
+    user_id INT, -- رقم المستخدم صاحب الطلب
+    user_name VARCHAR(255),
+    user_id VARCHAR(50),
     major VARCHAR(100),
     course VARCHAR(50),
     professor VARCHAR(255),
@@ -28,8 +36,12 @@ $conn->query("CREATE TABLE IF NOT EXISTS requests (
 
 $message = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $conn->real_escape_string($_POST['name'] ?? '');
-    $student_id = $conn->real_escape_string($_POST['id'] ?? '');
+    // خذ بيانات المستخدم من السيشن
+    $user_id = $_SESSION['user_id'];
+    $name = $_SESSION['user_name']; // أو أي قيمة خزنتها عند تسجيل الدخول
+
+    // باقي البيانات من الفورم
+    $user_name = $conn->real_escape_string($_POST['user_name'] ?? '');
     $major = $conn->real_escape_string($_POST['major'] ?? '');
     $course = $conn->real_escape_string($_POST['course'] ?? '');
     $professor = $conn->real_escape_string($_POST['professor'] ?? '');
@@ -37,8 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $type = $conn->real_escape_string($_POST['type'] ?? '');
     $file_name = NULL;
 
+    // رفع الملف
     if (!empty($_FILES['file']['name'])) {
-        $uploadDir = __DIR__ . '/uploads/';
+        $uploadDir = __DIR__ . '/uploads/'; // DIR أصح من DIR
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
         $safeName = time() . "_" . basename($_FILES['file']['name']);
@@ -49,8 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    $sql = "INSERT INTO requests (student_name, student_id, major, course, professor, purpose, type, file_name)
-            VALUES ('$name', '$student_id', '$major', '$course', '$professor', '$purpose', '$type', " .
+    // إدخال البيانات بالطلب مع user_id
+    $sql = "INSERT INTO requests (user_id, user_name, major, course, professor, purpose, type, file_name)
+            VALUES ('$user_id', '$user_name', '$major', '$course', '$professor', '$purpose', '$type', " .
             ($file_name ? "'$file_name'" : "NULL") . ")";
     if ($conn->query($sql)) {
         $message = "تم حفظ الطلب بنجاح ✅";
@@ -104,9 +118,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
   <!-- القائمة الجانبية -->
   <div class="sidebar">
-    <a href="recommendation_form.php">🏠</a>
+    <a href="req_system.php">🏠</a>
     <a href="my_requests.php">📑</a>
-    <a href="settings.php">⚙</a>
+    <a href="notifications.php">⚙</a>
   </div>
 
   <div class="container">

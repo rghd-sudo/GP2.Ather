@@ -1,4 +1,16 @@
-<?php include 'index.php'; ?>
+<?php
+// 1️ افتح السيشن أول شيء
+session_start();
+// 2️ تحقق إذا المستخدم مسجل دخول
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+// 3️ استدعاء الاتصال بقاعدة البيانات
+include 'index.php';
+// 4️ خزن معرف المستخدم من السيشن
+$user_id = $_SESSION['user_id'];
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -108,7 +120,7 @@
     <a href="Student_profile.php">profile</a>
     <a href="new_request.php">New Request</a>
     <a href="#">Track Request</a>
-    <a href="#">Notifications</a>
+    <a href="notifications.php">Notifications</a>
   </div>
 
   <!-- المحتوى -->
@@ -132,15 +144,17 @@
         <th>Actions</th>
       </tr>
       <?php
-      $sql = "SELECT * FROM requests ORDER BY id ASC";
+      // 5️⃣ اجلب فقط الطلبات الخاصة بالمستخدم الحالي
+      $sql = "SELECT * FROM requests WHERE user_id = $user_id ORDER BY id ASC";
       $result = $conn->query($sql);
+    
 
       if ($result->num_rows > 0) {
           while($row = $result->fetch_assoc()) {
               echo "<tr>
                       <td>".$row['id']."</td>
                       <td>".$row['professor']."</td>
-                      <td>".$row['date']."</td>
+                      <td>".$row['created_at']."</td>
                       <td class='".($row['status']=="Pending"?"pending":"accepted")."'>".$row['status']."</td>
                       <td class='actions'>
                         <button class='delete'>🗑</button>

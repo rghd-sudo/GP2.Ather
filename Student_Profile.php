@@ -1,4 +1,5 @@
 <?php
+session_start();
 include 'index.php';
 $student_id = 1; 
 //$student = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM Graduates WHERE id=$student_id"));

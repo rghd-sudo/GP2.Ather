@@ -1,6 +1,7 @@
 <?php
 include 'index.php';
-session_start(); // لتخزين بيانات الجلسة
+// لتخزين بيانات المستخدم
+session_start();
 
 $conn->set_charset("utf8mb4");
 $message = "";
