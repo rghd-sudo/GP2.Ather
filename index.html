@@ -25,13 +25,56 @@
             padding: 0;
         }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--light-peach);
-            color: var(--dark-gray);
-            line-height: 1.6;
-        }
+      /* أساسيات عامة */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #FFF8F0; /* برتقالي فاتح جداً */
+}
 
+/* الـ header الأساسي */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #FFEFD5;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* للأجهزة الصغيرة (شاشات الجوال) */
+@media (max-width: 600px) {
+  .header-bar {
+    flex-direction: column;  /* العناصر فوق بعض */
+    gap: 10px;
+    text-align: center;
+  }
+  .header-left {
+    font-size: 18px;
+  }
+}
+
+/* إذا الجهاز بالعرض (landscape) */
+@media screen and (orientation: landscape) {
+  .header-bar {
+    flex-direction: row;
+    padding: 10px 15px;
+  }
+  .header-left {
+    font-size: 22px;
+  }
+}
+
+/* إذا الجهاز بالطول (portrait) */
+@media screen and (orientation: portrait) {
+  .header-bar {
+    flex-direction: column;
+  }
+  .header-left {
+    font-size: 18px;
+  }
+}
         .container {
             max-width: 1200px;
             margin: 0 auto;
