@@ -1,6 +1,7 @@
 <?php
 include 'index.php';
-session_start(); // لتخزين بيانات الجلسة
+// لتخزين بيانات المستخدم
+session_start();
 
 $conn->set_charset("utf8mb4");
 $message = "";
@@ -267,7 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="password" id="paasword" name="paasword" required>
             </div>
 
-            <button class="btn-primary" type="submit">Login now</button>
+            <button class="btn-primary" type="submit">Login now</button><pr>
            <br> <p class="small-text">Don't have an account? <a href="register.php">Register here</a></p>
         </form>
 

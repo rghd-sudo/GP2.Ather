@@ -1,7 +1,8 @@
 <?php
+session_start();
 include 'index.php';
-$users_id = 1; 
-$users = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM users WHERE id=$users_id"));
+$student_id = 1; 
+//$student = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM Graduates WHERE id=$student_id"));
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
@@ -10,16 +11,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $sid = $_POST['student_id'];
     $grad = $_POST['graduation'];
 
-    $cv = $users['cv'];
+    $cv = $student['cv'];
     if (!empty($_FILES['cv']['name'])) {
         $cv = "uploads/" . basename($_FILES['cv']['name']);
         move_uploaded_file($_FILES['cv']['tmp_name'], $cv);
     }
 
-    $sql = "UPDATE users SET full_name='$name', email='$email', department='$dept', university='$univ',
-            student_id='$sid', graduation_year='$grad', cv='$cv' WHERE id=$users1_id";
+    $sql = "UPDATE Graduates 
+            SET full_name='$name', email='$email', department='$dept', university='$univ',
+                student_id='$sid', graduation_year='$grad', cv='$cv' 
+            WHERE id=$student_id";
     mysqli_query($conn, $sql);
-    header("Location: Student_Profile.php");
+    header("Location: profile.php");
 }
 ?>
 <!DOCTYPE html>
@@ -37,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     /* ---------- القائمة الجانبية ---------- */
     .sidebar {
-      width: 220px;
+      width: 80px;
       background: #cbe2ec;
       min-height: 100vh;
       padding-top: 20px;
@@ -45,26 +48,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     .logo img {
-      width: 120px;
-      margin-bottom: 20px;
-    }
-    .logo h2 {
-      font-size: 14px;
-      margin: 0;
-      font-weight: bold;
-    }
-    .logo p {
-      font-size: 10px;
-      margin: 0;
+      width: 50px;
+      margin-bottom: 30px;
+      border-radius: 50%;
     }
 
-    .sidebar div.menu-item {
-      padding: 15px;
+    .menu-item {
+      padding: 20px 0;
       cursor: pointer;
-      text-align: left;
-      padding-left: 30px;
     }
-    .sidebar div.menu-item:hover {
+
+    .menu-item img {
+      width: 30px;
+      height: 30px;
+    }
+
+    .menu-item:hover {
       background: #b2d4e6;
     }
 
@@ -160,13 +159,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   <div class="sidebar">
     <div class="logo">
       <img src="" alt="Logo">
-      <h2>ATHER GRADUATE</h2>
-      <p>ONE CLICK, ENDLESS POSSIBILITIES</p>
     </div>
-    <div class="menu-item">Profile</div>
-    <div class="menu-item">New Request</div>
-    <div class="menu-item">Track Request</div>
-    <div class="menu-item">Notifications</div>
+    <div class="menu-item" onclick="window.location.href='profile.php'">
+      <img src="icons/user.png" alt="Profile">
+    </div>
+    <div class="menu-item" onclick="window.location.href='new_request.php'">
+      <img src="icons/add.png" alt="New Request">
+    </div>
+    <div class="menu-item" onclick="window.location.href='track_request.php'">
+      <img src="icons/track.png" alt="Track">
+    </div>
+    <div class="menu-item" onclick="window.location.href='notifications.php'">
+      <img src="icons/bell.png" alt="Notifications">
+    </div>
   </div>
 
   <!-- ---------- Profile ---------- -->
@@ -187,87 +192,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       </div>
 
       <div class="form-section">
-        <label>Full name</label>
-        <input type="text" id="fullName" value="" disabled>
+        <form method="POST" enctype="multipart/form-data">
+          <label>Full name</label>
+          <input type="text" name="name" id="fullName" value="<?= $student['full_name'] ?>">
 
-        <label>Email</label>
-        <input type="email" id="email" value="" disabled>
+          <label>Email</label>
+          <input type="email" name="email" id="email" value="<?= $student['email'] ?>">
 
-        <label>Department</label>
-        <input type="text" id="dept" value="" disabled>
+          <label>Department</label>
+          <input type="text" name="department" id="dept" value="<?= $student['department'] ?>">
 
-        <label>University</label>
-        <input type="text" id="univ" value="" disabled>
+          <label>University</label>
+          <input type="text" name="university" id="univ" value="<?= $student['university'] ?>">
 
-        <label>Student ID</label>
-        <input type="text" id="studentID" value="" disabled>
+          <label>Student ID</label>
+          <input type="text" name="student_id" id="studentID" value="<?= $student['student_id'] ?>">
 
-        <label>Graduation Year</label>
-        <select id="gradYear" disabled>
-          <option value="" selected disabled>-- Select year --</option>
-          <option>2020</option>
-          <option>2026</option>
-          <option>2030</option>
-        </select>
-      </div>
+          <label>Graduation Year</label>
+          <select name="graduation" id="gradYear">
+            <option value="" disabled>-- Select year --</option>
+            <option <?= $student['graduation_year']=="2020"?"selected":"" ?>>2020</option>
+            <option <?= $student['graduation_year']=="2026"?"selected":"" ?>>2026</option>
+            <option <?= $student['graduation_year']=="2030"?"selected":"" ?>>2030</option>
+          </select>
 
-      <div class="actions">
-        <button class="save-btn" id="saveBtn" disabled>Save changes</button>
-        <button class="reset-btn" id="resetBtn" disabled>Reset</button>
+          <label>Upload CV</label>
+          <input type="file" name="cv">
+
+          <div class="actions">
+            <button type="submit" class="save-btn">Save changes</button>
+            <button type="reset" class="reset-btn">Reset</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
-
-  <script>
-    const editBtn = document.getElementById("editBtn");
-    const saveBtn = document.getElementById("saveBtn");
-    const resetBtn = document.getElementById("resetBtn");
-    const inputs = document.querySelectorAll("input, select");
-
-    // البيانات الأصلية تبدأ فارغة
-    const originalData = {
-      fullName: "",
-      email: "",
-      dept: "",
-      univ: "",
-      studentID: "",
-      gradYear: ""
-    };
-
-    // تفعيل التعديل
-    editBtn.onclick = () => {
-      inputs.forEach(inp => inp.disabled = false);
-      saveBtn.disabled = false;
-      resetBtn.disabled = false;
-    };
-
-    // حفظ البيانات
-    saveBtn.onclick = () => {
-      document.getElementById("displayName").textContent = document.getElementById("fullName").value;
-      document.getElementById("displayEmail").textContent = document.getElementById("email").value;
-      document.getElementById("displayDept").textContent = document.getElementById("dept").value;
-      document.getElementById("displayUniv").textContent = document.getElementById("univ").value;
-      document.getElementById("displayID").textContent = document.getElementById("studentID").value;
-
-      inputs.forEach(inp => inp.disabled = true);
-      saveBtn.disabled = true;
-      resetBtn.disabled = true;
-    };
-
-    // إعادة التعيين للقيم الفارغة
-    resetBtn.onclick = () => {
-      document.getElementById("fullName").value = originalData.fullName;
-      document.getElementById("email").value = originalData.email;
-      document.getElementById("dept").value = originalData.dept;
-      document.getElementById("univ").value = originalData.univ;
-      document.getElementById("studentID").value = originalData.studentID;
-      document.getElementById("gradYear").value = originalData.gradYear;
-
-      document.getElementById("displayName").textContent = "";
-      document.getElementById("displayEmail").textContent = "";
-      document.getElementById("displayDept").textContent = "";
-      document.getElementById("displayUniv").textContent = "";
-      document.getElementById("displayID").textContent = "";
-    };
-  </script>
 </body>
+</html>
