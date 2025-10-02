@@ -68,7 +68,7 @@ $settings = mysqli_fetch_assoc($result);
 <!-- رسالة نجاح -->
 <?php if (isset($message)) { echo "<p style='color:green; text-align:center;'>$message</p>"; } ?>
 
-
+ 
 
 
     <!--main content الخيارات حق الاعدادت-->
