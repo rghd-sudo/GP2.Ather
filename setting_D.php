@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'php/connection.php';
+include 'php/index.php';
 
 // 📝 جلب student_id من السيشن
 $student_id = $_SESSION['user_id'];
