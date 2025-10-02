@@ -1,14 +1,18 @@
 <?php
 session_start();
-include 'php/index.php';
 
+include 'index.php';
+if (!isset($_SESSION['user_id'])) {
+    die("User not logged in");
+}
+$user_id = $_SESSION['user_id'];
 // 📝 جلب student_id من السيشن
-$student_id = $_SESSION['user_id'];
+$user_id = $_SESSION['user_id'];
 
 // جلب الاسم الكامل عدليها حسب الاعندك الجدوال 
-$result = mysqli_query($conn, "SELECT full_name FROM users WHERE id='$student_id'");
+$result = mysqli_query($conn, "SELECT name FROM users WHERE id='$user_id'");
 $row = mysqli_fetch_assoc($result);
-$student_name = $row['full_name'];
+$student_name = $row['name'];
 
 // 📝 معالجة الفورم عند الضغط على Save
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -21,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 0;
 
     // 📝 تحقق إذا يوجد سجل مسبق للطالب
-    $check = mysqli_query($conn, "SELECT * FROM notifications WHERE student_id='$student_id'");
+    $check = mysqli_query($conn, "SELECT * FROM notifications WHERE student_id='$user_id'");
     if (mysqli_num_rows($check) > 0) {
         // تحديث السجل
         mysqli_query($conn, "UPDATE notifications SET 
@@ -32,20 +36,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             via_email='$via_email',
             via_in_app='$via_in_app',
             reminder_days='$reminder_days'
-            WHERE student_id='$student_id'");
+            WHERE student_id='$user_id'");
     } else {
         // إدخال سجل جديد
         mysqli_query($conn, "INSERT INTO notifications 
             (student_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
             VALUES 
-            ('$student_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', '$via_email', '$via_in_app', '$reminder_days')");
+            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', '$via_email', '$via_in_app', '$reminder_days')");
     }
 
     $message = "Settings saved successfully!";
 }
 
 // 📝 جلب الإعدادات الحالية للعرض
-$result = mysqli_query($conn, "SELECT * FROM notifications WHERE student_id='$student_id'");
+$result = mysqli_query($conn, "SELECT * FROM notifications WHERE student_id='$user_id'");
 $settings = mysqli_fetch_assoc($result);
 ?>
 <!DOCTYPE html>
@@ -140,8 +144,8 @@ $settings = mysqli_fetch_assoc($result);
     </div>
        
                   
-                  <button class="save">  Save Notitfcation setting</button>
+                  <button class="save">  Save Notification setting</button>
 
-                  <script src="jave/settings_sd.js"></script>
+                  <script src="java/settings_sd.js"></script>
 </body>
 </html>
