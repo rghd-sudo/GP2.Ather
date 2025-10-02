@@ -72,57 +72,53 @@ $settings = mysqli_fetch_assoc($result);
     <!--main content الخيارات حق الاعدادت-->
     <div class="content">
 
-       
-      <!-- Request Pending -->
+       <form method="POST">
+    <!-- Request Pending -->
     <div class="item">
         <h3>Request Pending Reminder</h3>
         <p class="desc">Send reminder if the request is still pending</p>
         <label class="switch">
-            <input type="checkbox" name="notify_pending" value="1" <?= isset($settings['notify_pending']) && $settings['notify_pending'] ? 'checked' : '' ?>>
+            <input type="checkbox" name="notify_pending" value="1" <?= ($settings['notify_pending'] ?? 0) ? 'checked' : '' ?>>
             <span class="slider"></span>
         </label>
     </div>
 
-           
     <!-- Request Rejected -->
     <div class="item">
         <h3>Request Rejected</h3>
         <p class="desc">Notify when a request is rejected</p>
         <label class="switch">
-            <input type="checkbox" name="notify_rejected" value="1" <?= isset($settings['notify_rejected']) && $settings['notify_rejected'] ? 'checked' : '' ?>>
+            <input type="checkbox" name="notify_rejected" value="1" <?= ($settings['notify_rejected'] ?? 0) ? 'checked' : '' ?>>
             <span class="slider"></span>
         </label>
     </div>
 
-                <!-- Recommendation Uploaded -->
+    <!-- Recommendation Uploaded -->
     <div class="item">
         <h3>Recommendation Uploaded</h3>
         <p class="desc">Notify when the professor uploaded recommendation</p>
         <label class="switch">
-            <input type="checkbox" name="notify_uploaded" value="1" <?= isset($settings['notify_uploaded']) && $settings['notify_uploaded'] ? 'checked' : '' ?>>
+            <input type="checkbox" name="notify_uploaded" value="1" <?= ($settings['notify_uploaded'] ?? 0) ? 'checked' : '' ?>>
             <span class="slider"></span>
         </label>
     </div>
-    
 
-                    
-                
-                 <!-- Notification Method -->
-    <div class="choices_reminder"> 
+    <!-- Notification Method -->
+    <div class="choices_reminder">
         <div class="choices">
             <h4>Send Notification via:</h4>
-            <label><input type="checkbox" name="via_email" value="1" <?= isset($settings['via_email']) && $settings['via_email'] ? 'checked' : '' ?>> Email</label>
-            <label><input type="checkbox" name="via_in_app" value="1" <?= isset($settings['via_in_app']) && $settings['via_in_app'] ? 'checked' : '' ?>> In-app</label>
-        </div>    
+            <label><input type="checkbox" name="via_email" value="1" <?= ($settings['via_email'] ?? 0) ? 'checked' : '' ?>> Email</label>
+            <label><input type="checkbox" name="via_in_app" value="1" <?= ($settings['via_in_app'] ?? 0) ? 'checked' : '' ?>> In-app</label>
+        </div>
 
         <!-- Reminder Days -->
         <div class="reminder">
             <label>Send Reminder After:</label>
             <select name="reminder_days" class="days">
-                <option value="0" <?= isset($settings['reminder_days']) && $settings['reminder_days']==0 ? 'selected' : '' ?>>No reminder</option>
-                <option value="1" <?= isset($settings['reminder_days']) && $settings['reminder_days']==1 ? 'selected' : '' ?>>1 Day</option>
-                <option value="2" <?= isset($settings['reminder_days']) && $settings['reminder_days']==2 ? 'selected' : '' ?>>2 Days</option>
-                <option value="3" <?= isset($settings['reminder_days']) && $settings['reminder_days']==3 ? 'selected' : '' ?>>3 Days</option>
+                <option value="0" <?= ($settings['reminder_days'] ?? 0)==0 ? 'selected' : '' ?>>No reminder</option>
+                <option value="1" <?= ($settings['reminder_days'] ?? 0)==1 ? 'selected' : '' ?>>1 Day</option>
+                <option value="2" <?= ($settings['reminder_days'] ?? 0)==2 ? 'selected' : '' ?>>2 Days</option>
+                <option value="3" <?= ($settings['reminder_days'] ?? 0)==3 ? 'selected' : '' ?>>3 Days</option>
             </select>
         </div>
     </div>

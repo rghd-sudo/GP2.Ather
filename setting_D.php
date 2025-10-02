@@ -62,20 +62,20 @@ $settings = mysqli_fetch_assoc($result);
 </head>
 <body>
 <!-- Back Button -->
-<a href="  .php " class="back_btn">&#8592;</a>
-   <!-- الهيدر-->
-   <header class="header">
-    <h4>Welcome. <span class="docter_name"></span></h4><!--php name aotu-->
-</header>
+<a href="new_request.php " class="back_btn">&#8592;</a>
+ 
+
+<!-- Header -->
+<header class="header">                 <!-- يتغير ع جدول الدكتور -->
+    <h4>Welcome, <span class="student_name"><?php echo $student_name; ?></span></h4>
   
 
 <!-- رسالة نجاح -->
 <?php if (isset($message)) { echo "<p style='color:green; text-align:center;'>$message</p>"; } ?>
 
+   <!--main content الخيارات حق الاعدادت-->
+<form method="POST">
  
-
-
-    <!--main content الخيارات حق الاعدادت-->
     <div class="content">
 
        <!-- New Request -->
@@ -142,10 +142,10 @@ $settings = mysqli_fetch_assoc($result);
             </select>
         </div>
     </div>
-       
+    
                   
-                  <button class="save">  Save Notification setting</button>
+                  <button class="save">  Save Notitfcation setting</button>
 
-                  <script src="java/settings_sd.js"></script>
+                  <script src="jave/settings_sd.js"></script>
 </body>
 </html>
