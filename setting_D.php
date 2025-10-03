@@ -3,7 +3,7 @@ session_start();
 
 include 'index.php';
 if (!isset($_SESSION['user_id'])) {
-    die("User not logged in");
+     header("Location: login.php");
 }
 $user_id = $_SESSION['user_id'];
 // 📝 جلب student_id من السيشن
@@ -12,7 +12,7 @@ $user_id = $_SESSION['user_id'];
 // جلب الاسم الكامل عدليها حسب الاعندك الجدوال 
 $result = mysqli_query($conn, "SELECT name FROM users WHERE id='$user_id'");
 $row = mysqli_fetch_assoc($result);
-$student_name = $row['name'];
+$user_name = $row['name'];
 
 // 📝 معالجة الفورم عند الضغط على Save
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 0;
 
     // 📝 تحقق إذا يوجد سجل مسبق للطالب
-    $check = mysqli_query($conn, "SELECT * FROM notifications WHERE student_id='$user_id'");
+    $check = mysqli_query($conn, "SELECT * FROM notifications WHERE user_id='$user_id'");
     if (mysqli_num_rows($check) > 0) {
         // تحديث السجل
         mysqli_query($conn, "UPDATE notifications SET 
@@ -36,11 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             via_email='$via_email',
             via_in_app='$via_in_app',
             reminder_days='$reminder_days'
-            WHERE student_id='$user_id'");
+            WHERE user_id='$user_id'");
     } else {
         // إدخال سجل جديد
         mysqli_query($conn, "INSERT INTO notifications 
-            (student_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
+            (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
             VALUES 
             ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', '$via_email', '$via_in_app', '$reminder_days')");
     }
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // 📝 جلب الإعدادات الحالية للعرض
-$result = mysqli_query($conn, "SELECT * FROM notifications WHERE student_id='$user_id'");
+$result = mysqli_query($conn, "SELECT * FROM notifications WHERE user_id='$user_id'");
 $settings = mysqli_fetch_assoc($result);
 ?>
 <!DOCTYPE html>
@@ -57,17 +57,17 @@ $settings = mysqli_fetch_assoc($result);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" href="setting_style.css">
     <title>setting</title>
-    <link rel="stylesheet" href="setting_style.css">
+   
 </head>
 <body>
+     
 <!-- Back Button -->
-<a href="new_request.php " class="back_btn">&#8592;</a>
- 
-
+<a href="req_system.php" class="back_btn">&#8592;</a>
 <!-- Header -->
 <header class="header">                 <!-- يتغير ع جدول الدكتور -->
-    <h4>Welcome, <span class="student_name"><?php echo $student_name; ?></span></h4>
+    <h4>Welcome, <span class="student_name"><?php echo $user_name; ?></span></h4>
   
 
 <!-- رسالة نجاح -->

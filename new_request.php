@@ -91,10 +91,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       font-family: Arial, sans-serif;
     }
     body{margin:0;background:var(--bg);color:var(--text);display:flex}
-    .sidebar{width:80px;background:var(--header);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 0;gap:20px}
+    .sidebar{width:80px;background:var(--header);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:15px 0;gap:18px}
     .sidebar a{width:50px;height:50px;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;border-radius:12px;text-decoration:none;font-size:20px;box-shadow:var(--shadow)}
-    .container{flex:1;max-width:1150px;margin:30px;padding:30px}
-    .header{display:flex;justify-content:space-between;align-items:center;background:var(--header);padding:28px;border-radius:28px;box-shadow:var(--shadow);}
+    .container{flex:1;max-width:1150px;margin:30px;padding:20px}
+    .header{display:flex;justify-content:space-between;align-items:center;background:var(--header);padding: 20px;border-radius:28px;box-shadow:var(--shadow);}
     .brand{display:flex;align-items:center;gap:18px}
     .avatar{width:84px;height:84px;border-radius:50%;overflow:hidden}
     .avatar img{width:100%;height:100%;object-fit:cover}
@@ -103,19 +103,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .student-info input{display:block;width:380px;border:none;border-bottom:2px solid rgba(0,0,0,0.08);background:transparent;padding:8px 6px}
     .form-wrap{display:flex;gap:40px;margin-top:40px}
     .col{flex:1}
-    .field{margin-bottom:30px}
+    .field{margin-bottom:25px}
     .label{font-weight:700;margin-bottom:10px}
-    .select-style{background:var(--input);padding:18px;border-radius:6px;box-shadow:var(--shadow)}
+    .select-style{background:var(--input);padding:16px;border-radius:6px;box-shadow:var(--shadow)}
     select{width:100%;padding:10px;border:none;background:transparent;font-size:16px}
     input[type="text"], textarea{width:100%;padding:16px;border-radius:6px;border:none;background:var(--input);box-shadow:var(--shadow);font-size:15px}
     textarea{min-height:120px}
-    .upload{display:flex;align-items:center;gap:12px;background:var(--input);padding:14px;border-radius:6px;box-shadow:var(--shadow)}
+    .upload{display:flex;align-items:center;gap:12px;background:var(--input);padding:16px;border-radius:6px;box-shadow:var(--shadow)}
     .radios{display:flex;gap:22px;align-items:center}
     .submit-wrap{display:flex;justify-content:flex-end}
     .btn{background:var(--accent);color:white;padding:22px 48px;border-radius:50px;border:none;font-size:24px;font-weight:700;cursor:pointer}
+    .back_btn {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 5px;
+    font-size: 24px;
+    color: #03060a;
+    text-decoration: none;
+}
   </style>
 </head>
 <body>
+  <!-- Back Button -->
+<a href="req_system.php" class="back_btn">&#8592;</a>
   <div class="container">
     <div class="header">
       <div class="brand">

@@ -3,10 +3,16 @@ session_start();
 include 'index.php'; // الاتصال بقاعدة البيانات
 
 // جلب الإحصائيات
-$totalUsers = $conn->query("SELECT COUNT(*) AS count FROM users")->fetch_assoc()['count'] ?? 0;
-$completedRequests = $conn->query("SELECT COUNT(*) AS count FROM requests WHERE status='completed'")->fetch_assoc()['count'] ?? 0;
-$totalVisitors = $conn->query("SELECT COUNT(*) AS count FROM visitors")->fetch_assoc()['count'] ?? 0;
+$sql = "
+SELECT 
+    (SELECT COUNT(*) FROM requests WHERE status='approved') AS completed_requests,
+    (SELECT COUNT(*) FROM users) AS total_users,
+    (SELECT COUNT(*) FROM visitors) AS total_visitors
+";
+$result = $conn->query($sql);
+$stats = $result->fetch_assoc();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -44,16 +50,34 @@ body{font-family:'Poppins',sans-serif;background:var(--light-peach);color:var(--
 .cta-button:hover{background:#e6603d;}
 
 /* Statistics */
-.stats{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-top:30px;}
-.stat-box{background:#fff;padding:30px;border-radius:15px;box-shadow:0 2px 6px rgba(0,0,0,0.1);min-width:150px;transition:transform 0.3s;}
-.stat-box:hover{transform:translateY(-5px);}
-.stat-box .icon{font-size:40px;margin-bottom:10px;transition:transform 0.3s;}
-.stat-box h3{font-size:1.8rem;margin-bottom:5px;color:var(--coral);}
-.stat-box p{font-size:1rem;color:var(--dark-gray);}
-.stat-box:hover .icon{transform:scale(1.2);}
-.section-title{font-size:2rem;color:var(--coral);margin-bottom:40px;}
-
-/* Services */
+  /* Statistics Section */
+        .stats-section {background:#fff; padding:50px 20px; border-radius:20px; margin-bottom:50px; box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+        .stats-grid {display:flex; flex-wrap:wrap; gap:30px; justify-content:center; text-align:center;}
+        .stat-box {flex:1 1 200px; background:var(--light-peach); border-radius:15px; padding:25px; box-shadow:0 2px 6px rgba(0,0,0,0.1); transition: transform 0.3s;}
+        .stat-box:hover {transform: translateY(-5px);}
+        .stat-box .icon {font-size:40px; margin-bottom:15px; color:var(--coral);}
+        .stat-box h3 {font-size:2rem; margin-bottom:10px; color:var(--coral);}
+        .stat-box p {color:var(--dark-gray); font-weight:500;}
+          /* Services */
+        .services-grid {display:flex; flex-wrap:wrap; justify-content:center; gap:30px;}
+        .service-box {flex:1 1 250px; background:#fff; border-radius:15px; padding:30px; box-shadow:0 2px 6px rgba(0,0,0,0.1); transition: transform 0.3s;}
+        .service-box:hover {transform: translateY(-5px);}
+        .service-icon {font-size:40px;color:var(--coral);margin-bottom:15px;}
+        .service-box h3 {margin-bottom:10px;}
+        .service-box p {color:var(--dark-gray);}
+  /* Services 
+        .services-grid {display:flex; flex-wrap:wrap; justify-content:center; gap:30px;}
+        .service-box {flex:1 1 250px; background:#fff; border-radius:15px; padding:30px; box-shadow:0 2px 6px rgba(0,0,0,0.1); transition: transform 0.3s;}
+        .service-box:hover {transform: translateY(-5px);}
+        .service-icon {font-size:40px;color:var(--coral);margin-bottom:15px;}
+        .service-box h3 {margin-bottom:10px;}
+        .service-box p {color:var(--dark-gray);}*/
+        /* FAQ */
+        .faq-item {margin-bottom:15px; border-radius:10px; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+        .faq-question {width:100%; text-align:left; padding:15px 20px; font-size:1.1rem; border:none; background:var(--light-peach); cursor:pointer; font-weight:600; transition: background 0.3s ease; border-radius:10px;}
+        .faq-question:hover {background:var(--coral); color:#fff;}
+        .faq-answer {padding:15px 20px; display:none; color:var(--dark-gray);}
+/* Services 
 .services{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;}
 .service-box{background:#fff;padding:30px;border-radius:15px;box-shadow:0 2px 6px rgba(0,0,0,0.1);min-width:200px;transition:transform 0.3s;text-align:center;}
 .service-box i{font-size:40px;margin-bottom:15px;color:var(--coral);transition:transform 0.3s;}
@@ -61,14 +85,14 @@ body{font-family:'Poppins',sans-serif;background:var(--light-peach);color:var(--
 .service-box h3{margin-bottom:10px;}
 .service-box p{color:var(--dark-gray);}
 
-/* FAQ Accordion */
+/* FAQ Accordion 
 .faq{max-width:800px;margin:50px auto;}
 .faq-item{background:#fff;padding:20px;margin-bottom:15px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 .faq-item h3{cursor:pointer;position:relative;padding-right:30px;color:var(--dark-gray);}
 .faq-item h3::after{content:'\002B';position:absolute;right:0;top:0;font-size:1.5rem;color:var(--coral);transition:transform 0.3s;}
 .faq-item.active h3::after{content:'\2212';transform:rotate(180deg);}
 .faq-item p{margin-top:10px;display:none;color:var(--dark-gray);line-height:1.5;}
-.faq-item:hover h3{color:var(--coral);}
+.faq-item:hover h3{color:var(--coral);}*/
 
 /* Footer */
 .footer{background:var(--dark-gray);color:#fff;padding:40px 0;}
@@ -93,7 +117,6 @@ body{font-family:'Poppins',sans-serif;background:var(--light-peach);color:var(--
 <li><a href="#services">Services</a></li>
 <li><a href="#faq">FAQ</a></li>
 <li><a href="#contact">Contact Us</a></li>
-<li><a href="login.php"><i class="fa fa-user"></i></a></li>
 </ul>
 </nav>
 </div>
@@ -107,8 +130,28 @@ body{font-family:'Poppins',sans-serif;background:var(--light-peach);color:var(--
 <a href="login.php" class="cta-button">Get Started</a>
 </div>
 </section>
-
-<!-- Statistics -->
+   <!-- Statistics Section -->
+        <section id="statistics" class="stats-section container">
+            <h2 style="text-align:center; margin-bottom:40px;">Key Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="icon">✅</div>
+                    <h3 class="counter" data-target="<?= $stats['completed_requests'] ?>">0</h3>
+                    <p>Completed Requests</p>
+                </div>
+                <div class="stat-box">
+                    <div class="icon">👥</div>
+                    <h3 class="counter" data-target="<?= $stats['total_users'] ?>">0</h3>
+                    <p>Users</p>
+                </div>
+                <div class="stat-box">
+                    <div class="icon">🌐</div>
+                    <h3 class="counter" data-target="<?= $stats['total_visitors'] ?>">0</h3>
+                    <p>Visitors</p>
+                </div>
+            </div>
+        </section>
+<!-- Statistics 
 <section id="statistics" class="container" style="padding:50px 0;text-align:center;">
 <h2 class="section-title">Key Statistics</h2>
 <div class="stats">
@@ -116,24 +159,28 @@ body{font-family:'Poppins',sans-serif;background:var(--light-peach);color:var(--
     <div class="stat-box"><div class="icon">🌐</div><h3 class="counter" data-target="<?= $totalVisitors ?>">0</h3><p>Visitors</p></div>
     <div class="stat-box"><div class="icon">✅</div><h3 class="counter" data-target="<?= $completedRequests ?>">0</h3><p>Completed Requests</p></div>
 </div>
-</section>
+</section>-->
 
 <!-- Services -->
 <section id="services" class="container" style="padding:50px 0;text-align:center;">
 <h2 class="section-title">Our Services</h2>
-<div class="services">
-<div class="service-box"><i class="fa fa-envelope"></i><h3>Recommendation Letters</h3><p>Easily request and manage academic recommendation letters.</p></div>
-<div class="service-box"><i class="fa fa-user"></i><h3>User Profiles</h3><p>Manage your profile and track your requests efficiently.</p></div>
-<div class="service-box"><i class="fa fa-bell"></i><h3>Notifications</h3><p>Receive alerts for new requests, updates, or rejections.</p></div>
+<div class="services-grid">
+<div class="service-box"><i class="service-icon fa fa-envelope"></i><h3>Recommendation Letters</h3><p>Easily request and manage academic recommendation letters.</p></div>
+<div class="service-box"><i class="service-icon fa fa-user"></i><h3>User Profiles</h3><p>Manage your profile and track your requests efficiently.</p></div>
+<div class="service-box"><i class="service-icon fa fa-bell"></i><h3>Notifications</h3><p>Receive alerts for new requests, updates, or rejections.</p></div>
 </div>
 </section>
 
 <!-- FAQ -->
-<section id="faq" class="faq container">
-<h2 class="section-title">Frequently Asked Questions</h2>
-<div class="faq-item"><h3>How do I request a recommendation letter?</h3><p>After logging in, navigate to "New Request" and complete the form accurately with all required details.</p></div>
-<div class="faq-item"><h3>Can I track my requests?</h3><p>Yes. Access "Track Request" to monitor your submissions, view status updates, and download completed letters.</p></div>
-<div class="faq-item"><h3>Will I receive notifications?</h3><p>Absolutely. Notifications will alert you of request approvals, rejections, or any important updates in real-time.</p></div>
+ <section id="faq" class="container" style="padding:50px 0;">
+            <h2 style="text-align:center; margin-bottom:40px;">Frequently Asked Questions</h2>
+<!--<h2 class="section-title">Frequently Asked Questions</h2>-->
+<div class="faq-item"><button class="faq-question"><h3>How do I request a recommendation letter?</h3></button>
+<div class="faq-answer"><p>After logging in, navigate to "New Request" and complete the form accurately with all required details.</p></div></div>
+<div class="faq-item"><button class="faq-question"><h3>Can I track my requests?</h3></button>
+<div class="faq-answer"><p>Yes. Access "Track Request" to monitor your submissions, view status updates, and download completed letters.</p></div></div>
+<div class="faq-item"><button class="faq-question"><h3>Will I receive notifications?</h3></button>
+<div class="faq-answer"><p>Absolutely. Notifications will alert you of request approvals, rejections, or any important updates in real-time.</p></div></div>
 </section>
 </main>
 
@@ -174,8 +221,19 @@ counters.forEach(counter => {
     };
     updateCount();
 });
-
-// FAQ accordion
+        // FAQ Accordion
+        const faqItems = document.querySelectorAll('.faq-item');
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+            question.addEventListener('click', () => {
+                const answer = item.querySelector('.faq-answer');
+                const isOpen = answer.style.display === 'block';
+                document.querySelectorAll('.faq-answer').forEach(a => a.style.display = 'none');
+                if(!isOpen) answer.style.display = 'block';
+            });
+        });
+    </script>
+/* FAQ accordion
 const faqItems = document.querySelectorAll('.faq-item');
 faqItems.forEach(item => {
     item.querySelector('h3').addEventListener('click', () => {
@@ -185,8 +243,7 @@ const open = document.querySelector('.faq-item.active');
         const answer = item.querySelector('p');
         answer.style.display = item.classList.contains('active') ? 'block' : 'none';
     });
-});
-</script>
+});*/
 <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </body>
 </html>
