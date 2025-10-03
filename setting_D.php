@@ -20,36 +20,37 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $notify_pending = isset($_POST['notify_pending']) ? 1 : 0;
     $notify_rejected = isset($_POST['notify_rejected']) ? 1 : 0;
     $notify_uploaded = isset($_POST['notify_uploaded']) ? 1 : 0;
+    $notify_admin = isset($_POST['notify_admin']) ? 1 : 0;
     $via_email = isset($_POST['via_email']) ? 1 : 0;
     $via_in_app = isset($_POST['via_in_app']) ? 1 : 0;
-    $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 0;
-
-    // 📝 تحقق إذا يوجد سجل مسبق للطالب
-    $check = mysqli_query($conn, "SELECT * FROM notifications WHERE user_id='$user_id'");
+    $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 3;
+// 📝 تحقق إذا يوجد سجل مسبق للطالب
+    $check = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'");
     if (mysqli_num_rows($check) > 0) {
         // تحديث السجل
-        mysqli_query($conn, "UPDATE notifications SET 
+        mysqli_query($conn, "UPDATE notification_settings SET 
             notify_new_request='$notify_new_request',
             notify_pending='$notify_pending',
             notify_rejected='$notify_rejected',
             notify_uploaded='$notify_uploaded',
+            notify_admin_announcement='$notify_admin',
             via_email='$via_email',
             via_in_app='$via_in_app',
             reminder_days='$reminder_days'
             WHERE user_id='$user_id'");
     } else {
-        // إدخال سجل جديد
-        mysqli_query($conn, "INSERT INTO notifications 
-            (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
+          // إدخال سجل جديد
+        mysqli_query($conn, "INSERT INTO notification_settings 
+            (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, notify_admin_announcement, via_email, via_in_app, reminder_days)
             VALUES 
-            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', '$via_email', '$via_in_app', '$reminder_days')");
+            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', '$notify_admin', '$via_email', '$via_in_app', '$reminder_days')");
     }
 
     $message = "Settings saved successfully!";
 }
 
 // 📝 جلب الإعدادات الحالية للعرض
-$result = mysqli_query($conn, "SELECT * FROM notifications WHERE user_id='$user_id'");
+$result = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'");
 $settings = mysqli_fetch_assoc($result);
 ?>
 <!DOCTYPE html>

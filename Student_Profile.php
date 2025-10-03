@@ -1,26 +1,26 @@
 <?php
 session_start();
 include 'index.php';
-$student_id = 1; 
-//$student = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM Graduates WHERE id=$student_id"));
+$user_id = 1; 
+$Graduates = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM Graduates WHERE user_id=$user_id"));
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
     $dept = $_POST['department'];
     $univ = $_POST['university'];
-    $sid = $_POST['student_id'];
+    $sid = $_POST['user_id'];
     $grad = $_POST['graduation'];
 
-    $cv = $student['cv'];
+    $cv = $Graduates['cv'];
     if (!empty($_FILES['cv']['name'])) {
         $cv = "uploads/" . basename($_FILES['cv']['name']);
         move_uploaded_file($_FILES['cv']['tmp_name'], $cv);
     }
 
     $sql = "UPDATE Graduates 
-            SET full_name='$name', email='$email', department='$dept', university='$univ',
-                student_id='$sid', graduation_year='$grad', cv='$cv' 
-            WHERE id=$student_id";
+            SET name='$name', email='$email', department='$dept', university='$univ',
+                user_id='$sid', graduation_year='$grad', cv='$cv' 
+            WHERE id=$user_id";
     mysqli_query($conn, $sql);
     header("Location: profile.php");
 }
@@ -194,26 +194,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       <div class="form-section">
         <form method="POST" enctype="multipart/form-data">
           <label>Full name</label>
-          <input type="text" name="name" id="fullName" value="<?= $student['full_name'] ?>">
+          <input type="text" name="name" id="fullName" value="<?= $Graduates['full_name'] ?>">
 
           <label>Email</label>
-          <input type="email" name="email" id="email" value="<?= $student['email'] ?>">
+          <input type="email" name="email" id="email" value="<?= $Graduates['email'] ?>">
 
           <label>Department</label>
-          <input type="text" name="department" id="dept" value="<?= $student['department'] ?>">
+          <input type="text" name="department" id="dept" value="<?= $Graduates['department'] ?>">
 
           <label>University</label>
-          <input type="text" name="university" id="univ" value="<?= $student['university'] ?>">
+          <input type="text" name="university" id="univ" value="<?= $Graduates['university'] ?>">
 
           <label>Student ID</label>
-          <input type="text" name="student_id" id="studentID" value="<?= $student['student_id'] ?>">
+          <input type="text" name="student_id" id="studentID" value="<?= $Graduates['student_id'] ?>">
 
           <label>Graduation Year</label>
           <select name="graduation" id="gradYear">
             <option value="" disabled>-- Select year --</option>
-            <option <?= $student['graduation_year']=="2020"?"selected":"" ?>>2020</option>
-            <option <?= $student['graduation_year']=="2026"?"selected":"" ?>>2026</option>
-            <option <?= $student['graduation_year']=="2030"?"selected":"" ?>>2030</option>
+            <option <?= $Graduates['graduation_year']=="2020"?"selected":"" ?>>2020</option>
+            <option <?= $Graduates['graduation_year']=="2026"?"selected":"" ?>>2026</option>
+            <option <?= $Graduates['graduation_year']=="2030"?"selected":"" ?>>2030</option>
           </select>
 
           <label>Upload CV</label>

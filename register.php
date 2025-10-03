@@ -5,8 +5,79 @@ include 'index.php';
 // عرض الرسالة إذا موجودة
 if (isset($_SESSION['message'])) {
     echo "<script>alert('" . $_SESSION['message'] . "');</script>";
+    unset($_SESSION['message']);
+}
+
+// فقط للتأكد من أن الجداول موجودة (يمكن حذفه بعد التأكد)
+$conn->query("CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    paasword VARCHAR(255) NOT NULL,
+    department VARCHAR(255),
+    National_ID VARCHAR(50),
+    university VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
+
+$conn->query("CREATE TABLE IF NOT EXISTS graduates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    graduation_year YEAR,
+    gpa DECIMAL(3,2),
+    cv_path VARCHAR(500),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)");
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name        = trim($_POST['name'] ?? '');
+    $email       = trim($_POST['email'] ?? '');
+    $paasword    = trim($_POST['paasword'] ?? '');
+    $confirm_password = trim($_POST['confirm_password'] ?? '');
+    $National_ID = trim($_POST['National_ID'] ?? '');
+    $university  = trim($_POST['university'] ?? '');
+    $department  = trim($_POST['department'] ?? '');
+    $graduation_year = $_POST['graduation_year'] ?? null;
+    $gpa = $_POST['gpa'] ?? null;
+    $cv_path = null; // ضع مسار CV إذا كان هناك رفع ملفات
+
+    if ($name && $email && $paasword && $department && $National_ID && $university) {
+        // تشفير كلمة المرور
+        $hashed = password_hash($paasword, PASSWORD_BCRYPT);
+        if ($paasword !== $confirm_password) {
+            $_SESSION['message'] = "⚠️ Passwords do not match";
+        } 
+      // استخدام prepared statement للتخزين في users
+$stmt = $conn->prepare("INSERT INTO users (name, email, paasword, department, National_ID, university) VALUES (?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("ssssss", $name, $email, $hashed, $department, $National_ID, $university);
+if ($stmt->execute()) {
+    $user_id = $stmt->insert_id; // <-- هنا نأخذ معرف المستخدم بعد الإدخال
+
+    // الآن نضيف بيانات الخريج في graduates
+    $stmt2 = $conn->prepare("INSERT INTO graduates (user_id, graduation_year, gpa, cv_path) VALUES (?, ?, ?, ?)");
+    $stmt2->bind_param("iids", $user_id, $graduation_year, $gpa, $cv_path);
+    $stmt2->execute();
+    $stmt2->close();
+
+       $_SESSION['message'] = "Successful registration✅";
+            header("Location: req_system.php");
+        } else {
+            $_SESSION['message'] = "Error: " . $stmt->error;
+        }
+    $stmt->close();
+ }
+ }
+
+/*عرض الرسالة إذا موجودة
+if (isset($_SESSION['message'])) {
+    echo "<script>alert('" . $_SESSION['message'] . "');</script>";
     unset($_SESSION['message']); // مسح الرسالة بعد عرضها مرة واحدة
 }
+      // 2. إدخال البيانات الخاصة بالخريج في graduates
+                $stmt = $conn->prepare("INSERT INTO graduates (user_id,graduation_year,gpa,cv_path) VALUES (?,?,?,?)");
+                $stmt->bind_param("iids", $user_id, $graduation_year, $gpa, $cv_path);
+                $stmt->execute();
+                $stmt->close();
 // إنشاء جدول إذا لم يكن موجود
 $conn->query("CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -52,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->close();
  }
  }
-}
+}*/
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -159,12 +230,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     <div class="card">
         
-        
-     <?php if($message): ?>
-      <p style="margin:20px 0;padding:12px;background:#fff8e6;border-radius:6px;box-shadow:var(--shadow)"><?= $message; ?></p>
-    <?php endif; ?>
-    <h2>Register</h2>
-       
+        <h2>Register</h2>
+    <!-- <sage): ?>
+      <p style="margin:20px 0;padding:12px;background:#fff8e6;border-radius:6px;box-shadow:var(--shadow)"><></p>
+     ?> -->
+        <div class="container">
         <form action="register.php" method="POST">
            <div class="input-group">
             <label for="name">Full Name:</label>
@@ -175,8 +245,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="email" id="email" name="email" required>
            </div>
            <div class="input-group">
-               <label for="password">Password:</label>
-            <input type="password" id="password" name="paasword" required>
+               <label for="paasword">Password:</label>
+            <input type="password" id="paasword" name="paasword" required>
         </div>
 <div class="input-group">
             <label for="confirm_password">Confirm Password:</label>
