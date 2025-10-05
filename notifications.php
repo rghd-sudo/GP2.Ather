@@ -17,11 +17,12 @@ if ($conn->connect_error) {
 // إنشاء جدول التنبيهات إذا ما كان موجود
 $conn->query("CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
+     user_id INT NOT NULL,   -- معرف المستخدم
     message VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )");
 
-// جلب التنبيهات
+/* جلب التنبيهات
 $result = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC");
 ?>
 <?php while($row = $result->fetch_assoc()): ?>
@@ -30,6 +31,7 @@ $result = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC");
         <p class="time"><?= $row['created_at'] ?></p>
     </div>
 <?php endwhile; ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,12 +104,12 @@ $result = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC");
 </head>
 <body>
     <!-- القائمة الجانبية -->
-    <div class="sidebar">
-        <a href="#">Profile</a>
-        <a href="#">New Request</a>
-        <a href="#">Track Request</a>
-        <a href="#">Notifications</a>
-    </div>
+   <div class="sidebar">
+    <a href="Student_profile.php">profile</a>
+    <a href="new_request.php">New Request</a>
+    <a href="#">Track Request</a>
+    <a href="notifications.php">Notifications</a>
+  </div>
 
     <!-- المحتوى -->
     <div class="content">

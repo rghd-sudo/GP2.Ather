@@ -1,4 +1,16 @@
-<?php include 'index.php'; ?>
+<?php
+// 1️ افتح السيشن أول شيء
+session_start();
+// 2️ تحقق إذا المستخدم مسجل دخول
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+// 3️ استدعاء الاتصال بقاعدة البيانات
+include 'index.php';
+// 4️ خزن معرف المستخدم من السيشن
+$user_id = $_SESSION['user_id'];
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,15 +112,97 @@
     .edit {
       background: #a5d8f8;
     }
+ 
+.top_bar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  flex-wrap: nowrap;
+  padding: 3px 5px;
+  box-sizing: border-box;
+}
+
+/* مجموعة الأزرار */
+.right_buttons {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* أيقونات */
+.icon_btn, .logout_btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 10;
+  text-decoration: none;
+}
+.icon_btn svg{
+   width: 22px;
+  height: 22px;
+  fill: #ffde3bff; 
+}
+.logout_btn svg {
+  width: 22px;
+  height: 22px;
+  fill: #03060a;
+}
+
+/* للهواتف */
+@media (max-width: 480px) {
+  .back_btn { font-size: 20px; }
+  .icon_btn svg,
+  .logout_btn svg { width: 20px; height: 20px; }
+}
   </style>
 </head>
 <body>
+<div class="top_bar">
+  <div class="right_buttons">
+    <!-- جرس التنبيهات -->
+    <a href="notifications.php" class="icon_btn" aria-label="الإشعارات">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+        <path d="M224 512c35.3 0 63.1-28.7 
+                 63.1-64H160.9c0 35.3 28.7 64 
+                 63.1 64zm215.4-149.7c-20.9-21.4-55.5-52.2-55.5-154.3
+                 0-77.7-54.5-139.8-127.1-155.2V32c0-17.7-14.3-32-32-32s-32
+                 14.3-32 32v20.9C118.5 68.2 64 130.3 64 208c0
+                 102.1-34.6 132.9-55.5 154.3-6 6.1-8.5 14.3-8.5
+                 22.5 0 16.8 13.2 32 32 32h383.9c18.8 0 32-15.2
+                 32-32 0-8.2-2.6-16.4-8.5-22.5z"/>
+      </svg>
+    </a>
+
+    <!-- زر تسجيل الخروج -->
+    <a href="logout.html" class="logout_btn" aria-label="تسجيل خروج">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <path d="M377.9 105.9c-12.5-12.5-32.8-12.5-45.3 
+                 0s-12.5 32.8 0 45.3L402.7 221H160c-17.7 
+                 0-32 14.3-32 32s14.3 32 32 32h242.7l-70.1 
+                 69.9c-12.5 12.5-12.5 32.8 0 45.3s32.8 
+                 12.5 45.3 0l128-128c12.5-12.5 
+                 12.5-32.8 0-45.3l-128-128zM96 
+                 64c-35.3 0-64 28.7-64 64v256c0 
+                 35.3 28.7 64 64 64h96c17.7 0 
+                 32-14.3 32-32s-14.3-32-32-32H96V128h96c17.7 
+                 0 32-14.3 32-32s-14.3-32-32-32H96z"/>
+      </svg>
+    </a>
+  </div>
+</div>
   <!-- القائمة الجانبية -->
   <div class="sidebar">
     <a href="Student_profile.php">profile</a>
     <a href="new_request.php">New Request</a>
     <a href="#">Track Request</a>
-    <a href="#">Notifications</a>
+    <a href="notifications.php">Notifications</a>
   </div>
 
   <!-- المحتوى -->
@@ -132,15 +226,17 @@
         <th>Actions</th>
       </tr>
       <?php
-      $sql = "SELECT * FROM requests ORDER BY id ASC";
+      // 5️⃣ اجلب فقط الطلبات الخاصة بالمستخدم الحالي
+      $sql = "SELECT * FROM requests WHERE user_id = $user_id ORDER BY id ASC";
       $result = $conn->query($sql);
+    
 
       if ($result->num_rows > 0) {
           while($row = $result->fetch_assoc()) {
               echo "<tr>
                       <td>".$row['id']."</td>
                       <td>".$row['professor']."</td>
-                      <td>".$row['date']."</td>
+                      <td>".$row['created_at']."</td>
                       <td class='".($row['status']=="Pending"?"pending":"accepted")."'>".$row['status']."</td>
                       <td class='actions'>
                         <button class='delete'>🗑</button>

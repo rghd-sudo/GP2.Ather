@@ -1,5 +1,12 @@
 <?php
 // recommendation_form.php
+session_start(); // افتح السيشن أول شيء
+
+// تحقق من أن المستخدم مسجل دخول
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
 // الاتصال بقاعدة البيانات
 $host = "localhost";
@@ -15,8 +22,9 @@ if ($conn->connect_error) {
 // إنشاء جدول إذا لم يكن موجود
 $conn->query("CREATE TABLE IF NOT EXISTS requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    student_name VARCHAR(255),
-    student_id VARCHAR(50),
+    user_id INT, -- رقم المستخدم صاحب الطلب
+    user_name VARCHAR(255),
+    user_id VARCHAR(50),
     major VARCHAR(100),
     course VARCHAR(50),
     professor VARCHAR(255),
@@ -28,8 +36,12 @@ $conn->query("CREATE TABLE IF NOT EXISTS requests (
 
 $message = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $conn->real_escape_string($_POST['name'] ?? '');
-    $student_id = $conn->real_escape_string($_POST['id'] ?? '');
+    // خذ بيانات المستخدم من السيشن
+    $user_id = $_SESSION['user_id'];
+    $name = $_SESSION['user_name']; // أو أي قيمة خزنتها عند تسجيل الدخول
+
+    // باقي البيانات من الفورم
+    $user_name = $conn->real_escape_string($_POST['user_name'] ?? '');
     $major = $conn->real_escape_string($_POST['major'] ?? '');
     $course = $conn->real_escape_string($_POST['course'] ?? '');
     $professor = $conn->real_escape_string($_POST['professor'] ?? '');
@@ -37,8 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $type = $conn->real_escape_string($_POST['type'] ?? '');
     $file_name = NULL;
 
+    // رفع الملف
     if (!empty($_FILES['file']['name'])) {
-        $uploadDir = DIR . '/uploads/';
+        $uploadDir = __DIR__ . '/uploads/'; // DIR أصح من DIR
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
         $safeName = time() . "_" . basename($_FILES['file']['name']);
@@ -49,8 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    $sql = "INSERT INTO requests (student_name, student_id, major, course, professor, purpose, type, file_name)
-            VALUES ('$name', '$student_id', '$major', '$course', '$professor', '$purpose', '$type', " .
+    // إدخال البيانات بالطلب مع user_id
+    $sql = "INSERT INTO requests (user_id, user_name, major, course, professor, purpose, type, file_name)
+            VALUES ('$user_id', '$user_name', '$major', '$course', '$professor', '$purpose', '$type', " .
             ($file_name ? "'$file_name'" : "NULL") . ")";
     if ($conn->query($sql)) {
         $message = "تم حفظ الطلب بنجاح ✅";
@@ -76,39 +90,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       --shadow:0 6px 10px rgba(0,0,0,0.08);
       font-family: Arial, sans-serif;
     }
-    body{margin:0;background:var(--bg);color:var(--text);}
-    .container{max-width:900px;margin:30px auto;padding:30px;}
-    .header{display:flex;justify-content:space-between;align-items:center;background:var(--header);padding:20px;border-radius:20px;box-shadow:var(--shadow);}
-    .brand{display:flex;align-items:center;gap:14px}
-    .avatar{width:70px;height:70px;border-radius:50%;overflow:hidden}
+    body{margin:0;background:var(--bg);color:var(--text);display:flex}
+    .sidebar{width:80px;background:var(--header);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:15px 0;gap:18px}
+    .sidebar a{width:50px;height:50px;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;border-radius:12px;text-decoration:none;font-size:20px;box-shadow:var(--shadow)}
+    .container{flex:1;max-width:1150px;margin:30px;padding:20px}
+    .header{display:flex;justify-content:space-between;align-items:center;background:var(--header);padding: 20px;border-radius:28px;box-shadow:var(--shadow);}
+    .brand{display:flex;align-items:center;gap:18px}
+    .avatar{width:84px;height:84px;border-radius:50%;overflow:hidden}
     .avatar img{width:100%;height:100%;object-fit:cover}
-    .title{font-size:24px;font-weight:700}
+    .title{font-size:28px;font-weight:700}
     .student-info{font-family:monospace;color:#473d57}
-    .student-info input{display:block;width:240px;border:none;border-bottom:2px solid rgba(0,0,0,0.08);background:transparent;padding:6px 4px;margin-bottom:6px}
-    .form-wrap{display:flex;gap:30px;margin-top:30px}
+    .student-info input{display:block;width:380px;border:none;border-bottom:2px solid rgba(0,0,0,0.08);background:transparent;padding:8px 6px}
+    .form-wrap{display:flex;gap:40px;margin-top:40px}
     .col{flex:1}
-    .field{margin-bottom:20px}
-    .label{font-weight:700;margin-bottom:8px}
-    .select-style{background:var(--input);padding:10px;border-radius:6px;box-shadow:var(--shadow)}
-    select{width:100%;max-width:280px;padding:8px;border:none;background:transparent;font-size:15px}
-    input[type="text"], textarea, input[type="file"]{
-      width:100%;
-      max-width:280px;
-      padding:10px;
-      border-radius:6px;
-      border:none;
-      background:var(--input);
-      box-shadow:var(--shadow);
-      font-size:14px
-    }
-    textarea{min-height:90px}
-    .upload{display:flex;align-items:center;gap:10px;background:var(--input);padding:10px;border-radius:6px;box-shadow:var(--shadow)}
-    .radios{display:flex;gap:16px;align-items:center}
+    .field{margin-bottom:25px}
+    .label{font-weight:700;margin-bottom:10px}
+    .select-style{background:var(--input);padding:16px;border-radius:6px;box-shadow:var(--shadow)}
+    select{width:100%;padding:10px;border:none;background:transparent;font-size:16px}
+    input[type="text"], textarea{width:100%;padding:16px;border-radius:6px;border:none;background:var(--input);box-shadow:var(--shadow);font-size:15px}
+    textarea{min-height:120px}
+    .upload{display:flex;align-items:center;gap:12px;background:var(--input);padding:16px;border-radius:6px;box-shadow:var(--shadow)}
+    .radios{display:flex;gap:22px;align-items:center}
     .submit-wrap{display:flex;justify-content:flex-end}
-    .btn{background:var(--accent);color:white;padding:16px 36px;border-radius:40px;border:none;font-size:18px;font-weight:700;cursor:pointer}
+    .btn{background:var(--accent);color:white;padding:22px 48px;border-radius:50px;border:none;font-size:24px;font-weight:700;cursor:pointer}
+    .back_btn {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 5px;
+    font-size: 24px;
+    color: #03060a;
+    text-decoration: none;
+}
   </style>
 </head>
 <body>
+  <!-- Back Button -->
+<a href="req_system.php" class="back_btn">&#8592;</a>
   <div class="container">
     <div class="header">
       <div class="brand">
@@ -143,6 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </select>
           </div>
         </div>
+        
         <div class="field">
           <div class="label">Professor name*</div>
           <input type="text" name="professor" required>
@@ -161,13 +179,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <div class="label">Purpose of the Recommendation*</div>
           <textarea name="purpose" required></textarea>
         </div>
+        
         <div class="field">
-          <div class="label">Upload File (optional)</div>
+          <div class="label">Upload CV (optional)</div>
           <label class="upload">
             <span>⬆</span>
             <input type="file" name="file">
           </label>
         </div>
+
+        <div class="field">
+          <div class="label">Upload Grades (optional)</div>
+          <label class="upload">
+            <span>⬆</span>
+            <input type="file" name="grades">
+          </label>
+        </div>
+
         <div class="submit-wrap">
           <button type="submit" class="btn">Submit</button>
         </div>
