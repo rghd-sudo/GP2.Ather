@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // الاتصال بقاعدة البيانات
 $host = "localhost";
 $user = "root";
@@ -11,7 +14,6 @@ $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) {
     die("فشل الاتصال: " . $conn->connect_error);
 }
-
 // إنشاء جدول التنبيهات إذا ما كان موجود
 $conn->query("CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -28,7 +30,6 @@ $result = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC");
         <p class="time"><?= $row['created_at'] ?></p>
     </div>
 <?php endwhile; ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
