@@ -201,7 +201,7 @@ $user_id = $_SESSION['user_id'];
   <div class="sidebar">
     <a href="Student_profile.php">profile</a>
     <a href="new_request.php">New Request</a>
-    <a href="#">Track Request</a>
+    <a href="track_request.php">Track Request</a>
     <a href="notifications.php">Notifications</a>
   </div>
 

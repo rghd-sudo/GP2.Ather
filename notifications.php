@@ -22,7 +22,7 @@ $conn->query("CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )");
 
-/* جلب التنبيهات
+//جلب التنبيهات
 $result = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC");
 ?>
 <?php while($row = $result->fetch_assoc()): ?>
