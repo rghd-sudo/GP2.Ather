@@ -1,29 +1,140 @@
 <?php
 session_start();
 include 'index.php';
-$user_id = 1; 
-$graduates = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM graduates WHERE user_id=$user_id"));
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $dept = $_POST['department'];
-    $univ = $_POST['university'];
-    $uid = $_POST['user_id'];
-    $grad = $_POST['graduation_year'];
 
-    $cv = $graduates['cv_path'];
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+
+// جلب بيانات المستخدم والخريج
+$query = "
+    SELECT 
+        users.id AS uid,
+        users.name, 
+        users.email, 
+        users.department, 
+        users.university,
+        graduates.gpa, 
+        graduates.cv_path, 
+        graduates.graduation_year
+    FROM users
+    LEFT JOIN graduates ON users.id = graduates.user_id
+    WHERE users.id = $user_id
+";
+$result = mysqli_query($conn, $query);
+$graduate = mysqli_fetch_assoc($result);
+
+// حفظ التعديلات عند إرسال النموذج
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name  = $_POST['name'];
+    $email = $_POST['email'];
+    $dept  = $_POST['department'];
+    $univ  = $_POST['university'];
+    $gpa   = $_POST['gpa'];
+    $grad  = $_POST['graduation_year'];
+
+    $cv_path = $graduate['cv_path'] ?? null;
+
     if (!empty($_FILES['cv_path']['name'])) {
-        $cv = "uploads/" . basename($_FILES['cv_path']['name']);
-        move_uploaded_file($_FILES['cv_path']['tmp_name'], $cv);
+        $upload_dir = "uploads/";
+        $cv_path = $upload_dir . basename($_FILES['cv_path']['name']);
+        move_uploaded_file($_FILES['cv_path']['tmp_name'], $cv_path);
     }
 
-    $sql = "UPDATE graduates 
-            SET name='$name', email='$email', department='$dept', university='$univ',
-                user_id='$uid', graduation_year='$grad', cv_path='$cv' 
-            WHERE id=$user_id";
-    mysqli_query($conn, $sql);
-    header("Location: profile.php");
+    // تحديث users
+    mysqli_query($conn, "UPDATE users 
+                         SET name='$name', email='$email', department='$dept', university='$univ' 
+                         WHERE id=$user_id");
+
+    // التحقق إذا يوجد سجل في graduates
+    $grad_check = mysqli_query($conn, "SELECT * FROM graduates WHERE user_id=$user_id");
+    if (mysqli_num_rows($grad_check) > 0) {
+        // تحديث
+        mysqli_query($conn, "UPDATE graduates 
+                             SET gpa='$gpa', cv_path='$cv_path', graduation_year='$grad' 
+                             WHERE user_id=$user_id");
+    } else {
+        // إدراج جديد
+        mysqli_query($conn, "INSERT INTO graduates (user_id, gpa, cv_path, graduation_year) 
+                             VALUES ($user_id, '$gpa', '$cv_path', '$grad')");
+    }
+
+    header("Location: Student_Profile.php");
+    exit;
 }
+/*session_start();
+include 'index.php';
+
+// ✅ التحقق من الجلسة
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+
+// ✅ جلب بيانات المستخدم والخريج معًا
+$query = "
+    SELECT 
+        users.id AS uid,
+        users.name, 
+        users.email, 
+        users.department, 
+        users.university,
+        graduates.gpa, 
+        graduates.cv_path, 
+        graduates.graduation_year
+    FROM users
+    LEFT JOIN graduates ON users.id = graduates.user_id
+    WHERE users.id = $user_id
+";
+$result = mysqli_query($conn, $query);
+$graduate = mysqli_fetch_assoc($result);
+
+// ✅ حفظ التعديلات عند إرسال النموذج
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name  = $_POST['name'];
+    $email = $_POST['email'];
+    $dept  = $_POST['department'];
+    $univ  = $_POST['university'];
+    $gpa   = $_POST['gpa'];
+    $grad  = $_POST['graduation_year'];
+
+    // 📂 معالجة رفع السيرة الذاتية
+$cv_path = $graduate['cv_path'] ?? null;
+
+if (!empty($_FILES['cv_path']['name'])) {
+    $upload_dir = "uploads/";
+    $cv_path = $upload_dir . basename($_FILES['cv_path']['name']);
+    move_uploaded_file($_FILES['cv_path']['tmp_name'], $cv_path);
+}
+
+// ثم استخدام $cv_path في INSERT أو UPDATE كما ذكرت أعلاه 
+    // ✅ تحديث جدول users
+    $sql_user = "UPDATE users 
+                 SET name='$name', email='$email', department='$dept', university='$univ' 
+                 WHERE id=$user_id";
+    mysqli_query($conn, $sql_user);
+
+    // ✅ إذا الخريج موجود مسبقًا → حدّث، وإلا أضف سجل جديد
+    if ($graduate['gid']) {
+        $sql_grad = "UPDATE graduates 
+                     SET gpa='$gpa', cv_path='$cv', graduation_year='$grad' 
+                     WHERE user_id=$user_id";
+    } else {
+        $sql_grad = "INSERT INTO graduates (user_id, gpa, cv_path, graduation_year) 
+                     VALUES ($user_id, '$gpa', '$cv', '$grad')";
+    }
+    
+    mysqli_query($conn, $sql_grad);
+
+    // 🔁 إعادة تحميل الصفحة بعد الحفظ
+    header("Location: Student_Profile.php");
+    exit;
+}*/
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -106,7 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             padding: 15px 30px;
             cursor: pointer;
             transition: background-color 0.3s, color 0.3s;
-            color: #4b7495;
+            color: #2373b5ff;
             text-decoration: none;
             font-size: 1.1em;
             font-weight: 500;
@@ -114,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         .menu-item span {
             font-size: 1.5em; 
-            filter: grayscale(100%) brightness(0.7); 
+            
         }
         
         /* تنسيق العنصر النشط */
@@ -394,58 +505,58 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <div class="profile-avatar">
                             <span>👤</span>
                         </div>
-                        <div class="profile-details">
-                            <strong><?= htmlspecialchars($users['name']) ?></strong>
-                            <span><?= htmlspecialchars($users['email']) ?></span>
-                            <span><?= htmlspecialchars($users['department']) ?></span>
-                            <span><?= htmlspecialchars($users['university']) ?></span>
-                            <span><?= htmlspecialchars($graduates['user_id'] . ' _ ' . $graduates['graduation_year']) ?></span>
-                        </div>
+                         <div class="profile-details">
+                        <strong><?= htmlspecialchars($graduate['name'] ?? '') ?></strong>
+                        <span><?= htmlspecialchars($graduate['email'] ?? '') ?></span>
+                        <span><?= htmlspecialchars($graduate['department'] ?? '') ?></span>
+                        <span><?= htmlspecialchars($graduate['university'] ?? '') ?></span>
+                        <span><?= htmlspecialchars($graduate['gpa'] ?? '') ?></span>
+                        <span><?= htmlspecialchars($graduate['graduation_year'] ?? '') ?></span>
+                    </div>
                     </div>
                     <button class="btn-edit" id="editBtn">Edut</button>
                 </div>
                 <hr class="separator">
                 <div class="form-section">
                     <form method="POST" enctype="multipart/form-data">
-                        
                         <label>Full name</label>
-                        <input type="text" name="name" value=""> 
+                    <input type="text" name="name" value="<?= htmlspecialchars($graduate['name'] ?? '') ?>">
 
-                        <label>Email</label>
-                        <input type="email" name="email" value="">
+                    <label>Email</label>
+                    <input type="email" name="email" value="<?= htmlspecialchars($graduate['email'] ?? '') ?>">
 
-                        <label>Department</label>
-                        <input type="text" name="department" value="">
+                    <label>Department</label>
+                    <input type="text" name="department" value="<?= htmlspecialchars($graduate['department'] ?? '') ?>">
 
-                        <label>University</label>
-                        <input type="text" name="university" value="">
+                    <label>University</label>
+                    <input type="text" name="university" value="<?= htmlspecialchars($graduate['university'] ?? '') ?>">
 
-                        <label>Student ID</label>
-                        <input type="text" name="user_id" value="">
+                    <label>GPA</label>
+                    <input type="text" name="gpa" value="<?= htmlspecialchars($graduate['gpa'] ?? '') ?>">
 
                         <div class="form-row">
                             <div class="grad-year-group">
                                 <label>Graduation Year</label>
-                                <select name="graduation">
-                                    <option value="" disabled selected>-- Select year --</option>
-                                    <?php 
-                                    // حلقة توليد السنوات من 2024 إلى 2030
-                                    for ($y = 2024; $y <= 2030; $y++): 
-                                    ?>
-                                        <option value="<?= $y ?>" <?= ($graduates['graduation_year'] == $y) ? "selected" : "" ?>>
-                                            <?= $y ?>
-                                        </option>
-                                    <?php endfor; ?>
-                                </select>
+                                <select name="graduation_year">
+                        <option disabled selected>-- Select year --</option>
+                        <?php for ($y = 2020; $y <= 2030; $y++): ?>
+                            <option value="<?= $y ?>" <?= ($graduate['graduation_year'] == $y) ? 'selected' : '' ?>><?= $y ?></option>
+                        <?php endfor; ?>
+                    </select>
                             </div>
-                            
-                            <div class="upload-group">
-                                <label>Upload CV</label>
-                                <label for="cv-upload" class="upload-icon">
-                                    <span>⬆</span>
-                                </label>
-                                <input type="file" name="cv" id="cv-upload" hidden>
-                            </div>
+                            <!-- عرض CV الحالي -->
+                             <label>CV: </label>
+                             <?php if (!empty($graduate['cv_path'])): ?>
+                               <label><a href="<?= htmlspecialchars($graduate['cv_path']) ?>" target="_blank">CV</a></label>
+                                <?php else: ?>
+                                    <span>No CV uploaded</span>
+                                    <?php endif; ?>
+                                    <!-- رفع CV جديد -->
+                                     <label for="cv-upload" class="upload-icon">⬆️ Upload CV</label>
+                                     <input type="file" name="cv_path" id="cv-upload" hidden>
+                                
+                                <!--<input type="file" name="cv" id="cv-upload" hidden>
+                            </div>-->
                         </div>
 
                         <div class="actions">
