@@ -1,6 +1,8 @@
 <?php
 // 1️ افتح السيشن أول شيء
 session_start();
+// 4️ خزن معرف المستخدم من السيشن
+$user_id = $_SESSION['user_id'];
 // 2️ تحقق إذا المستخدم مسجل دخول
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -8,8 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 // 3️ استدعاء الاتصال بقاعدة البيانات
 include 'index.php';
-// 4️ خزن معرف المستخدم من السيشن
-$user_id = $_SESSION['user_id'];
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -227,7 +228,7 @@ $user_id = $_SESSION['user_id'];
       </tr>
       <?php
       // 5️⃣ اجلب فقط الطلبات الخاصة بالمستخدم الحالي
-      $sql = "SELECT * FROM requests WHERE user_id = $user_id ORDER BY id ASC";
+      $sql = "SELECT * FROM requests WHERE user_id = $user_id ORDER BY id DESC";
       $result = $conn->query($sql);
     
 
