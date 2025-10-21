@@ -129,9 +129,9 @@ color: white;
 <!-- القائمة الجانبية -->
 <div class="sidebar">
 <h3>Ather Graduate</h3>
-<a href="#">Profile</a>
-<a href="#">Requests</a>
-<a href="#">Recommendations</a>
+<a href="Professor-Profile.php">Profile</a>
+<a href="requests.php">Requests</a>
+<a href="recommendation-writing.php">Recommendations</a>
 <a href="#">Arwa Abdullah</a>
 </div>
 

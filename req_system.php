@@ -1,255 +1,317 @@
 <?php
-// 1️ افتح السيشن أول شيء
 session_start();
-// 4️ خزن معرف المستخدم من السيشن
-$user_id = $_SESSION['user_id'];
-// 2️ تحقق إذا المستخدم مسجل دخول
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
-// 3️ استدعاء الاتصال بقاعدة البيانات
 include 'index.php';
 
+// تحقق من تسجيل الدخول
+if (!isset($_SESSION['user_id'])) {
+  header("Location: login.php");
+  exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
+// ✅ اجلب اسم المستخدم من قاعدة البيانات
+$sql_user = "SELECT name FROM users WHERE id = '$user_id'";
+$result_user = $conn->query($sql_user);
+$user_name = "User";
+
+if ($result_user && $result_user->num_rows > 0) {
+  $row_user = $result_user->fetch_assoc();
+  $user_name = htmlspecialchars($row_user['name']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Recommendation System</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #fafafa;
-    }
-
-    /* ---------- القائمة الجانبية ---------- */
-    .sidebar {
-      width: 200px;
-      background: #cbe2ec;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-      padding-top: 20px;
-    }
-    .sidebar a {
-      display: block;
-      padding: 12px;
-      color: #000;
-      text-decoration: none;
-      font-size: 16px;
-      margin: 5px 0;
-    }
-    .sidebar a:hover {
-      background: #b2d3e6;
-      border-radius: 8px;
-    }
-
-    /* ---------- المحتوى ---------- */
-    .content {
-      margin-left: 220px;
-      padding: 20px;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .logo img {
-      width: 60px;
-    }
-
-    .btn {
-      background: #48b29c;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 20px;
-      color: #fff;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    .btn:hover {
-      background: #3b9a86;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-      background: #fff;
-    }
-    table, th, td {
-      border: 1px solid #ccc;
-    }
-    th, td {
-      padding: 12px;
-      text-align: center;
-    }
-    th {
-      background: #f5f5f5;
-    }
-    .pending {
-      color: orange;
-      font-weight: bold;
-    }
-    .accepted {
-      color: green;
-      font-weight: bold;
-    }
-    .actions button {
-      border: none;
-      padding: 6px 10px;
-      margin: 0 3px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .delete {
-      background: #f8a5a5;
-    }
-    .edit {
-      background: #a5d8f8;
-    }
- 
-.top_bar {
+<meta charset="UTF-8">
+<title>Recommendation System</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<style>
+/* 🔹 General Layout */
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #fdfaf6;
   display: flex;
-  align-items: center;
-  width: 100%;
-  flex-wrap: nowrap;
-  padding: 3px 5px;
-  box-sizing: border-box;
 }
 
-/* مجموعة الأزرار */
-.right_buttons {
+/* 🔹 Sidebar */
+.sidebar {
+  background-color: #c8e4eb;
+  width: 230px;
+  transition: width 0.3s;
+  height: 100vh;
+  padding-top: 20px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.sidebar.collapsed {
+  width: 70px;
+}
+.sidebar .logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.sidebar .logo img {
+  width: 80px;
+}
+.menu-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-left: auto;
+  padding: 12px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.3s;
+}
+.menu-item:hover {
+  background: #bcd5db;
+}
+.menu-item i {
+  font-size: 20px;
+  margin-right: 10px;
+  width: 25px;
+  text-align: center;
+}
+.menu-text {
+  font-size: 15px;
   white-space: nowrap;
 }
+.sidebar.collapsed .menu-text {
+  display: none;
+}
+.bottom-section {
+  margin-bottom: 20px;
+}
 
-/* أيقونات */
-.icon_btn, .logout_btn {
+/* 🔹 Toggle Button */
+.toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: -15px;
+  background: #003366;
+  color: #fff;
+  border-radius: 50%;
+  border: none;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+/* 🔹 Top Bar */
+.top-bar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 230px;
+  height: 60px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 20px;
+  transition: left 0.3s;
+  z-index: 10;
+}
+.sidebar.collapsed ~ .top-bar {
+  left: 70px;
+}
+.top-icons {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  cursor: pointer;
-  background: transparent;
+  gap: 20px;
+}
+.icon-btn {
+  background: none;
   border: none;
-  padding: 10;
-  text-decoration: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #333;
 }
-.icon_btn svg{
-   width: 22px;
-  height: 22px;
-  fill: #ffde3bff; 
-}
-.logout_btn svg {
-  width: 22px;
-  height: 22px;
-  fill: #03060a;
+.icon-btn:hover {
+  color: #003366;
 }
 
-/* للهواتف */
-@media (max-width: 480px) {
-  .back_btn { font-size: 20px; }
-  .icon_btn svg,
-  .logout_btn svg { width: 20px; height: 20px; }
+/* 🔹 Main Content */
+.main-content {
+  margin-left: 230px;
+  margin-top: 70px;
+  padding: 30px;
+  transition: margin-left 0.3s;
+  width: 100%;
 }
-  </style>
+.sidebar.collapsed + .top-bar + .main-content {
+  margin-left: 70px;
+}
+h2 {
+  font-size: 22px;
+  color: #003366;
+  margin-top: 0;
+}
+
+/* 🔹 Buttons */
+.btn {
+  background: #48b29c;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 20px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.3s;
+}
+.btn:hover {
+  background: #3b9a86;
+}
+
+/* 🔹 Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+table, th, td {
+  border: 1px solid #ddd;
+}
+th, td {
+  padding: 12px;
+  text-align: center;
+}
+th {
+  background: #f5f5f5;
+  color: #333;
+}
+.pending {
+  color: orange;
+  font-weight: bold;
+}
+.accepted {
+  color: green;
+  font-weight: bold;
+}
+.actions button {
+  border: none;
+  padding: 6px 10px;
+  margin: 0 3px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.delete {
+  background: #f8a5a5;
+}
+.edit {
+  background: #a5d8f8;
+}
+
+/* 🔹 Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 70px;
+  }
+  .sidebar {
+    width: 70px;
+  }
+  .menu-text {
+    display: none;
+  }
+}
+</style>
 </head>
 <body>
-<div class="top_bar">
-  <div class="right_buttons">
-    <!-- جرس التنبيهات -->
-    <a href="notifications.php" class="icon_btn" aria-label="الإشعارات">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-        <path d="M224 512c35.3 0 63.1-28.7 
-                 63.1-64H160.9c0 35.3 28.7 64 
-                 63.1 64zm215.4-149.7c-20.9-21.4-55.5-52.2-55.5-154.3
-                 0-77.7-54.5-139.8-127.1-155.2V32c0-17.7-14.3-32-32-32s-32
-                 14.3-32 32v20.9C118.5 68.2 64 130.3 64 208c0
-                 102.1-34.6 132.9-55.5 154.3-6 6.1-8.5 14.3-8.5
-                 22.5 0 16.8 13.2 32 32 32h383.9c18.8 0 32-15.2
-                 32-32 0-8.2-2.6-16.4-8.5-22.5z"/>
-      </svg>
-    </a>
 
-    <!-- زر تسجيل الخروج -->
-    <a href="logout.html" class="logout_btn" aria-label="تسجيل خروج">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-        <path d="M377.9 105.9c-12.5-12.5-32.8-12.5-45.3 
-                 0s-12.5 32.8 0 45.3L402.7 221H160c-17.7 
-                 0-32 14.3-32 32s14.3 32 32 32h242.7l-70.1 
-                 69.9c-12.5 12.5-12.5 32.8 0 45.3s32.8 
-                 12.5 45.3 0l128-128c12.5-12.5 
-                 12.5-32.8 0-45.3l-128-128zM96 
-                 64c-35.3 0-64 28.7-64 64v256c0 
-                 35.3 28.7 64 64 64h96c17.7 0 
-                 32-14.3 32-32s-14.3-32-32-32H96V128h96c17.7 
-                 0 32-14.3 32-32s-14.3-32-32-32H96z"/>
-      </svg>
-    </a>
+<!-- 🔸 Sidebar -->
+<div class="sidebar" id="sidebar">
+  <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
+  <div>
+    <div class="logo">
+      <img src="IMG_1786.PNG\" alt="Logo">
+    </div>
+    <a href="profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+    <a href="new_request.php" class="menu-item"><i class="fas fa-plus-square"></i><span class="menu-text">New Request</span></a>
+    <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i><span class="menu-text">Track Request</span></a>
+    <a href="notifications.php" class="menu-item"><i class="fas fa-bell"></i><span class="menu-text">Notifications</span></a>
+  </div>
+
+  <div class="bottom-section">
+    <a href="#" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
   </div>
 </div>
-  <!-- القائمة الجانبية -->
-  <div class="sidebar">
-    <a href="Student_profile.php">profile</a>
-    <a href="new_request.php">New Request</a>
-    <a href="track_request.php">Track Request</a>
-    <a href="notifications.php">Notifications</a>
+
+<!-- 🔸 Top Bar -->
+<div class="top-bar">
+  <div class="top-icons">
+    <button class="icon-btn"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout"><i class="fas fa-arrow-right-from-bracket"></i></button>
   </div>
+</div>
 
-  <!-- المحتوى -->
-  <div class="content">
-    <div class="logo">
-      <img src="logo.png" alt="Logo">
-      <h3>ATHER GRADUATE</h3>
-    </div>
+<!-- 🔸 Main Content -->
+<div class="main-content">
+  <h2>Welcome, <?php echo $user_name; ?></h2>
 
-    <button class="btn" onclick="window.location.href='new_request.php'">
-      + New Recommendation Request
-    </button>
+  <button class="btn" onclick="window.location.href='new_request.php'">
+    + New Recommendation Request
+  </button>
 
-    <h3>My Request</h3>
-    <table>
-      <tr>
-        <th>#</th>
-        <th>Professor</th>
-        <th>Date</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-      <?php
-      // 5️⃣ اجلب فقط الطلبات الخاصة بالمستخدم الحالي
-      $sql = "SELECT * FROM requests WHERE user_id = $user_id ORDER BY id DESC";
-      $result = $conn->query($sql);
-    
+  <h3>My Requests</h3>
 
-      if ($result->num_rows > 0) {
-          while($row = $result->fetch_assoc()) {
-              echo "<tr>
-                      <td>".$row['id']."</td>
-                      <td>".$row['professor']."</td>
-                      <td>".$row['created_at']."</td>
-                      <td class='".($row['status']=="Pending"?"pending":"accepted")."'>".$row['status']."</td>
-                      <td class='actions'>
-                        <button class='delete'>🗑</button>
-                        <button class='edit'>✏</button>
-                      </td>
-                    </tr>";
-          }
-      } else {
-          echo "<tr><td colspan='5'>لا توجد طلبات بعد</td></tr>";
+  <table>
+    <tr>
+      <th>#</th>
+      <th>Professor</th>
+      <th>Date</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+    <?php
+    $sql = "SELECT * FROM requests WHERE user_id = $user_id ORDER BY id DESC";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows > 0) {
+      while($row = $result->fetch_assoc()) {
+        echo "<tr>
+                <td>".$row['id']."</td>
+                <td>".$row['professor']."</td>
+                <td>".$row['created_at']."</td>
+                <td class='".($row['status']=="Pending"?"pending":"accepted")."'>".$row['status']."</td>
+                <td class='actions'>
+                  <button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
+                  <button class='delete' onclick=\"deleteRequest(".$row['id'].")\">🗑 Delete</button>
+                </td>
+              </tr>";
       }
-      ?>
-    </table>
-  </div>
+    } else {
+      echo "<tr><td colspan='5'>No requests found</td></tr>";
+    }
+    ?>
+  </table>
+</div>
+
+<script>
+// 🔸 Toggle sidebar
+const toggleBtn = document.getElementById("toggleBtn");
+const sidebar = document.getElementById("sidebar");
+toggleBtn.addEventListener("click", () => {
+  sidebar.classList.toggle("collapsed");
+});
+
+// 🔸 Buttons (temporary JS actions)
+function editRequest(id) {
+  alert("Edit request #" + id);
+  // window.location.href = "edit_request.php?id=" + id;
+}
+
+function deleteRequest(id) {
+  if (confirm("Are you sure you want to delete request #" + id + "?")) {
+    // إرسال طلب الحذف إلى PHP لاحقًا
+    alert("Request deleted!");
+  }
+}
+</script>
 </body>
 </html>

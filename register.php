@@ -37,10 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $National_ID = trim($_POST['National_ID'] ?? '');
     $university  = trim($_POST['university'] ?? '');
     $department  = trim($_POST['department'] ?? '');
-    $graduation_year = $_POST['graduation_year'] ?? null;
-    $gpa = $_POST['gpa'] ?? null;
-    $cv_path = null; // ضع مسار CV إذا كان هناك رفع ملفات
-
+   
     if ($name && $email && $paasword && $department && $National_ID && $university) {
         // تشفير كلمة المرور
         $hashed = password_hash($paasword, PASSWORD_BCRYPT);

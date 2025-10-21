@@ -3,7 +3,7 @@
 $host = "localhost";
 $user = "root";
 $pass = "";
-$dbname = "graduate_system";
+$dbname = "agdb";
 
 $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error); }
@@ -177,10 +177,10 @@ gap: 10px;
 
 <div class="sidebar">
 <img src="logo.png" alt="Logo">
-<a href="#">Profile</a>
-<a href="#">Requests</a>
-<a href="#">Recommendations</a>
-<a href="#"> <?php echo $professorName; ?></a>
+<a href="Professor-Profile.php">Profile</a>
+<a href="requests.php">Requests</a>
+<a href="recommendation-writing.php">Recommendations</a>
+<a href="#"> <?php// echo $professorName; ?></a>
 </div>
 
 
@@ -190,9 +190,9 @@ gap: 10px;
 <div class="profile-header">
 <img src="user-icon.png" alt="User">
 <div>
-<h2><?php echo $professorName; ?></h2>
-<p><?php echo $professorEmail; ?></p>
-<p><?php echo $professorDept . " - " . $professorUni; ?></p>
+<h2><?php //echo $professorName; ?></h2>
+<p><?php //echo $professorEmail; ?></p>
+<p><?php //echo $professorDept . " - " . $professorUni; ?></p>
 </div>
 <button class="edit-btn">Edit</button>
 </div>
