@@ -140,31 +140,32 @@ if (!empty($_FILES['cv_path']['name'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <title>Student Profile</title>
     <style>
         /* التنسيقات العامة والهيكل الأساسي */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #F0F4F8; /* لون خلفية فاتح جداً */
+            background-color: #fdfaf6; /* لون خلفية فاتح جداً */
             margin: 0;
             display: flex;
             min-height: 100vh;
-            justify-content: center; /* توسيط المحتوى الأفقي */
+          /*    justify-content: center;توسيط المحتوى الأفقي */
             align-items: flex-start; /* بدء المحتوى من الأعلى */
         }
 
-        /* حاوية الهيكل بالكامل لتحديد العرض والتوسيط */
+        /* حاوية الهيكل بالكامل لتحديد العرض والتوسيط 
         .page-container {
             display: flex; 
             width: 100%; 
             max-width: 1200px; 
             margin: 30px auto; 
             min-height: 80vh;
-        }
+        }*/
 
         /* ------------------------------------------- */
         /* تنسيقات الشريط الجانبي (Sidebar) */
-        /* ------------------------------------------- */
+        /* ------------------------------------------- 
 
         .sidebar {
             width: 300px;
@@ -179,11 +180,11 @@ if (!empty($_FILES['cv_path']['name'])) {
         }
 
         .logo-box {
-            background-color: #e6f0f7; /* لون مطابق للخلفية في الصورة */
+            background-color: #e6f0f7; /* لون مطابق للخلفية في الصورة 
             width: 80%;
             padding: 20px;
             padding-right: 40px;
-            border-radius: 0 0 50px 0; /* زاوية دائرية كبيرة في الأسفل يمين */
+            border-radius: 0 0 50px 0; /* زاوية دائرية كبيرة في الأسفل يمين 
             position: absolute;
             top: 0;
             left: 0;
@@ -202,7 +203,7 @@ if (!empty($_FILES['cv_path']['name'])) {
             display: block;
         }
 
-        /* حاوية الروابط */
+        /* حاوية الروابط 
         .menu-links {
             position: absolute;
             top: 150px; 
@@ -227,7 +228,7 @@ if (!empty($_FILES['cv_path']['name'])) {
             font-size: 1.5em; 
             
         }
-        
+        */
         /* تنسيق العنصر النشط */
         .menu-item.active {
             color: #1a4d6e; 
@@ -460,9 +461,150 @@ if (!empty($_FILES['cv_path']['name'])) {
         .actions button:hover {
             opacity: 0.9;
         }
+        /* 🔹 Sidebar */
+.sidebar {
+  background-color: #c8e4eb;
+  width: 230px;
+  transition: width 0.3s;
+  height: 100vh;
+  padding-top: 20px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.sidebar.collapsed {
+  width: 70px;
+}
+.sidebar .logo {
+  text-align: center;
+  margin-bottom: 30px;
+  
+}
+.sidebar .logo img {
+  width: 80px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.3s;
+}
+.menu-item:hover {
+  background: #bcd5db;
+}
+.menu-item i {
+  font-size: 20px;
+  margin-right: 10px;
+  width: 25px;
+  text-align: center;
+}
+.menu-text {
+  font-size: 15px;
+  white-space: nowrap;
+}
+.sidebar.collapsed .menu-text {
+  display: none;
+}
+.bottom-section {
+  margin-bottom: 20px;
+}
+
+/* 🔹 Toggle Button */
+.toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: -15px;
+  background: #003366;
+  color: #fff;
+  border-radius: 50%;
+  border: none;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+/* 🔹 Top Bar */
+.top-bar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 230px;
+  height: 60px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 20px;
+  transition: left 0.3s;
+  z-index: 10;
+}
+.sidebar.collapsed ~ .top-bar {
+  left: 70px;
+}
+.top-icons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #333;
+}
+.icon-btn:hover {
+  color: #003366;
+}
+
+/* 🔹 Main Content */
+.main-content {
+  margin-left: 230px;
+  margin-top: 70px;
+  padding: 30px;
+  transition: margin-left 0.3s;
+  width: 100%;
+}
+.sidebar.collapsed + .top-bar + .main-content {
+  margin-left: 70px;
+}
+h2 {
+  font-size: 22px;
+  color: #003366;
+  margin-top: 0;
+}
+
+/* 🔹 Buttons */
+.btn {
+  background: #48b29c;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 20px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.3s;
+}
+.btn:hover {
+  background: #3b9a86;
+}
+/* 🔹 Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 70px;
+  }
+  .sidebar {
+    width: 70px;
+  }
+  .menu-text {
+    display: none;
+  }}
     </style>
 </head>
-<body>
+<body><!--
     <div class="page-container">
         
         <div class="sidebar">
@@ -496,7 +638,32 @@ if (!empty($_FILES['cv_path']['name'])) {
                 </a>
             </div>
         </div>
+-->
+<!-- 🔸 Sidebar -->
+<div class="sidebar" id="sidebar">
+  <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
+  <div>
+    <div class="logo">
+      <img src="logo1.jpg" alt="Logo">
+    </div>
+    <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+    <a href="new_request.php" class="menu-item"><i class="fas fa-plus-square"></i><span class="menu-text">New Request</span></a>
+    <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i><span class="menu-text">Track Request</span></a>
+  
+  </div>
 
+  <div class="bottom-section">
+    <a href="setting_s.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
+  </div>
+</div>
+
+<!-- 🔸 Top Bar -->
+<div class="top-bar">
+  <div class="top-icons">
+    <button class="icon-btn"><a href="notifications.php"><i class="fas fa-bell"></i></a></button>
+    <button class="icon-btn" title="Logout"><a href="logout.html"><i class="fas fa-arrow-right-from-bracket"></i></a></button>
+  </div>
+</div>
         <div class="profile-container">
             <div class="profile-card">
                 
@@ -568,5 +735,20 @@ if (!empty($_FILES['cv_path']['name'])) {
             </div>
         </div>
     </div>
+    <script>
+// 🔸 Toggle sidebar
+const toggleBtn = document.getElementById("toggleBtn");
+const sidebar = document.getElementById("sidebar");
+toggleBtn.addEventListener("click", () => {
+  sidebar.classList.toggle("collapsed");
+});
+
+// 🔸 Buttons (temporary JS actions)
+function editRequest(id) {
+  alert("Edit request #" + id);
+  // window.location.href = "edit_request.php?id=" + id;
+  }
+
+</script>
 </body>
 </html>

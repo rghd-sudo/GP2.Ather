@@ -23,8 +23,11 @@ if ($result_user && $result_user->num_rows > 0) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" content="width=device-width, initial-scale=1.0">
 <title>Recommendation System</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 <style>
 /* 🔹 General Layout */
@@ -229,24 +232,24 @@ th {
   <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
   <div>
     <div class="logo">
-      <img src="IMG_1786.PNG\" alt="Logo">
+      <img src="logo1.jpg" alt="Logo">
     </div>
-    <a href="profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+    <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     <a href="new_request.php" class="menu-item"><i class="fas fa-plus-square"></i><span class="menu-text">New Request</span></a>
     <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i><span class="menu-text">Track Request</span></a>
-    <a href="notifications.php" class="menu-item"><i class="fas fa-bell"></i><span class="menu-text">Notifications</span></a>
+  
   </div>
 
   <div class="bottom-section">
-    <a href="#" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
+    <a href="setting_s.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
   </div>
 </div>
 
 <!-- 🔸 Top Bar -->
 <div class="top-bar">
   <div class="top-icons">
-    <button class="icon-btn"><i class="fas fa-bell"></i></button>
-    <button class="icon-btn" title="Logout"><i class="fas fa-arrow-right-from-bracket"></i></button>
+    <button class="icon-btn"><a href="notifications.php"><i class="fas fa-bell"></i></a></button>
+    <button class="icon-btn" title="Logout"><a href="logout.html"><i class="fas fa-arrow-right-from-bracket"></i></a></button>
   </div>
 </div>
 
@@ -313,5 +316,6 @@ function deleteRequest(id) {
   }
 }
 </script>
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </body>
 </html>
