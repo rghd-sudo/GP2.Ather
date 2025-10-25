@@ -1,14 +1,21 @@
 <?php
 session_start();
 include 'index.php';
+/*
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
+require 'phpmailer/Exception.php';
+require 'phpmailer/PHPMailer.php';
+require 'phpmailer/SMTP.php';
+*/
 // عرض الرسالة إذا موجودة
 if (isset($_SESSION['message'])) {
     echo "<script>alert('" . $_SESSION['message'] . "');</script>";
     unset($_SESSION['message']);
 }
 
-// فقط للتأكد من أن الجداول موجودة (يمكن حذفه بعد التأكد)
+// إنشاء الجداول (اختياري في أول مرة فقط)
 $conn->query("CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -23,9 +30,9 @@ $conn->query("CREATE TABLE IF NOT EXISTS users (
 $conn->query("CREATE TABLE IF NOT EXISTS graduates (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    graduation_year YEAR,
-    gpa DECIMAL(3,2),
-    cv_path VARCHAR(500),
+    graduation_year YEAR NULL,
+    gpa DECIMAL(3,2) NULL,
+    cv_path VARCHAR(500) NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 )");
 
@@ -37,35 +44,91 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $National_ID = trim($_POST['National_ID'] ?? '');
     $university  = trim($_POST['university'] ?? '');
     $department  = trim($_POST['department'] ?? '');
-   
+
     if ($name && $email && $paasword && $department && $National_ID && $university) {
-        // تشفير كلمة المرور
-        $hashed = password_hash($paasword, PASSWORD_BCRYPT);
         if ($paasword !== $confirm_password) {
             $_SESSION['message'] = "⚠️ Passwords do not match";
-        } 
-      // استخدام prepared statement للتخزين في users
-$stmt = $conn->prepare("INSERT INTO users (name, email, paasword, department, National_ID, university) VALUES (?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("ssssss", $name, $email, $hashed, $department, $National_ID, $university);
-if ($stmt->execute()) {
-    $user_id = $stmt->insert_id; // <-- هنا نأخذ معرف المستخدم بعد الإدخال
-
-    // الآن نضيف بيانات الخريج في graduates
-    $stmt2 = $conn->prepare("INSERT INTO graduates (user_id, graduation_year, gpa, cv_path) VALUES (?, ?, ?, ?)");
-    $stmt2->bind_param("iids", $user_id, $graduation_year, $gpa, $cv_path);
-    $stmt2->execute();
-    $stmt2->close();
-
-       $_SESSION['message'] = "Successful registration✅";
-            header("Location: req_system.php");
-        } else {
-            $_SESSION['message'] = "Error: " . $stmt->error;
+            header("Location: register.php");
+            exit;
         }
-    $stmt->close();
- }
- }
 
-/*عرض الرسالة إذا موجودة
+        // تشفير كلمة المرور
+        $hashed = password_hash($paasword, PASSWORD_BCRYPT);
+
+        // التحقق من أن البريد غير مسجل مسبقًا
+        $check = $conn->prepare("SELECT id FROM users WHERE email = ?");
+        $check->bind_param("s", $email);
+        $check->execute();
+        $check->store_result();
+        if ($check->num_rows > 0) {
+            $_SESSION['message'] = "⚠️ Email already exists";
+            header("Location: register.php");
+            exit;
+        }
+        $check->close();
+
+        // تخزين بيانات المستخدم في جدول users
+        $stmt = $conn->prepare("INSERT INTO users (name, email, paasword, department, National_ID, university) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssss", $name, $email, $hashed, $department, $National_ID, $university);
+
+        if ($stmt->execute()) {
+            $user_id = $stmt->insert_id;
+
+            // إدخال الخريج تلقائيًا في جدول graduates
+            $graduation_year = NULL;
+            $gpa = NULL;
+            $cv_path = NULL;
+
+            $stmt2 = $conn->prepare("INSERT INTO graduates (user_id, graduation_year, gpa, cv_path) VALUES (?, ?, ?, ?)");
+            $stmt2->bind_param("iids", $user_id, $graduation_year, $gpa, $cv_path);
+            $stmt2->execute();
+            $stmt2->close();
+
+            $_SESSION['message'] = "✅ Registration successful!";
+            header("Location: req_system.php");
+            exit;
+        } else {
+            $_SESSION['message'] = "❌ Error: " . $stmt->error;
+        }
+        $stmt->close();
+    } else {
+        $_SESSION['message'] = "⚠️ Please fill all fields";
+    }
+}
+/*
+        // إرسال رمز التحقق عبر PHPMailer
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'yourgmail@gmail.com'; // بريدك
+            $mail->Password = 'app-password';       // كلمة مرور التطبيقات من Google
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
+
+            $mail->setFrom('yourgmail@gmail.com', 'نظام التوصيات');
+            $mail->addAddress($email, $name);
+
+            $mail->isHTML(true);
+            $mail->Subject = 'رمز التحقق من البريد الإلكتروني';
+            $mail->Body = "مرحباً <b>$name</b>،<br>رمز التحقق الخاص بك هو: <b>$verify_code</b>";
+
+            $mail->send();
+     // تحويل المستخدم لصفحة إدخال 
+     header("Location: verify.php?email=" . urlencode($email));
+            exit;
+        } catch (Exception $e) {
+            $_SESSION['message'] = "❌ حدث خطأ أثناء إرسال البريد: {$mail->ErrorInfo}";
+            header("Location: register.php");
+            exit;
+        }
+    } else {
+        $_SESSION['message'] = "❌ Error: " . $stmt->error;
+    }
+    $stmt->close();
+}
+عرض الرسالة إذا موجودة
 if (isset($_SESSION['message'])) {
     echo "<script>alert('" . $_SESSION['message'] . "');</script>";
     unset($_SESSION['message']); // مسح الرسالة بعد عرضها مرة واحدة
