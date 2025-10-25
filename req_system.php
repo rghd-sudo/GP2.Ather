@@ -229,7 +229,7 @@ th {
   <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
   <div>
     <div class="logo">
-      <img src="l" alt="Logo">
+      <img src="LOGOblue.PNG" alt="Logo">
     </div>
     <a hefr="req_system.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
     <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
