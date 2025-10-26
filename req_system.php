@@ -230,6 +230,7 @@ th {
   <div>
     <div class="logo">
       <img src="logobl.png" alt="Logo">
+
     </div>
     <a href="req_system.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
     <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
