@@ -1,235 +1,302 @@
 <?php
-
+// الاتصال بقاعدة البيانات
 $host = "localhost";
 $user = "root";
 $pass = "";
-$dbname = "agdb";
+$dbname = "graduate_system";
 
 $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error); }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-$fullname = $_POST['fullname'];
-$email = $_POST['email'];
-$dept = $_POST['dept'];
-$university = $_POST['university'];
+session_start();
+$professor_id = 1; // مؤقتاً، لاحقاً خليه من session
 
-$cvName = null;
-if (isset($_FILES['cv']) && $_FILES['cv']['error'] == 0) {
-$cvName = time() . "_" . $_FILES['cv']['name'];
-move_uploaded_file($_FILES['cv']['tmp_name'], "uploads/" . $cvName);
-}
+// جلب بيانات البروفيسور
+$sql = "SELECT * FROM professors WHERE professor_id = $professor_id";
+$result = $conn->query($sql);
+$professor_data = $result->fetch_assoc();
 
-$stmt = $conn->prepare("INSERT INTO doctors (fullname, email, dept, university, cv) VALUES (?, ?, ?, ?, ?)");
-$stmt->bind_param("sssss", $fullname, $email, $dept, $university, $cvName);
-if ($stmt->execute()) {
-$message = "تم حفظ البيانات بنجاح!";
-} else {
-$message = "حدث خطأ أثناء حفظ البيانات.";
-}
-$stmt->close();
-}
+// تعديل البيانات عند الحفظ
+if (isset($_POST['save'])) {
+  $full_name = $_POST['full_name'];
+  $email = $_POST['email'];
+  $department = $_POST['department'];
+  $university = $_POST['university'];
 
-$conn->close();
+  // رفع CV جديد إذا تم اختياره
+  $cv_path = $professor_data['cv_path'];
+  if (!empty($_FILES['cv']['name'])) {
+      $cv_name = basename($_FILES['cv']['name']);
+      $target_path = "uploads/" . $cv_name;
+      move_uploaded_file($_FILES['cv']['tmp_name'], $target_path);
+      $cv_path = $target_path;
+  }
+
+  $update_sql = "UPDATE professors 
+                 SET full_name='$full_name', email='$email', department='$department', university='$university', cv_path='$cv_path'
+                 WHERE professor_id=$professor_id";
+  if ($conn->query($update_sql)) {
+      echo "<script>alert('Profile updated successfully!');</script>";
+  } else {
+      echo "<script>alert('Error updating profile');</script>";
+  }
+}
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Profile Page</title>
-
+<title>Professor Profile</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 <style>
-body {
-margin: 0;
-font-family: Arial, sans-serif;
-background-color: #f7f7f7;
+ body {
+    margin: 0;
+    font-family: "Poppins", sans-serif;
+    background: #f9f9f9;
+    display: flex;
+  }
+h2 {
+  margin-top: 80px;
+  font-size: 22px;
+  color: #003366;
+  margin-top: -19px;
 }
+  /* Sidebar */
+  .sidebar {
+    background-color: #cde3e8;
+    width: 230px;
+    transition: width 0.3s;
+    height: 100vh;
+    padding-top: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
 
+  .sidebar.collapsed {
+    width: 70px;
+  }
 
-.sidebar {
-position: fixed;
-top: 0;
-left: 0;
-width: 200px;
-height: 100%;
-background-color: #cfe0e9;
-padding-top: 20px;
-}
+  .sidebar .logo {
+    text-align: center;
+    margin-bottom: 30px;
+  }
 
-.sidebar img {
-display: block;
-margin: 0 auto 20px auto;
-width: 120px;
-}
+  .sidebar .logo img {
+    width: 80px;
+  }
 
-.sidebar a {
-display: block;
-padding: 15px;
-color: #000;
-text-decoration: none;
-font-size: 16px;
-}
+  .menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.3s;
+  }
 
-.sidebar a:hover {
-background-color: #b5cbd7;
-border-radius: 5px;
-}
+  .menu-item:hover {
+    background: #bcd5db;
+  }
 
+  .menu-item i {
+    font-size: 20px;
+    margin-right: 10px;
+    width: 25px;
+    text-align: center;
+  }
 
-.content {
-margin-left: 220px;
-padding: 20px;
-}
+  .menu-text {
+    font-size: 15px;
+    white-space: nowrap;
+  }
 
-.profile-card {
-background: #fff;
-padding: 20px;
-border-radius: 8px;
-box-shadow: 0 0 10px rgba(0,0,0,0.1);
-max-width: 600px;
-}
+  .sidebar.collapsed .menu-text {
+    display: none;
+  }
 
-.profile-header {
-display: flex;
-align-items: center;
-margin-bottom: 20px;
-}
+  /* Bottom Section */
+  .bottom-section {
+    margin-bottom: 20px;
+  }
 
-.profile-header img {
-width: 70px;
-height: 70px;
-border-radius: 50%;
-background-color: #3cb371;
-margin-right: 15px;
-}
+  /* Collapse Button */
+  .toggle-btn {
+    position: absolute;
+    top: 20px;
+    right: -15px;
+    background: #003366;
+    color: #fff;
+    border-radius: 50%;
+    border: none;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+  }
 
-.profile-header h2 {
-margin: 0;
-}
+  /* Top Icons */
+  .top-icons {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
 
-.profile-header p {
-margin: 3px 0;
-color: #555;
-}
+  .icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #333;
+  }
 
-.edit-btn {
-margin-left: auto;
-background: #3cb371;
-color: #fff;
-border: none;
-padding: 8px 15px;
-border-radius: 20px;
-cursor: pointer;
-}
+  .icon-btn:hover {
+    color: #003366;
+  }
 
-.form-group {
-margin-bottom: 15px;
-}
+  /* Main Content */
+  .main-content {
+    margin-left: 230px;
+    padding: 30px;
+    transition: margin-left 0.3s;
+    width: 100%;
+    position: relative;
+  }
 
-.form-group label {
-display: block;
-margin-bottom: 5px;
-color: #333;
-}
+  .sidebar.collapsed + .main-content {
+    margin-left: 70px;
+  }
 
-.form-group input {
-width: 100%;
-padding: 8px;
-border: 1px solid #ccc;
-border-radius: 5px;
-}
+  /* Profile Box */
+  .profile-box {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    width: 600px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
 
-.buttons {
-margin-top: 20px;
-display: flex;
-gap: 10px;
-}
+  .profile-box h2 {
+    color: #003366;
+    margin-bottom: 5px;
+  }
 
-.save-btn {
-background: #5b8df7;
-color: white;
-border: none;
-padding: 10px 20px;
-border-radius: 5px;
-cursor: pointer;
-}
+  .profile-box p {
+    color: gray;
+    margin-top: 0;
+  }
 
-.reset-btn {
-background: #eee;
-border: none;
-padding: 10px 20px;
-border-radius: 5px;
-cursor: pointer;
-}
+  form label {
+    display: block;
+    margin-top: 12px;
+    font-weight: 600;
+  }
 
-.upload-cv {
-display: flex;
-align-items: center;
-gap: 10px;
-}
+  form input[type="text"],
+  form input[type="email"],
+  form input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+
+  .buttons {
+    margin-top: 20px;
+  }
+
+  .buttons button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .save-btn {
+    background: #4a7dfc;
+    color: #fff;
+  }
+
+  .reset-btn {
+    background: #eee;
+    margin-left: 10px;
+  }
 </style>
 </head>
 <body>
 
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
 
+    <div>
+      <div class="logo">
+        <img src="IMG_1786.PNG" alt="Logo">
+      </div>
 
-<div class="sidebar">
-<img src="logo.png" alt="Logo">
-<a href="Professor-Profile.php">Profile</a>
-<a href="requests.php">Requests</a>
-<a href="recommendation-writing.php">Recommendations</a>
-<a href="#"> <?php// echo $professorName; ?></a>
-</div>
+      <a href="#" class="menu-item"><i class="fas fa-inbox"></i><span class="menu-text">New Requests</span></a>
+      <a href="#" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
+      <a href="#" class="menu-item"><i class="fas fa-pen-nib"></i><span class="menu-text">Write Recommendation</span></a>
+      <a href="#" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+    </div>
 
+    <div class="bottom-section">
+      <a href="#" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
+    </div>
+  </div>
 
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="top-icons">
+      <button class="icon-btn"><i class="fas fa-bell"></i></button>
+      <button class="icon-btn" title="Logout"><i class="fas fa-arrow-right-from-bracket"></i></button>
+    </div>
 
-<div class="content">
-<div class="profile-card">
-<div class="profile-header">
-<img src="user-icon.png" alt="User">
-<div>
-<h2><?php //echo $professorName; ?></h2>
-<p><?php //echo $professorEmail; ?></p>
-<p><?php //echo $professorDept . " - " . $professorUni; ?></p>
-</div>
-<button class="edit-btn">Edit</button>
-</div>
+    <div class="profile-box">
+      <h2><?php echo $professor_data['full_name']; ?></h2>
+      <p><?php echo $professor_data['email']; ?></p>
+      <p><?php echo $professor_data['department'] . " - " . $professor_data['university']; ?></p>
 
-<form>
-<div class="form-group">
-<label for="fullname">Full name</label>
-<input type="text" id="fullname" name="fullname" placeholder="Full name">
-</div>
+      <form method="POST" enctype="multipart/form-data">
+        <label>Full Name</label>
+        <input type="text" name="full_name" value="<?php echo $professor_data['full_name']; ?>" required>
 
-<div class="form-group">
-<label for="email">Email</label>
-<input type="email" id="email" name="email" placeholder="Email">
-</div>
+        <label>Email</label>
+        <input type="email" name="email" value="<?php echo $professor_data['email']; ?>" required>
 
-<div class="form-group">
-<label for="dept">Department</label>
-<input type="text" id="dept" name="dept" placeholder="Department">
-</div>
+        <label>Department</label>
+        <input type="text" name="department" value="<?php echo $professor_data['department']; ?>" required>
 
-<div class="form-group">
-<label for="university">University</label>
-<input type="text" id="university" name="university" placeholder="University">
-</div>
+        <label>University</label>
+        <input type="text" name="university" value="<?php echo $professor_data['university']; ?>" required>
 
-<div class="form-group upload-cv">
-<label for="cv">Upload CV:</label>
-<input type="file" id="cv" name="cv">
-</div>
+        <label>Upload CV</label>
+        <input type="file" name="cv" accept=".pdf,.doc,.docx">
 
-<div class="buttons">
-<button type="submit" class="save-btn">Save changes</button>
-<button type="reset" class="reset-btn">Reset</button>
-</div>
-</form>
-</div>
-</div>
+        <?php if(!empty($professor_data['cv_path'])): ?>
+          <p>Current CV: <a href="<?php echo $professor_data['cv_path']; ?>" target="_blank">View</a></p>
+        <?php endif; ?>
 
+        <div class="buttons">
+          <button type="submit" name="save" class="save-btn">Save Changes</button>
+          <button type="reset" class="reset-btn">Reset</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+  const toggleBtn = document.getElementById("toggleBtn");
+  const sidebar = document.getElementById("sidebar");
+
+  toggleBtn.addEventListener("click", () => {
+    sidebar.classList.toggle("collapsed");
+  });
+</script>
 </body>
 </html>
