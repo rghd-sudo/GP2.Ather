@@ -1,4 +1,4 @@
-fetch("professor_all_request.php")
+fetch(".php")
 .then(response => response.json())
 .then(stats => {
   document.getElementById("completedCount").textContent = stats.completed;

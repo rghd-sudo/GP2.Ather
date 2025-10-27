@@ -215,7 +215,8 @@ body {
 <!----شريط البجث---->
 <h2>Requests</h2>
 <div class="search-bar">
-  <input type="text" placeholder="Search">
+<input type="text" id="searchInput" placeholder="Search">
+
 </div>
 
 
@@ -257,7 +258,8 @@ body {
       <td>   <!-- يفتح الي المسودة وغيرها عند recommendation-writing  بام   -->
       <button class="btn edit" onclick="window.location.href='recommendation-writing.php?id=<?php echo $row['id']; ?>'">Edit</button>
 
-        <button class="btn delete" onclick="if(confirm('Are you sure?')) window.location.href='delete_request.php?id=<?php echo $row['id']; ?>'">Delete</button>
+      <button class="btn delete" onclick="deleteRequest(<?php echo $row['id']; ?>, this)">Delete</button>
+
       </td>
     </tr>
   <?php endforeach; ?>
@@ -280,5 +282,41 @@ searchInput.addEventListener("input", function() {
   });
 });
 </script>
+
+
+
+
+
+<!--زر الحذف-->
+<script>
+function deleteRequest(id, btn) {
+  if (!confirm("Are you sure you want to delete this request?")) return;
+
+  fetch("delete_request.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "id=" + id
+  })
+  .then(response => response.text())
+  .then(result => {
+    if (result.trim() === "success") {
+      const row = btn.closest("tr");
+      row.style.transition = "opacity 0.5s";
+      row.style.opacity = "0";
+      setTimeout(() => row.remove(), 500);
+      alert("✅ تم حذف الطلب بنجاح");
+    } else {
+      alert("❌ حدث خطأ أثناء الحذف");
+    }
+  })
+  .catch(error => {
+    alert("⚠️ فشل الاتصال بالسيرفر");
+    console.error(error);
+  });
+}
+</script>
+
+
+
 </body>
 </html>
