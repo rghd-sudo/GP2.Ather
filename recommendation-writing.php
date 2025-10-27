@@ -3,7 +3,7 @@
 $host = "localhost";
 $user = "root";
 $pass = "";
-$dbname = "agdh";
+$dbname = "agdb";
 
 $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) {
@@ -14,10 +14,10 @@ if ($conn->connect_error) {
 $graduate_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 // جلب بيانات الخريج واليوزر
-$sql = "SELECT g.*, u.name AS student_name, u.department 
-        FROM graduates g 
-        JOIN users u ON g.user_id = u.id 
-        WHERE g.id = ?";
+$sql = "SELECT g.*, u.name, u.email, u.department
+        FROM graduates g
+        JOIN users u ON g.user_id = u.id
+        WHERE g.user_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $graduate_id);
 $stmt->execute();
@@ -48,13 +48,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 body {
     margin: 0;
     font-family: "Poppins", sans-serif;
-    background: #f9f9f9;
-    display: flex;
+     background: #fdfaf6;
+  display: flex;
 }
 
-/* Sidebar */
+/* 🔹 Sidebar */
 .sidebar {
-    background-color: #cde3e8;
+  background-color: #c8e4eb;
     width: 230px;
     height: 100vh;
     position: fixed;
@@ -144,14 +144,14 @@ button {
 <div class="sidebar">
     <div>
         <div class="logo" style="text-align:center; margin-bottom:30px;">
-            <img src="IMG_1786.PNG" width="80">
+            <img src="LOGObl.PNG" width="80">
         </div>
         <a href="requests.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-        <a href="#" class="menu-item"><i class="fas fa-pen-nib"></i><span>Write Recommendation</span></a>
+        <a href="recommendation-Writing.php" class="menu-item"><i class="fas fa-pen-nib"></i><span>Write Recommendation</span></a>
         <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
     </div>
     <div class="bottom-section">
-        <a href="#" class="menu-item"><i class="fas fa-gear"></i><span>Notification Settings</span></a>
+        <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span>Notification Settings</span></a>
     </div>
 </div>
 
