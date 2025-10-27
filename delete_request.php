@@ -8,7 +8,7 @@ if (isset($_POST['id'])) {
     if (mysqli_query($conn, $sql)) {
         echo "success";
     } else {
-        // 👇 غيري هذا السطر مؤقتًا عشان نعرف الخطأ الحقيقي
+       
         echo mysqli_error($conn);
     }
 } else {
