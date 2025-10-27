@@ -13,11 +13,11 @@ if ($conn->connect_error) {
 // الحصول على معرف الخريج من الرابط (مثلاً RecommendationWriting.php?id=5)
 $graduate_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-// جلب بيانات الخريج واليوزر
 $sql = "SELECT g.*, u.name, u.email, u.department
         FROM graduates g
         JOIN users u ON g.user_id = u.id
-        WHERE g.user_id = ?";
+        WHERE g.graduate_id = ?";
+
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $graduate_id);
 $stmt->execute();
@@ -159,32 +159,33 @@ button {
 <div class="main-content">
     <h2>Recommendation Writing</h2>
 
-    <?php if ($graduate): ?>
+     
+<?php if ($graduate): ?>
     <div class="info-box">
-        <div class="info-item"><b>Student name:</b> <?= htmlspecialchars($graduate['student_name']) ?></div>
-        <div class="info-item"><b>ID:</b> <?= htmlspecialchars($graduate['user_id']) ?></div>
+        <div class="info-item"><b>Student name:</b> <?= htmlspecialchars($graduate['name']) ?></div>
+        <div class="info-item"><b>National ID:</b> <?= htmlspecialchars($graduate['user_id']) ?></div>
         <div class="info-item"><b>Department:</b> <?= htmlspecialchars($graduate['department']) ?></div>
-        <div class="info-item"><b>Purpose:</b> <?= htmlspecialchars($graduate['purpose']) ?></div>
-        <div class="info-item"><b>Recommendation Type:</b> <?= htmlspecialchars($graduate['recommendation_type']) ?></div>
+        <div class="info-item"><b>Graduation Year:</b> <?= htmlspecialchars($graduate['graduation_year']) ?></div>
+        <div class="info-item"><b>GPA:</b> <?= htmlspecialchars($graduate['gpa']) ?></div>
     </div>
 
     <form method="POST">
-        <label><b>Recommendation Template</b></label>
-        <select name="recommendation_type">
-            <option value="Academic-Graduate Studies">Academic-Graduate Studies</option>
-            <option value="Professional-Internship/Job">Professional-Internship/Job</option>
-            <option value="Scholarship/Exchange Programs">Scholarship/Exchange Programs</option>
+        <label><b>Recommendation Type</b></label>
+        <select name="recommendation_type" required>
+            <option value="Academic-Graduate Studies">Academic - Graduate Studies</option>
+            <option value="Professional-Internship/Job">Professional - Internship / Job</option>
+            <option value="Scholarship/Exchange Programs">Scholarship / Exchange Programs</option>
         </select>
 
-        <textarea name="recommendation_text" placeholder="Write your recommendation here..."></textarea>
+        <textarea name="recommendation_text" placeholder="Write your recommendation here..." required></textarea>
 
         <br>
-        <button type="button" class="cancel-btn">Cancel</button>
+        <button type="button" class="cancel-btn" onclick="history.back()">Cancel</button>
         <button type="submit" class="send-btn">Send Recommendation</button>
     </form>
-    <?php else: ?>
-        <p>No graduate found.</p>
-    <?php endif; ?>
+<?php else: ?>
+    <p>No graduate found.</p>
+<?php endif; ?>
 </div>
 
 </body>
