@@ -3,7 +3,7 @@
 $host = "localhost";
 $user = "root";
 $pass = "";
-$dbname = "agdh"; 
+$dbname = "agdb"; 
 
 // Connect
 $conn = new mysqli($host, $user, $pass, $dbname);
@@ -27,9 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['req
         exit;
     }
 }
-
-// Fetch requests (يمكن تغييره لإظهار كل الحالات أو فقط pending)
-$stmt = $conn->prepare("SELECT id, graduate_name, request_date, type, purpose, status FROM requests ORDER BY request_date DESC");
+$stmt = $conn->prepare("SELECT id, user_name, created_at, type, purpose, status FROM requests ORDER BY created_at DESC");
 $stmt->execute();
 $result = $stmt->get_result();
 $requests = $result->fetch_all(MYSQLI_ASSOC);
@@ -48,12 +46,13 @@ $stmt->close();
   body {
     margin: 0;
     font-family: "Poppins", sans-serif;
-    background: #f9f9f9;
-    display: flex;
-  }
-  /* Sidebar */
-  .sidebar {
-    background-color: #cde3e8;
+   background: #fdfaf6;
+  display: flex;
+}
+
+/* 🔹 Sidebar */
+.sidebar {
+  background-color: #c8e4eb;
     width: 230px;
     transition: width 0.3s;
     height: 100vh;
@@ -64,6 +63,13 @@ $stmt->close();
     flex-direction: column;
     justify-content: space-between;
   }
+
+.sidebar.collapsed .menu-text {
+  display: none;
+}
+.bottom-section {
+  margin-bottom: 20px;}
+
   .sidebar .logo { text-align: center; margin-bottom: 30px; }
   .sidebar .logo img { width: 80px; }
   .menu-item { display: flex; align-items: center; padding: 12px 20px; color: #333; text-decoration: none; transition: background 0.3s; }
@@ -162,12 +168,12 @@ $stmt->close();
 
     <div>
       <div class="logo">
-        <img src="IMG_1786.PNG" alt="Logo">
+        <img src="LOGObl.PNG" alt="Logo">
       </div>
 
       
       <a href="requests.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-        <a href="#" class="menu-item"><i class="fas fa-pen-nib"></i><span>Write Recommendation</span></a>
+        <a href="recommendation-Writing.php" class="menu-item"><i class="fas fa-pen-nib"></i><span>Write Recommendation</span></a>
         <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
     </div>
 
@@ -192,8 +198,8 @@ $stmt->close();
       <?php else: ?>
         <?php foreach ($requests as $r): 
           $id = intval($r['id']);
-          $name = htmlspecialchars($r['graduate_name']);
-          $rawDate = $r['request_date'];
+          $name = htmlspecialchars($r['user_name']);
+          $rawDate = $r['created_at'];
           $dateStr = $rawDate ? date("d/m/Y", strtotime($rawDate)) : '-';
           $type = htmlspecialchars($r['type']);
           $purpose = htmlspecialchars($r['purpose']);
