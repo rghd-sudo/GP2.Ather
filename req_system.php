@@ -229,7 +229,7 @@ th {
   <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
   <div>
     <div class="logo">
-      <img src="logobl.png" alt="Logo">
+      <img src="logobl.PNG" alt="Logo">
 
     </div>
     <a href="req_system.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
@@ -245,10 +245,10 @@ th {
 </div>
 
 <!-- 🔸 Top Bar -->
-<div class="top-bar">
+<div class="top-bar"> 
   <div class="top-icons">
-    <button class="icon-btn"><a href="notifications.php"><i class="fas fa-bell"></i></a></button>
-    <button class="icon-btn" title="Logout"><a href="logout.html"><i class="fas fa-arrow-right-from-bracket"></i></a></button>
+    <button class="icon-btn" title="Notifications" onclick="window.location.href='notifications.php'"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout" onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
   </div>
 </div>
 
