@@ -1,26 +1,31 @@
 <?php
-include 'php/connection.php';
+session_start();
+include 'index.php';
+
 
 $sql = "
 SELECT 
-    r.id,
-    u.full_name,
-    r.recommendation_type,
-    r.request_date,
-    r.purpose,
-    r.status
+    id,
+    user_name,
+    user_id,
+    major,
+    course,
+    professor,
+    purpose,
+    type,
+    file_name,
+    created_at,
+    status
 FROM 
-    requests r
-JOIN 
-    users u ON r.student_id = u.id
+    requests
 ORDER BY 
-    r.request_date DESC
+    created_at DESC
 ";
 
 $result = mysqli_query($conn, $sql);
 
 if (!$result) {
-  die("❌ SQL Error: " . mysqli_error($conn));
+    die("❌ SQL Error: " . mysqli_error($conn));
 }
 
 
@@ -47,7 +52,120 @@ if(mysqli_num_rows($result) > 0){
 <head>
 <meta charset="UTF-8">
 <title>all request </title>
- <link rel="stylesheet" href="css/DR_Recommendation.css">
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #fffcf5;
+    margin: 0;
+    padding: 20px;
+  }
+  
+  .stats_container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+  
+  .stats-card {
+    background-color: #a8a0a0;
+    border-radius: 15px;
+    padding: 20px;
+    width: 180px;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: relative;
+  }
+  
+  .stat-number { font-size: 24px; margin-bottom: 10px; }
+  .stat-label { font-size: 14px; color: #333; }
+  
+  .progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  
+  .progress {
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease-in-out;
+  }
+  
+  .completed .progress { background: green; }
+  .rejected .progress { background: red; }
+  .draft .progress { background: blue; }
+  
+  .completed { border: 3px solid green; }
+  .rejected { border: 3px solid red; }
+  .draft { border: 3px solid blue; }
+  
+  .search-bar { text-align: center; margin-top: 20px; }
+  .search-bar input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 200px;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  /* ---- أزرار الإجراءات ---- */
+.btn {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-right: 5px; /* مسافة بسيطة بين الأزرار */
+  transition: all 0.2s ease;
+}
+
+/* زر التعديل */
+.btn.edit {
+  background-color: #4a90e2; /* أزرق */
+  color: white;
+}
+
+.btn.edit:hover {
+  background-color: #357abd; /* أزرق غامق عند المرور */
+}
+
+/* زر الحذف */
+.btn.delete {
+  background-color: #e74c3c; /* أحمر */
+  color: white;
+}
+
+.btn.delete:hover {
+  background-color: #c0392b; /* أحمر غامق عند المرور */
+}
+
+  
+  .thead { background-color: #4a6fa5; }
+  .thead th { padding: 15px; text-align: right; font-size: 15px; font-weight: 600; }
+  tbody td { padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: right; font-size: 14px; color: #333; }
+  tbody tr:hover { background-color: #f1f5f9; transform: translateY(-1px); transition: all 0.2s ease; }
+  
+  .status-completed { background-color: #d4edda; color: #155724; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
+  .status-pending { background-color: #fff3cd; color: #856404; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
+  .status-draft { background-color: #e2e3e5; color: #383d41; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
+  .status-rejected { background-color: #f8d7da; color: #721c24; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
+  
+
+</style>
 </head>
 <body>
 
@@ -116,11 +234,11 @@ if(mysqli_num_rows($result) > 0){
   <tbody id="tableBody">
   <?php foreach($data as $index => $row): ?>
     <tr>
-      <td><?php echo $index + 1; ?></td>
-      <td><?php echo htmlspecialchars($row['full_name']); ?></td>
-      <td><?php echo htmlspecialchars($row['recommendation_type']); ?></td>
-      <td><?php echo htmlspecialchars($row['request_date']); ?></td>
-      <td><?php echo htmlspecialchars($row['purpose']); ?></td>
+       <td><?php echo $index + 1; ?></td>
+       <td><?php echo htmlspecialchars($row['user_name']); ?></td>
+        <td><?php echo htmlspecialchars($row['type']); ?></td>
+        <td><?php echo htmlspecialchars($row['created_at']); ?></td>
+     <td><?php echo htmlspecialchars($row['purpose']); ?></td>
       <td>
         <?php 
           $statusClass = '';
