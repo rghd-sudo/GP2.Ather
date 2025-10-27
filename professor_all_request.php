@@ -232,38 +232,38 @@ body {
       <th>Actions</th> 
     </tr>
   </thead>
+
   <tbody id="tableBody">
   <?php foreach($data as $index => $row): ?>
-    <tr>
+    <tr data-status="<?php echo strtolower($row['status']); ?>">
        <td><?php echo $index + 1; ?></td>
        <td><?php echo htmlspecialchars($row['user_name']); ?></td>
-        <td><?php echo htmlspecialchars($row['type']); ?></td>
-        <td><?php echo htmlspecialchars($row['created_at']); ?></td>
-     <td><?php echo htmlspecialchars($row['purpose']); ?></td>
-      <td>
-        <?php 
-          $statusClass = '';
-          switch(strtolower($row['status'])){
-            case 'completed': $statusClass = 'status-completed'; break;
-            case 'pending': $statusClass = 'status-pending'; break;
-            case 'draft': $statusClass = 'status-draft'; break;
-            case 'rejected': $statusClass = 'status-rejected'; break;
-          }
-        ?>
-        <span class="<?php echo $statusClass; ?>">
-          <?php echo ucfirst($row['status']); ?>
-        </span>
-      </td>
+       <td><?php echo htmlspecialchars($row['type']); ?></td>
+       <td><?php echo htmlspecialchars($row['created_at']); ?></td>
+       <td><?php echo htmlspecialchars($row['purpose']); ?></td>
+       <td>
+         <?php 
+        $statusClass = '';
+        switch(strtolower($row['status'])){
+          case 'completed': $statusClass = 'status-completed'; break;
+          case 'pending': $statusClass = 'status-pending'; break;
+          case 'draft': $statusClass = 'status-draft'; break;
+          case 'rejected': $statusClass = 'status-rejected'; break;
+        }
+      ?>
+          <span class="<?php echo $statusClass; ?>">
+           <?php echo ucfirst($row['status']); ?>
+         </span>
+       </td>
+       <td>
       <!-- عمود الأزرار -->
-      <td>   <!-- يفتح الي المسودة وغيرها عند recommendation-writing  بام   -->
       <button class="btn edit" onclick="window.location.href='recommendation-writing.php?id=<?php echo $row['id']; ?>'">Edit</button>
-
-      <button class="btn delete" onclick="deleteRequest(<?php echo $row['id']; ?>, this)">Delete</button>
-
-      </td>
+         <button class="btn delete" onclick="deleteRequest(<?php echo $row['id']; ?>, this)">Delete</button>
+       </td>
     </tr>
   <?php endforeach; ?>
-  </tbody>
+</tbody>
+
 </table>
 
 
@@ -300,15 +300,17 @@ function deleteRequest(id, btn) {
   .then(response => response.text())
   .then(result => {
     if (result.trim() === "success") {
-      const row = btn.closest("tr");
-      row.style.transition = "opacity 0.5s";
-      row.style.opacity = "0";
-      setTimeout(() => row.remove(), 500);
-      alert("✅ تم حذف الطلب بنجاح");
-    } else {
-      alert("❌ حدث خطأ أثناء الحذف");
-    }
-  })
+  const row = btn.closest("tr");
+  row.style.transition = "opacity 0.5s";
+  row.style.opacity = "0";
+
+  setTimeout(() => {
+    row.remove();
+    updateStats(); // ← هذا السطر يضاف هنا
+  }, 500);
+
+  alert("✅ تم حذف الطلب بنجاح");
+})
   .catch(error => {
     alert("⚠️ فشل الاتصال بالسيرفر");
     console.error(error);
