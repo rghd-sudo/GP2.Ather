@@ -3,7 +3,7 @@
 $host = "localhost";
 $user = "root";
 $pass = "";
-$dbname = "agdb";
+$dbname = "agdh";
 
 $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) {
@@ -146,10 +146,9 @@ button {
         <div class="logo" style="text-align:center; margin-bottom:30px;">
             <img src="IMG_1786.PNG" width="80">
         </div>
-        <a href="#" class="menu-item"><i class="fas fa-inbox"></i><span>New Requests</span></a>
-        <a href="#" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
+        <a href="requests.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
         <a href="#" class="menu-item"><i class="fas fa-pen-nib"></i><span>Write Recommendation</span></a>
-        <a href="#" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
+        <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
     </div>
     <div class="bottom-section">
         <a href="#" class="menu-item"><i class="fas fa-gear"></i><span>Notification Settings</span></a>
