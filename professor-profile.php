@@ -3,7 +3,7 @@
 $host = "localhost";
 $user = "root";
 $pass = "";
-$dbname = "graduate_system";
+$dbname = "agdb";
 
 $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error); }
@@ -53,7 +53,7 @@ if (isset($_POST['save'])) {
  body {
     margin: 0;
     font-family: "Poppins", sans-serif;
-    background: #f9f9f9;
+    background:  #fdfaf6;;
     display: flex;
   }
 h2 {
@@ -64,7 +64,7 @@ h2 {
 }
   /* Sidebar */
   .sidebar {
-    background-color: #cde3e8;
+    background-color:  #c8e4eb;
     width: 230px;
     transition: width 0.3s;
     height: 100vh;
@@ -236,25 +236,25 @@ h2 {
 
     <div>
       <div class="logo">
-        <img src="IMG_1786.PNG" alt="Logo">
+        <img src="logobl.PNG" alt="Logo">
       </div>
 
-      <a href="#" class="menu-item"><i class="fas fa-inbox"></i><span class="menu-text">New Requests</span></a>
+      <a href="requests.php" class="menu-item"><i class="fas fa-inbox"></i><span class="menu-text">New Requests</span></a>
       <a href="#" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
-      <a href="#" class="menu-item"><i class="fas fa-pen-nib"></i><span class="menu-text">Write Recommendation</span></a>
-      <a href="#" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+      <a href="recommendation-writing.php" class="menu-item"><i class="fas fa-pen-nib"></i><span class="menu-text">Write Recommendation</span></a>
+      <a href="Professor-Profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     </div>
 
     <div class="bottom-section">
-      <a href="#" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
+      <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
     </div>
   </div>
 
   <!-- Main Content -->
   <div class="main-content">
     <div class="top-icons">
-      <button class="icon-btn"><i class="fas fa-bell"></i></button>
-      <button class="icon-btn" title="Logout"><i class="fas fa-arrow-right-from-bracket"></i></button>
+    <button class="icon-btn" title="Notifications" onclick="window.location.href='notifications.php'"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout" onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
     </div>
 
     <div class="profile-box">
