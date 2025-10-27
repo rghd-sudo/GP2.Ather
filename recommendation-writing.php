@@ -1,103 +1,190 @@
 <?php
-// نفترض أن المستخدم مسجل دخول
-// هنا حطيت بيانات ثابتة للتجربة فقط
-$user = [
-'name' => 'Shahd Ahmedc',
-'university_id' => '11258905',
-'department' => 'Information System',
-'purpose' => 'internship_Huawei',
-'recommendation_type' => 'Academic'
-];
+// الاتصال بقاعدة البيانات
+$host = "localhost";
+$user = "root";
+$pass = "";
+$dbname = "agdh";
 
-// عند الضغط على الإرسال أو الحفظ كمسودة
-$message = "";
+$conn = new mysqli($host, $user, $pass, $dbname);
+if ($conn->connect_error) {
+    die("فشل الاتصال بقاعدة البيانات: " . $conn->connect_error);
+}
+
+// الحصول على معرف الخريج من الرابط (مثلاً RecommendationWriting.php?id=5)
+$graduate_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+// جلب بيانات الخريج واليوزر
+$sql = "SELECT g.*, u.name AS student_name, u.department 
+        FROM graduates g 
+        JOIN users u ON g.user_id = u.id 
+        WHERE g.id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $graduate_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$graduate = $result->fetch_assoc();
+
+// حفظ التوصية عند الإرسال
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-$recommendation_text = $_POST['recommendation_text'] ?? '';
-$recommendation_type = $_POST['recommendation_type'] ?? 'Academic';
-$action = $_POST['action'] ?? 'send';
+    $recommendation_text = $_POST['recommendation_text'];
+    $type = $_POST['recommendation_type'];
+    $professor_id = 1; // مبدئيًا ثابت، لاحقًا تستبدل بـ session الخاصة بالبروفسور
 
-if ($action === 'send' && empty($recommendation_text)) {
-$message = "❌ يجب كتابة نص التوصية قبل الإرسال.";
-} else {
-$status = ($action === 'draft') ? "تم الحفظ كمسودة ✅" : "تم إرسال التوصية بنجاح ✅";
-$message = $status;
+    $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, recommendation_text, recommendation_type, created_at) VALUES (?, ?, ?, ?, NOW())");
+    $insert->bind_param("iiss", $graduate_id, $professor_id, $recommendation_text, $type);
+    $insert->execute();
+
+    echo "<script>alert('تم إرسال التوصية بنجاح!');</script>";
 }
-}
-function e($txt){ return htmlspecialchars($txt, ENT_QUOTES, 'UTF-8'); }
 ?>
-<!doctype html>
-<html lang="ar">
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <title>Recommendation Writing</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 <style>
-body { font-family: Arial; background:#fbf9f6; direction:rtl; }
-.card { background:#f0f0f0; padding:18px; border-radius:12px; display:flex; gap:20px; margin-bottom:20px; }
-.col { flex:1; }
-.label { font-weight:bold; }
-.small { margin-top:6px; color:#333; }
-.container { background:#fff; padding:18px; border-radius:12px; box-shadow:0 0 4px rgba(0,0,0,0.1); }
-textarea { width:100%; min-height:150px; padding:10px; }
-.footer { display:flex; justify-content:space-between; margin-top:12px; }
-.btn { padding:8px 14px; border:none; border-radius:6px; cursor:pointer; }
-.btn-grey { background:#d9d9d9; }
-.btn-primary { background:#2f6bff; color:#fff; }
-.btn-cancel { background:#aaa; color:#fff; }
-.msg { padding:10px; margin-bottom:12px; border-radius:6px; }
-.success { background:#e7f6e9; color:#135e2a; }
-.error { background:#ffecec; color:#8a1d1d; }
+body {
+    margin: 0;
+    font-family: "Poppins", sans-serif;
+    background: #f9f9f9;
+    display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+    background-color: #cde3e8;
+    width: 230px;
+    height: 100vh;
+    position: fixed;
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+
+.menu-item:hover {
+    background: #bcd5db;
+}
+
+.menu-item i {
+    font-size: 20px;
+    margin-right: 10px;
+    width: 25px;
+    text-align: center;
+}
+
+.main-content {
+    margin-left: 230px;
+    padding: 40px;
+    width: 100%;
+}
+
+/* Info box */
+.info-box {
+    background: #f1f1f1;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+.info-item {
+    background: #e3e3e3;
+    padding: 10px;
+    border-radius: 6px;
+}
+.info-item b {
+    color: #003366;
+}
+
+/* Editor box */
+textarea {
+    width: 100%;
+    height: 200px;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    resize: none;
+}
+
+button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.send-btn {
+    background-color: #003366;
+    color: white;
+}
+.cancel-btn {
+    background-color: #ccc;
+}
+
 </style>
 </head>
 <body>
 
-<h2>Recommendation Writing</h2>
-
-<?php if($message): ?>
-<div class="msg <?php echo (strpos($message,"❌")!==false?"error":"success"); ?>">
-<?php echo e($message); ?>
-</div>
-<?php endif; ?>
-
-<div class="card">
-<div class="col">
-<div class="label">Student name</div>
-<div class="small"><?php echo e($user['name']); ?></div>
-</div>
-<div class="col">
-<div class="label">ID</div>
-<div class="small"><?php echo e($user['university_id']); ?></div>
-</div>
-<div class="col">
-<div class="label">Department</div>
-<div class="small"><?php echo e($user['department']); ?></div>
-</div>
-<div class="col">
-<div class="label">Purpose</div>
-<div class="small"><?php echo e($user['purpose']); ?></div>
-</div>
+<!-- Sidebar -->
+<div class="sidebar">
+    <div>
+        <div class="logo" style="text-align:center; margin-bottom:30px;">
+            <img src="IMG_1786.PNG" width="80">
+        </div>
+        <a href="requests.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
+        <a href="#" class="menu-item"><i class="fas fa-pen-nib"></i><span>Write Recommendation</span></a>
+        <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
+    </div>
+    <div class="bottom-section">
+        <a href="#" class="menu-item"><i class="fas fa-gear"></i><span>Notification Settings</span></a>
+    </div>
 </div>
 
-<div class="container">
-<form method="post">
-<label>Recommendation Type: </label>
-<select name="recommendation_type">
-<option <?php if($user['recommendation_type']=="Academic") echo "selected"; ?>>Academic</option>
-<option>Professional</option>
-<option>Scholarship</option>
-</select>
+<!-- Main Content -->
+<div class="main-content">
+    <h2>Recommendation Writing</h2>
 
-<div style="margin-top:10px;">
-<textarea name="recommendation_text" placeholder="اكتب نص التوصية هنا..."><?php echo e($_POST['recommendation_text'] ?? ''); ?></textarea>
-</div>
+    <?php if ($graduate): ?>
+    <div class="info-box">
+        <div class="info-item"><b>Student name:</b> <?= htmlspecialchars($graduate['student_name']) ?></div>
+        <div class="info-item"><b>ID:</b> <?= htmlspecialchars($graduate['user_id']) ?></div>
+        <div class="info-item"><b>Department:</b> <?= htmlspecialchars($graduate['department']) ?></div>
+        <div class="info-item"><b>Purpose:</b> <?= htmlspecialchars($graduate['purpose']) ?></div>
+        <div class="info-item"><b>Recommendation Type:</b> <?= htmlspecialchars($graduate['recommendation_type']) ?></div>
+    </div>
 
-<div class="footer">
-<button type="submit" name="action" value="draft" class="btn btn-grey">Save as Draft</button>
-<div>
-<button type="reset" class="btn btn-cancel">Cancel</button>
-<button type="submit" name="action" value="send" class="btn btn-primary">Send Recommendation</button>
-</div>
-</div>
-</form>
+    <form method="POST">
+        <label><b>Recommendation Template</b></label>
+        <select name="recommendation_type">
+            <option value="Academic-Graduate Studies">Academic-Graduate Studies</option>
+            <option value="Professional-Internship/Job">Professional-Internship/Job</option>
+            <option value="Scholarship/Exchange Programs">Scholarship/Exchange Programs</option>
+        </select>
+
+        <textarea name="recommendation_text" placeholder="Write your recommendation here..."></textarea>
+
+        <br>
+        <button type="button" class="cancel-btn">Cancel</button>
+        <button type="submit" class="send-btn">Send Recommendation</button>
+    </form>
+    <?php else: ?>
+        <p>No graduate found.</p>
+    <?php endif; ?>
 </div>
 
 </body>
