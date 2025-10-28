@@ -14,10 +14,10 @@ if ($conn->connect_error) {
 $graduate_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 $sql = "SELECT g.*, u.name, u.email, u.department , u.National_ID,
-               r.subject, r.purpose, r.recommendation_type
+               r.major, r.purpose, r.type AS recommendation_type
         FROM graduates g
         JOIN users u ON g.user_id = u.id
-        LEFT JOIN recommendations r ON g.graduate_id = r.graduate_id
+        LEFT JOIN requests r ON g.graduate_id = r.graduate_id
         WHERE g.graduate_id = ?";
 
 $stmt = $conn->prepare($sql);
@@ -156,3 +156,4 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
 </div>
 </body>
 </html>
+
