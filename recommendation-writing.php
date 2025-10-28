@@ -35,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $purpose = $graduate['purpose'] ?? '';
     $type = $graduate['recommendation_type'] ?? '';
 
-    $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, content, recommendation_type, subject, purpose, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
-    $insert->bind_param("iisssss", $graduate_id, $professor_id, $content, $type, $subject, $purpose, $status);
+    $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, content, recommendation_type, major, purpose, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+    $insert->bind_param("iisssss", $graduate_id, $professor_id, $content, $type, $major, $purpose, $status);
     $insert->execute();
 
     if($status === 'sent'){
@@ -137,9 +137,9 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
         <div class="info-item"><b>Department:</b> <?= htmlspecialchars($graduate['department']) ?></div>
         <div class="info-item"><b>Graduation Year:</b> <?= htmlspecialchars($graduate['graduation_year']) ?></div>
         <div class="info-item"><b>GPA:</b> <?= htmlspecialchars($graduate['gpa']) ?></div>
-        <div class="info-item"><b>Subject:</b> <?= htmlspecialchars($graduate['subject'] ?? '-') ?></div>
-        <div class="info-item"><b>Purpose:</b> <?= htmlspecialchars($graduate['purpose'] ?? '-') ?></div>
-        <div class="info-item"><b>Recommendation Type:</b> <?= htmlspecialchars($graduate['recommendation_type'] ?? '-') ?></div>
+        <div class="info-item"><b>Subject:</b> <?= htmlspecialchars($requests['major'] ?? '-') ?></div>
+        <div class="info-item"><b>Purpose:</b> <?= htmlspecialchars($requests['purpose'] ?? '-') ?></div>
+        <div class="info-item"><b>Recommendation Type:</b> <?= htmlspecialchars($requests['type'] ?? '-') ?></div>
     </div>
 
     <form method="POST">
@@ -156,4 +156,5 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
 </div>
 </body>
 </html>
+
 
