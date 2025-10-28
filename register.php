@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $graduation_year = NULL;
             $gpa = NULL;
             $cv_path = NULL;
-
+            
             $stmt2 = $conn->prepare("INSERT INTO graduates (user_id, graduation_year, gpa, cv_path) VALUES (?, ?, ?, ?)");
             $stmt2->bind_param("iids", $user_id, $graduation_year, $gpa, $cv_path);
             $stmt2->execute();
