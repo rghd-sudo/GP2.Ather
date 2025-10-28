@@ -28,7 +28,7 @@ if (!$professor_data) {
 
 // عند الحفظ
 if (isset($_POST['save'])) {
-    $full_name = $_POST['full_name'];
+    $name = $_POST['full_name'];
     $email = $_POST['email'];
     $department = $_POST['department'];
     $university = $_POST['university'];
@@ -46,7 +46,7 @@ if (isset($_POST['save'])) {
 
     // تحديث بيانات المستخدم
     $update_user = "UPDATE users 
-                    SET name='$full_name', email='$email', department='$department', university='$university'
+                    SET name='$name', email='$email', department='$department', university='$university'
                     WHERE id={$professor_data['user_id']}";
 
     // تحديث بيانات البروفيسور
@@ -151,3 +151,4 @@ body {
 </script>
 </body>
 </html>
+
