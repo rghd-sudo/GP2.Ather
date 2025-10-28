@@ -13,9 +13,8 @@ if ($conn->connect_error) {
 // الحصول على معرف الخريج من الرابط
 $graduate_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-// جلب بيانات الخريج
 $sql = "SELECT g.*, u.name, u.email, u.department , u.National_ID,
-               r.subject, r.purpose
+               r.subject, r.purpose, r.recommendation_type
         FROM graduates g
         JOIN users u ON g.user_id = u.id
         LEFT JOIN recommendations r ON g.graduate_id = r.graduate_id
@@ -32,9 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $content = $_POST['recommendation_text'];
     $status = $_POST['action']; // "draft" أو "sent"
     $professor_id = 1; // لاحقًا من session
-    $subject = $graduate['subject'] ?? '';
+    $subject = $graduate['subject'] ?? ''; 
     $purpose = $graduate['purpose'] ?? '';
-    $type = $_POST['recommendation_type']; // من الـ dropdown
+    $type = $graduate['recommendation_type'] ?? '';
 
     $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, content, recommendation_type, subject, purpose, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
     $insert->bind_param("iisssss", $graduate_id, $professor_id, $content, $type, $subject, $purpose, $status);
@@ -43,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if($status === 'sent'){
         echo "<script>alert('The Recommendation has been sent successfully!');</script>";
     } else {
-        echo "<script>alert('The Recommendation has been saved as a draft!');</script>";
+        echo "<script>alert('The Recommendation has been saved as a draft');</script>";
     }
 }
 ?>
@@ -62,6 +61,7 @@ body {
     display: flex;
 }
 
+/* Sidebar */
 .sidebar {
   background-color: #c8e4eb;
   width: 230px;
@@ -73,7 +73,14 @@ body {
   justify-content: space-between;
 }
 
-.menu-item { display: flex; align-items: center; padding: 12px 20px; color: #333; text-decoration: none; transition: background 0.3s; }
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.3s;
+}
 .menu-item:hover { background: #bcd5db; }
 .menu-item i { font-size: 20px; margin-right: 10px; width: 25px; text-align: center; }
 
@@ -97,8 +104,7 @@ body {
 .info-item b { color: #003366; }
 
 /* Form */
-select, textarea { width: 100%; margin-top: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-textarea { height: 200px; resize: none; }
+textarea { width: 100%; height: 200px; margin-top: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; resize: none; }
 button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; }
 .send-btn { background-color: #003366; color: white; margin-right: 10px; }
 .draft-btn { background-color: #f39c12; color: white; margin-right: 10px; }
@@ -133,17 +139,9 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
         <div class="info-item"><b>GPA:</b> <?= htmlspecialchars($graduate['gpa']) ?></div>
         <div class="info-item"><b>Subject:</b> <?= htmlspecialchars($graduate['subject'] ?? '-') ?></div>
         <div class="info-item"><b>Purpose:</b> <?= htmlspecialchars($graduate['purpose'] ?? '-') ?></div>
+        <div class="info-item"><b>Recommendation Type:</b> <?= htmlspecialchars($graduate['recommendation_type'] ?? '-') ?></div>
     </div>
 
-    
-    <label><b>Recommenation Type </b></label>
-    <select name="recommendation_type" required>
-        <option value="Academic-Graduate Studies">Academic - Graduate Studies</option>
-        <option value="Professional-Internship/Job">Professional - Internship / Job</option>
-        <option value="Scholarship/Exchange Programs">Scholarship / Exchange Programs</option>
-    </select>
-
-    
     <form method="POST">
         <textarea name="recommendation_text" placeholder="Write your recommendation here..." required></textarea>
         <br>
@@ -151,7 +149,6 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
         <button type="submit" name="action" value="draft" class="draft-btn">Save Draft</button>
         <button type="submit" name="action" value="sent" class="send-btn">Send Recommendation</button>
     </form>
-
 <?php else: ?>
     <p>No graduate found.</p>
 <?php endif; ?>
