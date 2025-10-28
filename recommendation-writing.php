@@ -13,7 +13,7 @@ if ($conn->connect_error) {
 // الحصول على معرف الخريج من الرابط (مثلاً RecommendationWriting.php?id=5)
 $graduate_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-$sql = "SELECT g.*, u.name, u.email, u.department
+$sql = "SELECT g.*, u.name, u.email, u.department , u.National_ID
         FROM graduates g
         JOIN users u ON g.user_id = u.id
         WHERE g.graduate_id = ?";
@@ -26,12 +26,12 @@ $graduate = $result->fetch_assoc();
 
 // حفظ التوصية عند الإرسال
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $recommendation_text = $_POST['recommendation_text'];
+    $content = $_POST['content'];
     $type = $_POST['recommendation_type'];
     $professor_id = 1; // مبدئيًا ثابت، لاحقًا تستبدل بـ session الخاصة بالبروفسور
 
-    $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, recommendation_text, recommendation_type, created_at) VALUES (?, ?, ?, ?, NOW())");
-    $insert->bind_param("iiss", $graduate_id, $professor_id, $recommendation_text, $type);
+    $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, content, recommendation_type, created_at) VALUES (?, ?, ?, ?, NOW())");
+    $insert->bind_param("iiss", $graduate_id, $professor_id, $content, $type);
     $insert->execute();
 
     echo "<script>alert('تم إرسال التوصية بنجاح!');</script>";
@@ -162,8 +162,8 @@ button {
      
 <?php if ($graduate): ?>
     <div class="info-box">
-        <div class="info-item"><b>Student name:</b> <?= htmlspecialchars($graduate['name']) ?></div>
-        <div class="info-item"><b>National ID:</b> <?= htmlspecialchars($graduate['user_id']) ?></div>
+        <div class="info-item"><b>Name:</b> <?= htmlspecialchars($graduate['name']) ?></div>
+        <div class="info-item"><b>National ID:</b> <?= htmlspecialchars($graduate['National_ID']) ?></div>
         <div class="info-item"><b>Department:</b> <?= htmlspecialchars($graduate['department']) ?></div>
         <div class="info-item"><b>Graduation Year:</b> <?= htmlspecialchars($graduate['graduation_year']) ?></div>
         <div class="info-item"><b>GPA:</b> <?= htmlspecialchars($graduate['gpa']) ?></div>

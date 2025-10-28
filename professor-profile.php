@@ -239,10 +239,9 @@ h2 {
         <img src="logobl.PNG" alt="Logo">
       </div>
 
-      <a href="requests.php" class="menu-item"><i class="fas fa-inbox"></i><span class="menu-text">New Requests</span></a>
-      <a href="#" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
-      <a href="recommendation-writing.php" class="menu-item"><i class="fas fa-pen-nib"></i><span class="menu-text">Write Recommendation</span></a>
-      <a href="Professor-Profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+       <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
+      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
+        <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
     </div>
 
     <div class="bottom-section">

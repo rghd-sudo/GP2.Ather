@@ -27,7 +27,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['req
         exit;
     }
 }
-$stmt = $conn->prepare("SELECT id, user_name, created_at, type, purpose, status FROM requests ORDER BY created_at DESC");
+$stmt = $conn->prepare("
+    SELECT 
+        r.id,
+        u.name AS graduate_name,
+        r.created_at,
+        r.type,
+        r.purpose,
+        r.status
+    FROM 
+        requests r
+    JOIN 
+        users u ON r.user_id = u.id
+    ORDER BY 
+        r.created_at DESC
+");
 $stmt->execute();
 $result = $stmt->get_result();
 $requests = $result->fetch_all(MYSQLI_ASSOC);
@@ -171,14 +185,13 @@ $stmt->close();
         <img src="LOGObl.PNG" alt="Logo">
       </div>
 
-      
-      <a href="requests.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-        <a href="recommendation-Writing.php" class="menu-item"><i class="fas fa-pen-nib"></i><span>Write Recommendation</span></a>
+       <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
+      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
         <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
     </div>
 
     <div class="bottom-section">
-      <a href="#" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
+      <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
     </div>
   </div>
 
@@ -198,7 +211,7 @@ $stmt->close();
       <?php else: ?>
         <?php foreach ($requests as $r): 
           $id = intval($r['id']);
-          $name = htmlspecialchars($r['user_name']);
+          $name = htmlspecialchars($r['graduate_name']);
           $rawDate = $r['created_at'];
           $dateStr = $rawDate ? date("d/m/Y", strtotime($rawDate)) : '-';
           $type = htmlspecialchars($r['type']);

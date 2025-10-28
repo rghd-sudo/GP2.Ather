@@ -11,20 +11,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $paasword = $_POST['paasword'] ?? '';
 
     if ($email && $paasword) {
-        // جلب المستخدم من القاعدة
-        $stmt = $conn->prepare("SELECT id, name, paasword FROM users WHERE email = ?");
+        $stmt = $conn->prepare("SELECT id, name, paasword, role FROM users WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows === 1) {
-            $users = $result->fetch_assoc();
-            // التحقق من كلمة المرور
-            if (password_verify($paasword, $users['paasword'])) {
-                // نجاح → حفظ بيانات المستخدم في الجلسة
-                $_SESSION['user_id'] = $users['id'];
-                $_SESSION['user_name'] = $users['name'];
-                header("Location: req_system.php"); // صفحة الترحيب أو لوحة التحكم
+            $user = $result->fetch_assoc();
+            if (password_verify($paasword, $user['paasword'])) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['name'];
+                $_SESSION['role'] = $user['role']; // حفظ الدور
+
+                // التوجيه حسب الدور
+                if ($user['role'] === 'graduate') {
+                    header("Location: req_system.php"); // صفحة الخريج
+                } elseif ($user['role'] === 'professor') {
+                    header("Location: requests.php"); // صفحة الدكتور
+                } else {
+                    $message = "⚠️ Undefined user role.";
+                }
                 exit;
             } else {
                 $message = "⚠️ The password is incorrect.";
@@ -268,7 +274,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="password" id="paasword" name="paasword" required>
             </div>
 
-            <button class="btn-primary" type="submit">Login now</button><pr>
+            <button class="btn-primary" type="submit">Login</button>
            <br> <p class="small-text">Don't have an account? <a href="register.php">Register here</a></p>
         </form>
 

@@ -5,21 +5,26 @@ include 'index.php';
 
 $sql = "
 SELECT 
-    id,
-    user_name,
-    user_id,
-    major,
-    course,
-    professor,
-    purpose,
-    type,
-    file_name,
-    created_at,
-    status
+    r.id AS request_id,
+    g.graduate_id,
+    u.name AS graduate_name,
+    r.user_id,
+    r.major,
+    r.course,
+    r.professor,
+    r.purpose,
+    r.type,
+    r.file_name,
+    r.created_at,
+    r.status
 FROM 
-    requests
+    requests r
+JOIN 
+    users u ON r.user_id = u.id
+JOIN
+    graduates g ON r.user_id = g.user_id
 ORDER BY 
-    created_at DESC
+    r.created_at DESC
 ";
 
 $result = mysqli_query($conn, $sql);
@@ -237,7 +242,7 @@ body {
   <?php foreach($data as $index => $row): ?>
     <tr data-status="<?php echo strtolower($row['status']); ?>">
        <td><?php echo $index + 1; ?></td>
-       <td><?php echo htmlspecialchars($row['user_name']); ?></td>
+       <td><?php echo htmlspecialchars($row['graduate_name']); ?></td>
        <td><?php echo htmlspecialchars($row['type']); ?></td>
        <td><?php echo htmlspecialchars($row['created_at']); ?></td>
        <td><?php echo htmlspecialchars($row['purpose']); ?></td>
@@ -257,14 +262,15 @@ body {
        </td>
        <td>
       <!-- عمود الأزرار -->
-      <button class="btn edit" onclick="window.location.href='recommendation-writing.php?id=<?php echo $row['id']; ?>'">Edit</button>
-         <button class="btn delete" onclick="deleteRequest(<?php echo $row['id']; ?>, this)">Delete</button>
+       <button class="btn edit" onclick="window.location.href='recommendation-writing.php?id=<?= $row['graduate_id']; ?>'">Edit</button>
+       <button class="btn delete" onclick="deleteRequest(<?= $row['request_id']; ?>, this)">Delete</button>
        </td>
     </tr>
   <?php endforeach; ?>
 </tbody>
 
 </table>
+
 
 
 
@@ -303,7 +309,7 @@ function deleteRequest(id, btn) {
   const row = btn.closest("tr");
   row.style.transition = "opacity 0.5s";
   row.style.opacity = "0";
-
+    }
   setTimeout(() => {
     row.remove();
     updateStats(); // ← هذا السطر يضاف هنا
