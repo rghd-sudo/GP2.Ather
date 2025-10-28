@@ -118,9 +118,9 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
         <div class="logo" style="text-align:center; margin-bottom:30px;">
             <img src="LOGObl.PNG" width="80">
         </div>
-        <a href="requests.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-        <a href="recommendation-Writing.php" class="menu-item"><i class="fas fa-pen-nib"></i><span>Write Recommendation</span></a>
-        <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
+        <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
+      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
+      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
     </div>
     <div class="bottom-section">
         <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span>Notification Settings</span></a>
@@ -156,6 +156,7 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
 </div>
 </body>
 </html>
+
 
 
 
