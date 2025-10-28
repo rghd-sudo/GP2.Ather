@@ -1,59 +1,53 @@
 <?php
-// الاتصال بقاعدة البيانات
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "agdb";
-
-$conn = new mysqli($host, $user, $pass, $dbname);
-if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error); }
-
 session_start();
-$professor_id = 1; // مؤقتاً، لاحقاً خليه من session
+include 'index.php';
 
-// جلب بيانات البروفيسور
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Fetch professor and user info
 $query = "
     SELECT 
         users.id AS uid,
         users.name, 
         users.email, 
-        users.department, 
-        users.university,
-        professor.cv_path
-    FROM users
-    LEFT JOIN professor ON users.id = professor.user_id
-    WHERE users.id = $user_id 
-     $result = mysqli_query($conn, $query);
-     $professor = mysqli_fetch_assoc($result);
+        professors.department, 
+        professors.university, 
+        professors.cv_path
+    FROM professors
+    JOIN users ON professors.user_id = users.id
+    WHERE users.id = ?
 ";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$professor = $result->fetch_assoc();
 
-// تعديل البيانات عند الحفظ
-if (isset($_POST['save'])) {
-  $full_name = $_POST['full_name'];
-  $email = $_POST['email'];
-  $department = $_POST['department'];
-  $university = $_POST['university'];
-   $cv_path = $professor['cv_path'] ?? null;
+// Update professor data when form submitted
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name  = $_POST['name'];
+    $email = $_POST['email'];
+    $dept  = $_POST['department'];
+    $univ  = $_POST['university'];
 
-  
+    $cv_path = $professor['cv_path'] ?? null;
 
-  // رفع CV جديد إذا تم اختياره
-  $cv_path = $professor_data['cv_path'];
-  if (!empty($_FILES['cv']['name'])) {
-      $cv_name = basename($_FILES['cv']['name']);
-      $target_path = "uploads/" . $cv_name;
-      move_uploaded_file($_FILES['cv']['tmp_name'], $target_path);
-      $cv_path = $target_path;
-  }
+    if (!empty($_FILES['cv_path']['name'])) {
+        $upload_dir = "uploads/";
+        $cv_path = $upload_dir . basename($_FILES['cv_path']['name']);
+        move_uploaded_file($_FILES['cv_path']['tmp_name'], $cv_path);
+    }
 
-  $update_sql = "UPDATE professors 
-                 SET full_name='$full_name', email='$email', department='$department', university='$university', cv_path='$cv_path'
-                 WHERE professor_id=$professor_id";
-  if ($conn->query($update_sql)) {
-      echo "<script>alert('Profile updated successfully!');</script>";
-  } else {
-      echo "<script>alert('Error updating profile');</script>";
-  }
+    $conn->query("UPDATE users SET name='$name', email='$email' WHERE id=$user_id");
+    $conn->query("UPDATE professors SET department='$dept', university='$univ', cv_path='$cv_path' WHERE user_id=$user_id");
+
+    header("Location: Professor_Profile.php");
+    exit;
 }
 ?>
 
@@ -67,7 +61,7 @@ if (isset($_POST['save'])) {
  body {
     margin: 0;
     font-family: "Poppins", sans-serif;
-    background:  #fdfaf6;;
+    background: #f9f9f9;
     display: flex;
   }
 h2 {
@@ -76,240 +70,297 @@ h2 {
   color: #003366;
   margin-top: -19px;
 }
-  /* Sidebar */
-  .sidebar {
-    background-color:  #c8e4eb;
-    width: 230px;
-    transition: width 0.3s;
-    height: 100vh;
-    padding-top: 20px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    position: fixed;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
 
-  .sidebar.collapsed {
-    width: 70px;
-  }
+/* Sidebar */
+.sidebar {
+  background-color: #cde3e8;
+  width: 230px;
+  transition: width 0.3s;
+  height: 100vh;
+  padding-top: 20px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
 
-  .sidebar .logo {
-    text-align: center;
-    margin-bottom: 30px;
-  }
+.sidebar.collapsed {
+  width: 70px;
+}
 
-  .sidebar .logo img {
-    width: 80px;
-  }
+.sidebar .logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
 
-  .menu-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 20px;
-    color: #333;
-    text-decoration: none;
-    transition: background 0.3s;
-  }
+.sidebar .logo img {
+  width: 80px;
+}
 
-  .menu-item:hover {
-    background: #bcd5db;
-  }
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.3s;
+}
 
-  .menu-item i {
-    font-size: 20px;
-    margin-right: 10px;
-    width: 25px;
-    text-align: center;
-  }
+.menu-item:hover {
+  background: #bcd5db;
+}
 
-  .menu-text {
-    font-size: 15px;
-    white-space: nowrap;
-  }
+.menu-item i {
+  font-size: 20px;
+  margin-right: 10px;
+  width: 25px;
+  text-align: center;
+}
 
-  .sidebar.collapsed .menu-text {
-    display: none;
-  }
+.menu-text {
+  font-size: 15px;
+  white-space: nowrap;
+}
 
-  /* Bottom Section */
-  .bottom-section {
-    margin-bottom: 20px;
-  }
+.sidebar.collapsed .menu-text {
+  display: none;
+}
 
-  /* Collapse Button */
-  .toggle-btn {
-    position: absolute;
-    top: 20px;
-    right: -15px;
-    background: #003366;
-    color: #fff;
-    border-radius: 50%;
-    border: none;
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-  }
+/* Bottom Section */
+.bottom-section {
+  margin-bottom: 20px;
+}
 
-  /* Top Icons */
-  .top-icons {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
+/* Collapse Button */
+.toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: -15px;
+  background: #003366;
+  color: #fff;
+  border-radius: 50%;
+  border: none;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
 
-  .icon-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
-    color: #333;
-  }
+/* Top Icons */
+.top-icons {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
 
-  .icon-btn:hover {
-    color: #003366;
-  }
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #333;
+}
 
-  /* Main Content */
-  .main-content {
-    margin-left: 230px;
-    padding: 30px;
-    transition: margin-left 0.3s;
-    width: 100%;
-    position: relative;
-  }
+.icon-btn:hover {
+  color: #003366;
+}
 
-  .sidebar.collapsed + .main-content {
-    margin-left: 70px;
-  }
+/* Main Content */
+.main-content {
+  margin-left: 230px;
+  padding: 30px;
+  transition: margin-left 0.3s;
+  width: 100%;
+  position: relative;
+}
 
-  /* Profile Box */
-  .profile-box {
-    background: #fff;
-    padding: 30px;
-    border-radius: 12px;
-    width: 600px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  }
+.sidebar.collapsed + .main-content {
+  margin-left: 70px;
+}
 
-  .profile-box h2 {
-    color: #003366;
-    margin-bottom: 5px;
-  }
+/* Profile Card */
+.profile-card {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  max-width: 700px;
+  margin: 120px auto;
+}
 
-  .profile-box p {
-    color: gray;
-    margin-top: 0;
-  }
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-  form label {
-    display: block;
-    margin-top: 12px;
-    font-weight: 600;
-  }
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 
-  form input[type="text"],
-  form input[type="email"],
-  form input[type="file"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-  }
+.profile-info strong {
+  font-size: 18px;
+  color: #003366;
+}
 
-  .buttons {
-    margin-top: 20px;
-  }
+.profile-info span {
+  color: #555;
+  font-size: 14px;
+}
 
-  .buttons button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
+.btn-edit {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+.btn-edit:hover {
+  background: #2563eb;
+}
 
-  .save-btn {
-    background: #4a7dfc;
-    color: #fff;
-  }
+.form-section {
+  display: none;
+  margin-top: 20px;
+}
 
-  .reset-btn {
-    background: #eee;
-    margin-left: 10px;
-  }
+.form-section label {
+  display: block;
+  margin: 10px 0 5px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-section input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.actions {
+  text-align: center;
+  margin-top: 20px;
+}
+.actions button {
+  margin: 10px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+}
+.save-btn {
+  background: #7DAAFB;
+  color: white;
+}
+.reset-btn {
+  background: white;
+  border: 1px solid #ddd;
+  color: #555;
+}
 </style>
 </head>
 <body>
 
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
 
-    <div>
-      <div class="logo">
-        <img src="logobl.PNG" alt="Logo">
-      </div>
+  <div>
+    <div class="logo">
+      <img src="IMG_1786.PNG" alt="Logo">
+    </div>
 
-       <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
+    <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
       <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-        <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
+      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
     </div>
-
     <div class="bottom-section">
-      <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
+        <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span>Notification Settings</span></a>
     </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <!-- Top Icons -->
+  <div class="top-icons">
+    <button class="icon-btn"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout"><i class="fas fa-arrow-right-from-bracket"></i></button>
   </div>
 
-  <!-- Main Content -->
-  <div class="main-content">
-    <div class="top-icons">
-    <button class="icon-btn" title="Notifications" onclick="window.location.href='notifications.php'"><i class="fas fa-bell"></i></button>
-    <button class="icon-btn" title="Logout" onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
+  <div class="profile-card">
+    <div class="profile-header">
+      <div class="profile-info" id="profileDetails">
+        <strong><?= htmlspecialchars($professor['name'] ?? '') ?></strong>
+        <span><?= htmlspecialchars($professor['email'] ?? '') ?></span>
+        <span><?= htmlspecialchars($professor['department'] ?? '') ?></span>
+        <span><?= htmlspecialchars($professor['university'] ?? '') ?></span>
+        <?php if (!empty($professor['cv_path'])): ?>
+          <a href="<?= htmlspecialchars($professor['cv_path']) ?>" target="_blank">View CV</a>
+        <?php else: ?>
+          <span>No CV uploaded</span>
+        <?php endif; ?>
+      </div>
+      <button class="btn-edit" id="editBtn">Edit</button>
     </div>
 
-    <div class="profile-box">
-      <h2><?php echo $professor_data['full_name']; ?></h2>
-      <p><?php echo $professor_data['email']; ?></p>
-      <p><?php echo $professor_data['department'] . " - " . $professor_data['university']; ?></p>
-
+    <div class="form-section" id="profileForm">
       <form method="POST" enctype="multipart/form-data">
         <label>Full Name</label>
-        <input type="text" name="full_name" value="<?php echo $professor['full_name']; ?>" required>
+        <input type="text" name="name" value="<?= htmlspecialchars($professor['name'] ?? '') ?>">
 
         <label>Email</label>
-        <input type="email" name="email" value="<?php echo $professor['email']; ?>" required>
+        <input type="email" name="email" value="<?= htmlspecialchars($professor['email'] ?? '') ?>">
 
         <label>Department</label>
-        <input type="text" name="department" value="<?php echo $professor['department']; ?>" required>
+        <input type="text" name="department" value="<?= htmlspecialchars($professor['department'] ?? '') ?>">
 
         <label>University</label>
-        <input type="text" name="university" value="<?php echo $professor['university']; ?>" required>
+        <input type="text" name="university" value="<?= htmlspecialchars($professor['university'] ?? '') ?>">
 
-        <label>Upload CV</label>
-        <input type="file" name="cv" accept=".pdf,.doc,.docx">
+        <label>CV:</label>
+        <input type="file" name="cv_path">
 
-        <?php if(!empty($professor_data['cv_path'])): ?>
-          <p>Current CV: <a href="<?php echo $professor['cv_path']; ?>" target="_blank">View</a></p>
-        <?php endif; ?>
-
-        <div class="buttons">
-          <button type="submit" name="save" class="save-btn">Save Changes</button>
+        <div class="actions">
+          <button type="submit" class="save-btn">Save changes</button>
           <button type="reset" class="reset-btn">Reset</button>
         </div>
       </form>
     </div>
   </div>
+</div>
 
 <script>
-  const toggleBtn = document.getElementById("toggleBtn");
-  const sidebar = document.getElementById("sidebar");
+const toggleBtn = document.getElementById("toggleBtn");
+const sidebar = document.getElementById("sidebar");
+toggleBtn.addEventListener("click", () => {
+  sidebar.classList.toggle("collapsed");
+});
 
-  toggleBtn.addEventListener("click", () => {
-    sidebar.classList.toggle("collapsed");
-  });
+// Edit button toggle
+const editBtn = document.getElementById("editBtn");
+const profileDetails = document.getElementById("profileDetails");
+const profileForm = document.getElementById("profileForm");
+
+editBtn.addEventListener("click", () => {
+  if(profileForm.style.display === "none" || profileForm.style.display === "") {
+    profileForm.style.display = "block";
+    profileDetails.style.display = "none";
+    editBtn.textContent = "Cancel";
+  } else {
+    profileForm.style.display = "none";
+    profileDetails.style.display = "block";
+    editBtn.textContent = "Edit";
+  }
+});
 </script>
 </body>
 </html>
