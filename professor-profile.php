@@ -28,6 +28,8 @@ $stmt->execute();
 $result = $stmt->get_result();
 $professor = $result->fetch_assoc();
 
+$success_message = "";
+
 // Update professor data when form submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name  = $_POST['name'];
@@ -46,8 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn->query("UPDATE users SET name='$name', email='$email' WHERE id=$user_id");
     $conn->query("UPDATE professors SET department='$dept', university='$univ', cv_path='$cv_path' WHERE user_id=$user_id");
 
-    header("Location: Professor_Profile.php");
-    exit;
+    $success_message = "Profile updated successfully!";
 }
 ?>
 
@@ -58,14 +59,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Professor Profile</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 <style>
- body {
+body {
     margin: 0;
     font-family: "Poppins", sans-serif;
     background: #f9f9f9;
     display: flex;
-  }
+}
+
 h2 {
-  margin-top: 80px;
   font-size: 22px;
   color: #003366;
   margin-top: -19px;
@@ -191,55 +192,28 @@ h2 {
   margin: 120px auto;
 }
 
-.profile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.profile-info {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.profile-info strong {
-  font-size: 18px;
-  color: #003366;
-}
-
-.profile-info span {
-  color: #555;
-  font-size: 14px;
-}
-
-.btn-edit {
-  background: #3b82f6;
-  color: #fff;
-  border: none;
-  padding: 8px 20px;
+/* Success Message */
+.success-message {
+  background: #d1f7d6;
+  color: #2d7a32;
+  border: 1px solid #9de5a2;
+  padding: 10px 15px;
   border-radius: 8px;
-  cursor: pointer;
+  text-align: center;
   font-weight: bold;
-  transition: background-color 0.2s;
-}
-.btn-edit:hover {
-  background: #2563eb;
-}
-
-.form-section {
+  margin-bottom: 15px;
   display: none;
-  margin-top: 20px;
 }
 
-.form-section label {
+/* Form styling */
+form label {
   display: block;
   margin: 10px 0 5px;
   font-weight: 500;
   color: #333;
 }
 
-.form-section input {
+form input {
   width: 100%;
   padding: 8px;
   border-radius: 8px;
@@ -279,7 +253,7 @@ h2 {
       <img src="IMG_1786.PNG" alt="Logo">
     </div>
 
-    <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
+   <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
       <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
       <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
     </div>
@@ -290,51 +264,37 @@ h2 {
 
 <!-- Main Content -->
 <div class="main-content">
-  <!-- Top Icons -->
   <div class="top-icons">
     <button class="icon-btn"><i class="fas fa-bell"></i></button>
     <button class="icon-btn" title="Logout"><i class="fas fa-arrow-right-from-bracket"></i></button>
   </div>
 
   <div class="profile-card">
-    <div class="profile-header">
-      <div class="profile-info" id="profileDetails">
-        <strong><?= htmlspecialchars($professor['name'] ?? '') ?></strong>
-        <span><?= htmlspecialchars($professor['email'] ?? '') ?></span>
-        <span><?= htmlspecialchars($professor['department'] ?? '') ?></span>
-        <span><?= htmlspecialchars($professor['university'] ?? '') ?></span>
-        <?php if (!empty($professor['cv_path'])): ?>
-          <a href="<?= htmlspecialchars($professor['cv_path']) ?>" target="_blank">View CV</a>
-        <?php else: ?>
-          <span>No CV uploaded</span>
-        <?php endif; ?>
+    <?php if (!empty($success_message)): ?>
+      <div class="success-message" id="successMessage"><?= htmlspecialchars($success_message) ?></div>
+    <?php endif; ?>
+
+    <form method="POST" enctype="multipart/form-data">
+      <label>Full Name</label>
+      <input type="text" name="name" value="<?= htmlspecialchars($professor['name'] ?? '') ?>">
+
+      <label>Email</label>
+      <input type="email" name="email" value="<?= htmlspecialchars($professor['email'] ?? '') ?>">
+
+      <label>Department</label>
+      <input type="text" name="department" value="<?= htmlspecialchars($professor['department'] ?? '') ?>">
+
+      <label>University</label>
+      <input type="text" name="university" value="<?= htmlspecialchars($professor['university'] ?? '') ?>">
+
+      <label>CV:</label>
+      <input type="file" name="cv_path">
+
+      <div class="actions">
+        <button type="submit" class="save-btn">Save changes</button>
+        <button type="reset" class="reset-btn">Reset</button>
       </div>
-      <button class="btn-edit" id="editBtn">Edit</button>
-    </div>
-
-    <div class="form-section" id="profileForm">
-      <form method="POST" enctype="multipart/form-data">
-        <label>Full Name</label>
-        <input type="text" name="name" value="<?= htmlspecialchars($professor['name'] ?? '') ?>">
-
-        <label>Email</label>
-        <input type="email" name="email" value="<?= htmlspecialchars($professor['email'] ?? '') ?>">
-
-        <label>Department</label>
-        <input type="text" name="department" value="<?= htmlspecialchars($professor['department'] ?? '') ?>">
-
-        <label>University</label>
-        <input type="text" name="university" value="<?= htmlspecialchars($professor['university'] ?? '') ?>">
-
-        <label>CV:</label>
-        <input type="file" name="cv_path">
-
-        <div class="actions">
-          <button type="submit" class="save-btn">Save changes</button>
-          <button type="reset" class="reset-btn">Reset</button>
-        </div>
-      </form>
-    </div>
+    </form>
   </div>
 </div>
 
@@ -345,22 +305,16 @@ toggleBtn.addEventListener("click", () => {
   sidebar.classList.toggle("collapsed");
 });
 
-// Edit button toggle
-const editBtn = document.getElementById("editBtn");
-const profileDetails = document.getElementById("profileDetails");
-const profileForm = document.getElementById("profileForm");
-
-editBtn.addEventListener("click", () => {
-  if(profileForm.style.display === "none" || profileForm.style.display === "") {
-    profileForm.style.display = "block";
-    profileDetails.style.display = "none";
-    editBtn.textContent = "Cancel";
-  } else {
-    profileForm.style.display = "none";
-    profileDetails.style.display = "block";
-    editBtn.textContent = "Edit";
-  }
-});
+// show success message with fade out
+const msg = document.getElementById("successMessage");
+if (msg) {
+  msg.style.display = "block";
+  setTimeout(() => {
+    msg.style.opacity = "0";
+    msg.style.transition = "opacity 1s ease";
+    setTimeout(() => msg.remove(), 1000);
+  }, 3000);
+}
 </script>
 </body>
 </html>
