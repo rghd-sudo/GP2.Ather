@@ -1,72 +1,100 @@
 <?php
-// Database config
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "agdb"; 
+// requests.php
+session_start();
+include 'index.php'; // الاتصال بقاعدة agdb
 
-// Connect
-$conn = new mysqli($host, $user, $pass, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// التحقق من تسجيل الدخول
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
 }
 
-// Handle accept/reject action
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['request_id'])) {
-    $action = $_POST['action']; // "accept" or "reject"
-    $request_id = intval($_POST['request_id']);
+$user_id = (int) $_SESSION['user_id'];
 
-    if ($action === 'accept' || $action === 'reject') {
-        $newStatus = ($action === 'accept') ? 'accepted' : 'rejected';
-        $stmt = $conn->prepare("UPDATE requests SET status = ? WHERE id = ?");
-        $stmt->bind_param("si", $newStatus, $request_id);
-        $stmt->execute();
-        $stmt->close();
-        // بعد التحديث نعيد التحميل حتى تظهر الحالة المحدثة
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
+// جلب professor_id
+$prof_q = $conn->prepare("SELECT professor_id FROM professors WHERE user_id = ?");
+$prof_q->bind_param("i", $user_id);
+$prof_q->execute();
+$prof_res = $prof_q->get_result();
+if ($prof_res->num_rows === 0) {
+    die("Professor profile not found.");
+}
+$prof_row = $prof_res->fetch_assoc();
+$professor_id = (int) $prof_row['professor_id'];
+
+// معالجة القبول أو الرفض
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST['action'])) {
+    $request_id = (int) $_POST['request_id'];
+    $action = $_POST['action']; // accept أو reject
+    $status = ($action === 'accept') ? 'Accepted' : 'Rejected';
+
+    // تحديث الحالة
+    $upd = $conn->prepare("UPDATE requests SET status = ? WHERE id = ? AND professor = ?");
+    $upd->bind_param("sii", $status, $request_id, $professor_id);
+    $upd->execute();
+
+    // إرسال إشعار للطالب
+    $uget = $conn->prepare("SELECT user_id FROM requests WHERE id = ?");
+    $uget->bind_param("i", $request_id);
+    $uget->execute();
+    $uget_r = $uget->get_result();
+    if ($uget_r && $uget_r->num_rows) {
+        $urow = $uget_r->fetch_assoc();
+        $student_id = (int) $urow['user_id'];
+
+        $message = ($status === 'Accepted')
+            ? "Your recommendation request has been accepted."
+            : "Your recommendation request has been rejected.";
+
+        $insn = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
+        $insn->bind_param("is", $student_id, $message);
+        $insn->execute();
     }
-}
-$stmt = $conn->prepare("
-    SELECT 
-        r.id,
-        u.name AS graduate_name,
-        r.created_at,
-        r.type,
-        r.purpose,
-        r.status
-    FROM 
-        requests r
-    JOIN 
-        users u ON r.user_id = u.id
-    ORDER BY 
-        r.created_at DESC
-");
-$stmt->execute();
-$result = $stmt->get_result();
-$requests = $result->fetch_all(MYSQLI_ASSOC);
-$stmt->close();
 
+    header("Location: requests.php");
+    exit;
+}
+
+// جلب كل الطلبات
+$list_q = $conn->prepare("
+    SELECT r.id, r.user_id, r.major, r.course, r.purpose, r.type, r.file_name, r.created_at, r.status,
+           u.name AS student_name
+    FROM requests r
+    JOIN users u ON r.user_id = u.id
+    WHERE r.professor = ?
+    ORDER BY r.created_at DESC
+");
+$list_q->bind_param("i", $professor_id);
+$list_q->execute();
+$list_res = $list_q->get_result();
+
+// جلب آخر 10 إشعارات للبروفيسور
+$notif_q = $conn->prepare("SELECT message, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+$notif_q->bind_param("i", $user_id);
+$notif_q->execute();
+$notif_res = $notif_q->get_result();
 ?>
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Incoming Recommendation Requests</title>
+<title>All Recommendation Requests</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 <style>
-  /* --- (تصاميمك الأساسية) --- */
-  body {
+ body {
     margin: 0;
     font-family: "Poppins", sans-serif;
-   background: #fdfaf6;
-  display: flex;
+    background: #f9f9f9;
+    display: flex;
+  }
+h2 {
+  margin-top: 80px;
+  font-size: 22px;
+  color: #003366;
+  margin-top: -19px;
 }
-
-/* 🔹 Sidebar */
-.sidebar {
-  background-color: #c8e4eb;
+  .sidebar {
+    background-color: #cde3e8;
     width: 230px;
     transition: width 0.3s;
     height: 100vh;
@@ -77,101 +105,140 @@ $stmt->close();
     flex-direction: column;
     justify-content: space-between;
   }
-
-.sidebar.collapsed .menu-text {
-  display: none;
-}
-.bottom-section {
-  margin-bottom: 20px;}
-
-  .sidebar .logo { text-align: center; margin-bottom: 30px; }
-  .sidebar .logo img { width: 80px; }
-  .menu-item { display: flex; align-items: center; padding: 12px 20px; color: #333; text-decoration: none; transition: background 0.3s; }
-  .menu-item:hover { background: #bcd5db; }
-  .menu-item i { font-size: 20px; margin-right: 10px; width: 25px; text-align: center; }
-  .menu-text { font-size: 15px; white-space: nowrap; }
-  .toggle-btn { position: absolute; top: 20px; right: -15px; background: #003366; color: #fff; border-radius: 50%; border: none; width: 30px; height: 30px; cursor: pointer; }
-  .top-icons { position: absolute; top: 20px; right: 30px; display: flex; align-items: center; gap: 20px; }
-  .icon-btn { background: none; border: none; cursor: pointer; font-size: 20px; color: #333; }
-  .icon-btn:hover { color: #003366; }
-  .main-content { margin-left: 230px; padding: 30px; transition: margin-left 0.3s; width: 100%; position: relative; }
-  .username { font-size: 18px; color: #003366; font-weight: 600; margin-top: 70px; margin-bottom: 10px; }
-
-  /* Requests grid */
-  .requests-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
-    margin-top: 60px;
+  .sidebar.collapsed {
+    width: 70px;
   }
-
-  .request-card {
-    background: #f2f2f2;
-    border: 2px solid rgba(0,0,0,0.08);
-    border-radius: 8px;
-    padding: 18px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  .sidebar .logo {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .sidebar .logo img {
+    width: 80px;
+  }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.3s;
+  }
+  .menu-item:hover {
+    background: #bcd5db;
+  }
+  .menu-item i {
+    font-size: 20px;
+    margin-right: 10px;
+    width: 25px;
+    text-align: center;
+  }
+  .menu-text {
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .sidebar.collapsed .menu-text {
+    display: none;
+  }
+  .bottom-section {
+    margin-bottom: 20px;
+  }
+  .toggle-btn {
+    position: absolute;
+    top: 20px;
+    right: -15px;
+    background: #003366;
+    color: #fff;
+    border-radius: 50%;
+    border: none;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+  }
+  .top-icons {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #333;
+  }
+  .icon-btn:hover {
+    color: #003366;
+  }
+  .main-content {
+    margin-left: 230px;
+    padding: 30px;
+    transition: margin-left 0.3s;
+    width: 100%;
     position: relative;
   }
-
-  .request-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
+  .sidebar.collapsed + .main-content {
+    margin-left: 70px;
   }
-  .avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 6px;
-    background: #e8f3f7;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #2b7a90;
+  .username {
     font-size: 18px;
+    color: #003366;
+    font-weight: 600;
+    margin-top: 70px;
+    margin-bottom: 10px;
   }
-  .request-title { font-weight: 700; color: #003366; font-size: 18px; }
 
-  .request-body { color: #222; line-height: 1.4; margin-top: 8px; white-space: pre-wrap; }
-  .meta { margin-top: 8px; color: #444; font-size: 14px; }
-
+  /* Cards Styling */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 26px;
+    margin-top: 40px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 18px;
+    min-height: 170px;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  }
   .card-actions {
     position: absolute;
-    bottom: 12px;
-    right: 12px;
-    display: flex;
-    gap: 8px;
+    right: 16px;
+    bottom: 14px;
+    display:flex;
+    gap:10px;
   }
-
-  .btn {
+  .btn-accept {
+    background: #7fcfbd;
     border: none;
-    padding: 8px 14px;
-    border-radius: 18px;
-    cursor: pointer;
-    font-weight: 600;
+    padding:8px 14px;
+    border-radius:20px;
+    cursor:pointer;
+    color:#0b3b2e;
+    font-weight:700;
   }
-  .btn-accept { background: #7fc4b8; color: #063; }
-  .btn-reject { background: #f5a6a6; color: #700; }
-
-  .status-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    padding: 6px 10px;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 13px;
+  .btn-reject {
+    background: #f3a59a;
+    border:none;
+    padding:8px 14px;
+    border-radius:20px;
+    cursor:pointer;
+    color:#6b0f0f;
+    font-weight:700;
   }
-  .status-pending { background: #fff0b3; color: #7a5f00; border: 1px solid rgba(0,0,0,0.05); }
-  .status-accepted { background: #e6fbef; color: #0b6b3a; border: 1px solid rgba(0,0,0,0.05); }
-  .status-rejected { background: #fdeeee; color: #7a1b1b; border: 1px solid rgba(0,0,0,0.05); }
-
-  /* Responsive */
-  @media (max-width: 800px) {
-    .sidebar { width: 70px; }
-    .main-content { margin-left: 70px; }
+  .status-box {
+    padding:8px 12px;
+    border-radius:18px;
+    font-weight:700;
+    font-size:14px;
   }
+  .accepted { background:#d4edda; color:#155724; }
+  .rejected { background:#f8d7da; color:#721c24; }
 </style>
 </head>
 <body>
@@ -182,10 +249,10 @@ $stmt->close();
 
     <div>
       <div class="logo">
-        <img src="LOGObl.PNG" alt="Logo">
+        <img src="IMG_1786.PNG" alt="Logo">
       </div>
 
-       <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
+      <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
       <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
         <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
     </div>
@@ -197,7 +264,6 @@ $stmt->close();
 
   <!-- Main Content -->
   <div class="main-content">
-    <!-- Top Icons -->
     <div class="top-icons">
       <button class="icon-btn"><i class="fas fa-bell"></i></button>
       <button class="icon-btn" title="Logout"><i class="fas fa-arrow-right-from-bracket"></i></button>
@@ -205,67 +271,55 @@ $stmt->close();
 
     <h2>Incoming Recommendation Requests</h2>
 
-    <div class="requests-grid">
-      <?php if (empty($requests)): ?>
-        <p>لا يوجد طلبات حالياً.</p>
-      <?php else: ?>
-        <?php foreach ($requests as $r): 
-          $id = intval($r['id']);
-          $name = htmlspecialchars($r['graduate_name']);
-          $rawDate = $r['created_at'];
-          $dateStr = $rawDate ? date("d/m/Y", strtotime($rawDate)) : '-';
-          $type = htmlspecialchars($r['type']);
-          $purpose = htmlspecialchars($r['purpose']);
-          $status = strtolower($r['status'] ?? 'pending');
-          $statusClass = $status === 'accepted' ? 'status-accepted' : ($status === 'rejected' ? 'status-rejected' : 'status-pending');
-          $statusLabel = $status === 'accepted' ? 'Accepted' : ($status === 'rejected' ? 'Rejected' : 'Pending');
-        ?>
-        <div class="request-card">
-          <div class="status-badge <?php echo $statusClass; ?>"><?php echo $statusLabel; ?></div>
-
-          <div class="request-header">
-            <div class="avatar"><i class="fas fa-user"></i></div>
-            <div>
-              <div class="request-title">Request #<?php echo $id; ?> — <?php echo $name; ?></div>
-              <div style="font-size:13px;color:#666;margin-top:4px;"><?php echo $dateStr; ?> · <?php echo $type; ?></div>
-            </div>
-          </div>
-
-          <div class="request-body">
-            <strong>Purpose:</strong>
-            <div class="meta"><?php echo $purpose; ?></div>
-          </div>
+    <section class="cards">
+      <?php
+        if ($list_res->num_rows === 0) {
+          echo "<div style='grid-column:1/-1;text-align:center;color:#666;'>No requests found.</div>";
+        } else {
+          while ($r = $list_res->fetch_assoc()):
+            $rid = (int)$r['id'];
+            $student_name = htmlspecialchars($r['student_name']);
+            $date = htmlspecialchars($r['created_at']);
+            $type = htmlspecialchars($r['type']);
+            $purpose = htmlspecialchars($r['purpose']);
+            $status = $r['status'] ?? '';
+      ?>
+        <div class="card">
+          <h3><?= $student_name ?></h3>
+          <p><strong>Date:</strong> <?= $date ?></p>
+          <p><strong>Type:</strong> <?= $type ?></p>
+          <p><strong>Purpose:</strong> <?= $purpose ?></p>
 
           <div class="card-actions">
-            <?php if ($status !== 'accepted'): ?>
-              <form method="post" style="display:inline;">
-                <input type="hidden" name="request_id" value="<?php echo $id; ?>">
+            <?php if (strtolower($status) === 'accepted'): ?>
+              <div class="status-box accepted">Accepted</div>
+            <?php elseif (strtolower($status) === 'rejected'): ?>
+              <div class="status-box rejected">Rejected</div>
+            <?php else: ?>
+              <form method="POST">
+                <input type="hidden" name="request_id" value="<?= $rid ?>">
                 <input type="hidden" name="action" value="accept">
-                <button class="btn btn-accept" type="submit">Accept</button>
+                <button type="submit" class="btn-accept">Accept</button>
               </form>
-            <?php endif; ?>
-
-            <?php if ($status !== 'rejected'): ?>
-              <form method="post" style="display:inline;">
-                <input type="hidden" name="request_id" value="<?php echo $id; ?>">
+              <form method="POST">
+                <input type="hidden" name="request_id" value="<?= $rid ?>">
                 <input type="hidden" name="action" value="reject">
-                <button class="btn btn-reject" type="submit">Reject</button>
+                <button type="submit" class="btn-reject">Reject</button>
               </form>
             <?php endif; ?>
           </div>
         </div>
-        <?php endforeach; ?>
-      <?php endif; ?>
-    </div>
+      <?php endwhile; } ?>
+    </section>
   </div>
 
 <script>
   const toggleBtn = document.getElementById("toggleBtn");
   const sidebar = document.getElementById("sidebar");
+
   toggleBtn.addEventListener("click", () => {
     sidebar.classList.toggle("collapsed");
   });
 </script>
 </body>
 </html>
-
