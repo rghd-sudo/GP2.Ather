@@ -1,45 +1,54 @@
 <?php
-// الاتصال بقاعدة البيانات
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "agdb";
-
-$conn = new mysqli($host, $user, $pass, $dbname);
-if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error); }
-
 session_start();
-$professor_id = 1; // مؤقتاً، لاحقاً خليه من session
+include 'index.php';
 
-// جلب بيانات البروفيسور
-$sql = "SELECT * FROM professors WHERE professor_id = $professor_id";
-$result = $conn->query($sql);
-$professor_data = $result->fetch_assoc();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
 
-// تعديل البيانات عند الحفظ
-if (isset($_POST['save'])) {
-  $full_name = $_POST['full_name'];
-  $email = $_POST['email'];
-  $department = $_POST['department'];
-  $university = $_POST['university'];
+$user_id = $_SESSION['user_id'];
 
-  // رفع CV جديد إذا تم اختياره
-  $cv_path = $professor_data['cv_path'];
-  if (!empty($_FILES['cv']['name'])) {
-      $cv_name = basename($_FILES['cv']['name']);
-      $target_path = "uploads/" . $cv_name;
-      move_uploaded_file($_FILES['cv']['tmp_name'], $target_path);
-      $cv_path = $target_path;
-  }
+// Fetch professor and user info
+$query = "
+    SELECT 
+        users.id AS uid,
+        users.name, 
+        users.email, 
+        professors.department, 
+        professors.university, 
+        professors.cv_path
+    FROM professors
+    JOIN users ON professors.user_id = users.id
+    WHERE users.id = ?
+";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$professor = $result->fetch_assoc();
 
-  $update_sql = "UPDATE professors 
-                 SET full_name='$full_name', email='$email', department='$department', university='$university', cv_path='$cv_path'
-                 WHERE professor_id=$professor_id";
-  if ($conn->query($update_sql)) {
-      echo "<script>alert('Profile updated successfully!');</script>";
-  } else {
-      echo "<script>alert('Error updating profile');</script>";
-  }
+$success_message = "";
+
+// Update professor data when form submitted
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name  = $_POST['name'];
+    $email = $_POST['email'];
+    $dept  = $_POST['department'];
+    $univ  = $_POST['university'];
+
+    $cv_path = $professor['cv_path'] ?? null;
+
+    if (!empty($_FILES['cv_path']['name'])) {
+        $upload_dir = "uploads/";
+        $cv_path = $upload_dir . basename($_FILES['cv_path']['name']);
+        move_uploaded_file($_FILES['cv_path']['tmp_name'], $cv_path);
+    }
+
+    $conn->query("UPDATE users SET name='$name', email='$email' WHERE id=$user_id");
+    $conn->query("UPDATE professors SET department='$dept', university='$univ', cv_path='$cv_path' WHERE user_id=$user_id");
+
+    $success_message = "Profile updated successfully!";
 }
 ?>
 
@@ -50,252 +59,262 @@ if (isset($_POST['save'])) {
 <title>Professor Profile</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 <style>
- body {
+body {
     margin: 0;
     font-family: "Poppins", sans-serif;
-    background:  #fdfaf6;;
+    background: #f9f9f9;
     display: flex;
-  }
+}
+
 h2 {
-  margin-top: 80px;
   font-size: 22px;
   color: #003366;
   margin-top: -19px;
 }
-  /* Sidebar */
-  .sidebar {
-    background-color:  #c8e4eb;
-    width: 230px;
-    transition: width 0.3s;
-    height: 100vh;
-    padding-top: 20px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    position: fixed;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
 
-  .sidebar.collapsed {
-    width: 70px;
-  }
+/* Sidebar */
+.sidebar {
+  background-color: #cde3e8;
+  width: 230px;
+  transition: width 0.3s;
+  height: 100vh;
+  padding-top: 20px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
 
-  .sidebar .logo {
-    text-align: center;
-    margin-bottom: 30px;
-  }
+.sidebar.collapsed {
+  width: 70px;
+}
 
-  .sidebar .logo img {
-    width: 80px;
-  }
+.sidebar .logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
 
-  .menu-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 20px;
-    color: #333;
-    text-decoration: none;
-    transition: background 0.3s;
-  }
+.sidebar .logo img {
+  width: 80px;
+}
 
-  .menu-item:hover {
-    background: #bcd5db;
-  }
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.3s;
+}
 
-  .menu-item i {
-    font-size: 20px;
-    margin-right: 10px;
-    width: 25px;
-    text-align: center;
-  }
+.menu-item:hover {
+  background: #bcd5db;
+}
 
-  .menu-text {
-    font-size: 15px;
-    white-space: nowrap;
-  }
+.menu-item i {
+  font-size: 20px;
+  margin-right: 10px;
+  width: 25px;
+  text-align: center;
+}
 
-  .sidebar.collapsed .menu-text {
-    display: none;
-  }
+.menu-text {
+  font-size: 15px;
+  white-space: nowrap;
+}
 
-  /* Bottom Section */
-  .bottom-section {
-    margin-bottom: 20px;
-  }
+.sidebar.collapsed .menu-text {
+  display: none;
+}
 
-  /* Collapse Button */
-  .toggle-btn {
-    position: absolute;
-    top: 20px;
-    right: -15px;
-    background: #003366;
-    color: #fff;
-    border-radius: 50%;
-    border: none;
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-  }
+/* Bottom Section */
+.bottom-section {
+  margin-bottom: 20px;
+}
 
-  /* Top Icons */
-  .top-icons {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
+/* Collapse Button */
+.toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: -15px;
+  background: #003366;
+  color: #fff;
+  border-radius: 50%;
+  border: none;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
 
-  .icon-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
-    color: #333;
-  }
+/* Top Icons */
+.top-icons {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
 
-  .icon-btn:hover {
-    color: #003366;
-  }
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #333;
+}
 
-  /* Main Content */
-  .main-content {
-    margin-left: 230px;
-    padding: 30px;
-    transition: margin-left 0.3s;
-    width: 100%;
-    position: relative;
-  }
+.icon-btn:hover {
+  color: #003366;
+}
 
-  .sidebar.collapsed + .main-content {
-    margin-left: 70px;
-  }
+/* Main Content */
+.main-content {
+  margin-left: 230px;
+  padding: 30px;
+  transition: margin-left 0.3s;
+  width: 100%;
+  position: relative;
+}
 
-  /* Profile Box */
-  .profile-box {
-    background: #fff;
-    padding: 30px;
-    border-radius: 12px;
-    width: 600px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  }
+.sidebar.collapsed + .main-content {
+  margin-left: 70px;
+}
 
-  .profile-box h2 {
-    color: #003366;
-    margin-bottom: 5px;
-  }
+/* Profile Card */
+.profile-card {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  max-width: 700px;
+  margin: 120px auto;
+}
 
-  .profile-box p {
-    color: gray;
-    margin-top: 0;
-  }
+/* Success Message */
+.success-message {
+  background: #d1f7d6;
+  color: #2d7a32;
+  border: 1px solid #9de5a2;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 15px;
+  display: none;
+}
 
-  form label {
-    display: block;
-    margin-top: 12px;
-    font-weight: 600;
-  }
+/* Form styling */
+form label {
+  display: block;
+  margin: 10px 0 5px;
+  font-weight: 500;
+  color: #333;
+}
 
-  form input[type="text"],
-  form input[type="email"],
-  form input[type="file"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-  }
+form input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
 
-  .buttons {
-    margin-top: 20px;
-  }
-
-  .buttons button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-
-  .save-btn {
-    background: #4a7dfc;
-    color: #fff;
-  }
-
-  .reset-btn {
-    background: #eee;
-    margin-left: 10px;
-  }
+.actions {
+  text-align: center;
+  margin-top: 20px;
+}
+.actions button {
+  margin: 10px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+}
+.save-btn {
+  background: #7DAAFB;
+  color: white;
+}
+.reset-btn {
+  background: white;
+  border: 1px solid #ddd;
+  color: #555;
+}
 </style>
 </head>
 <body>
 
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
 
-    <div>
-      <div class="logo">
-        <img src="logobl.PNG" alt="Logo">
-      </div>
+  <div>
+    <div class="logo">
+      <img src="IMG_1786.PNG" alt="Logo">
+    </div>
 
-       <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
+   <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
       <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-        <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
+      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
     </div>
-
     <div class="bottom-section">
-      <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
+        <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span>Notification Settings</span></a>
     </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <div class="top-icons">
+    <button class="icon-btn"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout"><i class="fas fa-arrow-right-from-bracket"></i></button>
   </div>
 
-  <!-- Main Content -->
-  <div class="main-content">
-    <div class="top-icons">
-    <button class="icon-btn" title="Notifications" onclick="window.location.href='notifications.php'"><i class="fas fa-bell"></i></button>
-    <button class="icon-btn" title="Logout" onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
-    </div>
+  <div class="profile-card">
+    <?php if (!empty($success_message)): ?>
+      <div class="success-message" id="successMessage"><?= htmlspecialchars($success_message) ?></div>
+    <?php endif; ?>
 
-    <div class="profile-box">
-      <h2><?php echo $professor_data['full_name']; ?></h2>
-      <p><?php echo $professor_data['email']; ?></p>
-      <p><?php echo $professor_data['department'] . " - " . $professor_data['university']; ?></p>
+    <form method="POST" enctype="multipart/form-data">
+      <label>Full Name</label>
+      <input type="text" name="name" value="<?= htmlspecialchars($professor['name'] ?? '') ?>">
 
-      <form method="POST" enctype="multipart/form-data">
-        <label>Full Name</label>
-        <input type="text" name="full_name" value="<?php echo $professor_data['full_name']; ?>" required>
+      <label>Email</label>
+      <input type="email" name="email" value="<?= htmlspecialchars($professor['email'] ?? '') ?>">
 
-        <label>Email</label>
-        <input type="email" name="email" value="<?php echo $professor_data['email']; ?>" required>
+      <label>Department</label>
+      <input type="text" name="department" value="<?= htmlspecialchars($professor['department'] ?? '') ?>">
 
-        <label>Department</label>
-        <input type="text" name="department" value="<?php echo $professor_data['department']; ?>" required>
+      <label>University</label>
+      <input type="text" name="university" value="<?= htmlspecialchars($professor['university'] ?? '') ?>">
 
-        <label>University</label>
-        <input type="text" name="university" value="<?php echo $professor_data['university']; ?>" required>
+      <label>CV:</label>
+      <input type="file" name="cv_path">
 
-        <label>Upload CV</label>
-        <input type="file" name="cv" accept=".pdf,.doc,.docx">
-
-        <?php if(!empty($professor_data['cv_path'])): ?>
-          <p>Current CV: <a href="<?php echo $professor_data['cv_path']; ?>" target="_blank">View</a></p>
-        <?php endif; ?>
-
-        <div class="buttons">
-          <button type="submit" name="save" class="save-btn">Save Changes</button>
-          <button type="reset" class="reset-btn">Reset</button>
-        </div>
-      </form>
-    </div>
+      <div class="actions">
+        <button type="submit" class="save-btn">Save changes</button>
+        <button type="reset" class="reset-btn">Reset</button>
+      </div>
+    </form>
   </div>
+</div>
 
 <script>
-  const toggleBtn = document.getElementById("toggleBtn");
-  const sidebar = document.getElementById("sidebar");
+const toggleBtn = document.getElementById("toggleBtn");
+const sidebar = document.getElementById("sidebar");
+toggleBtn.addEventListener("click", () => {
+  sidebar.classList.toggle("collapsed");
+});
 
-  toggleBtn.addEventListener("click", () => {
-    sidebar.classList.toggle("collapsed");
-  });
+// show success message with fade out
+const msg = document.getElementById("successMessage");
+if (msg) {
+  msg.style.display = "block";
+  setTimeout(() => {
+    msg.style.opacity = "0";
+    msg.style.transition = "opacity 1s ease";
+    setTimeout(() => msg.remove(), 1000);
+  }, 3000);
+}
 </script>
 </body>
 </html>
