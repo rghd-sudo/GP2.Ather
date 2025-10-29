@@ -3,7 +3,7 @@ session_start();
 include 'index.php';
 
 // تحقق من تسجيل الدخول
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'graduate') {
   header("Location: login.php");
   exit();
 }

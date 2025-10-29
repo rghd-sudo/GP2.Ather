@@ -1,15 +1,12 @@
 <?php
-// Database config
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "agdb"; 
-
-// Connect
-$conn = new mysqli($host, $user, $pass, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+session_start();
+include 'index.php'; 
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
+  header("Location: login.php");
+  exit();
 }
+
+$user_id = $_SESSION['user_id'];
 
 // Handle accept/reject action
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['request_id'])) {
