@@ -11,39 +11,69 @@ if ($conn->connect_error) {
 }
 
 // الحصول على معرف الخريج من الرابط
-$graduate_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+session_start();
 
-$sql = "SELECT g.*, u.name, u.email, u.department , u.National_ID,
-               r.major, r.purpose, r.type AS recommendation_type
-        FROM graduates g
-        JOIN users u ON g.user_id = u.id
-        LEFT JOIN requests r ON g.graduate_id = r.graduate_id
-        WHERE g.graduate_id = ?";
+if (!isset($_SESSION['user_id'])) {
+  header("Location: login.php");
+  exit();
+}
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $graduate_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$graduate = $result->fetch_assoc();
+$professor_id = $_SESSION['user_id'];
+$request_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$graduate = null;
+$requests = null;
 
-// حفظ التوصية عند الإرسال
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $content = $_POST['recommendation_text'];
-    $status = $_POST['action']; // "draft" أو "sent"
-    $professor_id = 1; // لاحقًا من session
-    $major = $requests['major'] ?? ''; 
-    $purpose = $requests['purpose'] ?? '';
-    $type = $requests['recommendation_type'] ?? '';
+// 🟩 جلب بيانات الخريج والطلب
+if ($request_id > 0) {
+  $sql = "
+    SELECT 
+      u.name, u.National_ID, u.department,
+      g.graduation_year, g.gpa,
+      r.purpose, r.type, r.major,
+      g.user_id AS graduate_user_id
+    FROM requests r
+    JOIN graduates g ON r.user_id = g.user_id
+    JOIN users u ON g.user_id = u.id
+    WHERE r.id = ? AND r.professor_id = ?
+  ";
 
-    $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, content, recommendation_type, major, purpose, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
-    $insert->bind_param("iisssss", $graduate_id, $professor_id, $content, $type, $major, $purpose, $status);
-    $insert->execute();
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("ii", $request_id, $professor_id);
+  $stmt->execute();
+  $result = $stmt->get_result();
 
-    if($status === 'sent'){
-        echo "<script>alert('The Recommendation has been sent successfully!');</script>";
-    } else {
-        echo "<script>alert('The Recommendation has been saved as a draft');</script>";
-    }
+  if ($result->num_rows > 0) {
+    $graduate = $result->fetch_assoc();
+  }
+}
+
+// 🟦 حفظ التوصية (مسودة أو إرسال)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+  $action = $_POST['action'];
+  $text = trim($_POST['recommendation_text']);
+
+  if ($graduate && !empty($text)) {
+    // إدخال التوصية الجديدة
+    $insert_sql = "
+      INSERT INTO recommendations (content, professor_id, graduate_id, date_created, request_id)
+      VALUES (?, ?, ?, NOW(), ?)
+    ";
+    $stmt = $conn->prepare($insert_sql);
+    $stmt->bind_param("siii", $text, $professor_id, $graduate['graduate_user_id'], $request_id);
+    $stmt->execute();
+
+    // تحديث حالة الطلب
+    $status = ($action === 'draft') ? 'draft' : 'sent';
+    $update_sql = "UPDATE requests SET status = ? WHERE id = ?";
+    $stmt2 = $conn->prepare($update_sql);
+    $stmt2->bind_param("si", $status, $request_id);
+    $stmt2->execute();
+
+    echo "<script>alert('Recommendation $status saved successfully!'); window.location='professor_main.php';</script>";
+    exit();
+  } else {
+    echo "<script>alert('Please write a recommendation before saving.');</script>";
+  }
 }
 ?>
 

@@ -1,4 +1,9 @@
 <?php
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
+    header("Location: login.php");
+    exit;
+}
 // Database config
 $host = "localhost";
 $user = "root";
@@ -22,12 +27,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['req
         $stmt->bind_param("si", $newStatus, $request_id);
         $stmt->execute();
         $stmt->close();
+
         // بعد التحديث نعيد التحميل حتى تظهر الحالة المحدثة
         header("Location: " . $_SERVER['PHP_SELF']);
         exit;
     }
 }
-$stmt = $conn->prepare("
+
+// جلب قائمة الطلبات (مثلاً الخاصة بالبروفيسور)
+$user_id = $_SESSION['user_id'];
+$result = $conn->query("SELECT professor_id FROM professors WHERE user_id = $user_id");
+$row = $result->fetch_assoc();
+$professor_id = $row['professor_id'] ?? 0;
+$list_q = $conn->prepare("
     SELECT 
         r.id,
         u.name AS graduate_name,
@@ -39,19 +51,30 @@ $stmt = $conn->prepare("
         requests r
     JOIN 
         users u ON r.user_id = u.id
+    WHERE 
+        r.professor_id = ?      -- لو تبغى الطلبات الخاصة بدكتور محدد
     ORDER BY 
         r.created_at DESC
 ");
+
 $list_q->bind_param("i", $professor_id);
 $list_q->execute();
 $list_res = $list_q->get_result();
 
 // جلب آخر 10 إشعارات للبروفيسور
-$notif_q = $conn->prepare("SELECT message, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+$user_id = $professor_id; // لو كان نفس المعرف
+$notif_q = $conn->prepare("
+    SELECT message, created_at 
+    FROM notifications 
+    WHERE user_id = ? 
+    ORDER BY created_at DESC 
+    LIMIT 10
+");
 $notif_q->bind_param("i", $user_id);
 $notif_q->execute();
 $notif_res = $notif_q->get_result();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -227,7 +250,7 @@ h2 {
 
     <div>
       <div class="logo">
-        <img src="IMG_1786.PNG" alt="Logo">
+        <img src="LOGObl.PNG" alt="Logo">
       </div>
 
       <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
@@ -256,14 +279,14 @@ h2 {
         } else {
           while ($r = $list_res->fetch_assoc()):
             $rid = (int)$r['id'];
-            $student_name = htmlspecialchars($r['student_name']);
+            $graduate_name = htmlspecialchars($r['graduate_name']);
             $date = htmlspecialchars($r['created_at']);
             $type = htmlspecialchars($r['type']);
             $purpose = htmlspecialchars($r['purpose']);
             $status = $r['status'] ?? '';
       ?>
         <div class="card">
-          <h3><?= $student_name ?></h3>
+          <h3><?= $graduate_name ?></h3>
           <p><strong>Date:</strong> <?= $date ?></p>
           <p><strong>Type:</strong> <?= $type ?></p>
           <p><strong>Purpose:</strong> <?= $purpose ?></p>

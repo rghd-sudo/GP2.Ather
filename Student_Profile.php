@@ -140,12 +140,13 @@ if (!empty($_FILES['cv_path']['name'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <title>Student Profile</title>
     <style>
         /* التنسيقات العامة والهيكل الأساسي */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+           font-family: "Poppins", sans-serif;
             background-color: #fdfaf6; /* لون خلفية فاتح جداً */
             margin: 0;
             display: flex;
@@ -640,12 +641,16 @@ h2 {
         </div>
 -->
 <!-- 🔸 Sidebar -->
+
+<!-- 🔸 Sidebar -->
 <div class="sidebar" id="sidebar">
   <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
   <div>
     <div class="logo">
-      <img src="logo1.jpg" alt="Logo">
+      <img src="logobl.PNG" alt="Logo">
+
     </div>
+    <a href="req_system.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
     <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     <a href="new_request.php" class="menu-item"><i class="fas fa-plus-square"></i><span class="menu-text">New Request</span></a>
     <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i><span class="menu-text">Track Request</span></a>
@@ -658,12 +663,13 @@ h2 {
 </div>
 
 <!-- 🔸 Top Bar -->
-<div class="top-bar">
+<div class="top-bar"> 
   <div class="top-icons">
-    <button class="icon-btn"><a href="notifications.php"><i class="fas fa-bell"></i></a></button>
-    <button class="icon-btn" title="Logout"><a href="logout.html"><i class="fas fa-arrow-right-from-bracket"></i></a></button>
+    <button class="icon-btn" title="Notifications" onclick="window.location.href='notifications.php'"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout" onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
   </div>
 </div>
+
         <div class="profile-container">
             <div class="profile-card">
                 

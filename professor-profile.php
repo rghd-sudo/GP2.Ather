@@ -2,21 +2,16 @@
 session_start();
 include 'index.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
-}
 
-$user_id = $_SESSION['user_id'];
 
-// Fetch professor and user info
+// Fetch professor and user info  professors.cv_path
 $query = "
     SELECT 
         users.id AS uid,
         users.name, 
         users.email, 
-        professors.department, 
-        professors.university, 
+        users.department, 
+        users.university,
         professors.cv_path
     FROM professors
     JOIN users ON professors.user_id = users.id
@@ -46,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $conn->query("UPDATE users SET name='$name', email='$email' WHERE id=$user_id");
-    $conn->query("UPDATE professors SET department='$dept', university='$univ', cv_path='$cv_path' WHERE user_id=$user_id");
+   // $conn->query("UPDATE professors SET department='$dept', university='$univ', cv_path='$cv_path' WHERE user_id=$user_id");
 
     $success_message = "Profile updated successfully!";
 }
@@ -250,7 +245,7 @@ form input {
 
   <div>
     <div class="logo">
-      <img src="IMG_1786.PNG" alt="Logo">
+      <img src="LOGObl.PNG" alt="Logo">
     </div>
 
    <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>

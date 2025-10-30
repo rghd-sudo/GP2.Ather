@@ -11,14 +11,27 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'graduate') {
 $user_id = $_SESSION['user_id'];
 
 // ✅ اجلب اسم المستخدم من قاعدة البيانات
+// جلب اسم المستخدم
 $sql_user = "SELECT name FROM users WHERE id = '$user_id'";
 $result_user = $conn->query($sql_user);
 $user_name = "User";
 
 if ($result_user && $result_user->num_rows > 0) {
-  $row_user = $result_user->fetch_assoc();
-  $user_name = htmlspecialchars($row_user['name']);
+    $row_user = $result_user->fetch_assoc();
+    $user_name = htmlspecialchars($row_user['name']);
 }
+$sql = "
+SELECT 
+    r.*,
+    u.name AS professor_name
+FROM requests r
+JOIN professors p ON r.professor_id = p.professor_id
+JOIN users u ON p.user_id = u.id
+WHERE r.user_id = $user_id
+ORDER BY r.id DESC
+";
+
+$result = $conn->query($sql); // لا حاجة لاستخدام prepare هنا
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -276,11 +289,13 @@ th {
 
     if ($result->num_rows > 0) {
       while($row = $result->fetch_assoc()) {
-        echo "<tr>
-                <td>".$row['id']."</td>
-                <td>".$row['professor']."</td>
-                <td>".$row['created_at']."</td>
-                <td class='".($row['status']=="Pending"?"pending":"accepted")."'>".$row['status']."</td>
+   // $professor_name = $row['professor_name'] ?? '—'; // إذا كان فارغ
+
+    echo "<tr>
+            <td>".$row['id']."</td>
+            <td>".$row['professor_name']."</td>
+            <td>".$row['created_at']."</td>
+            <td class='".($row['status']=="Pending"?"pending":"accepted")."'>".$row['status']."</td>
                 <td class='actions'>
                   <button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
                   <button class='delete' onclick=\"deleteRequest(".$row['id'].")\">🗑 Delete</button>

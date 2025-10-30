@@ -221,9 +221,17 @@ textarea { min-height:100px; resize:vertical; }
   font-weight:bold;
   text-align:center;
 }
+.back_btn {
+    display: inline-block;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #03060a;
+    text-decoration: none;
+}
 </style>
 </head>
 <body>
+   <a href="req_system.php" class="back_btn">&#8592;</a>
 <div class="container">
   <div class="header-card">
     <div class="icon-container"></div>

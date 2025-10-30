@@ -1,5 +1,6 @@
 <?php
 session_start();
+
 include 'index.php';
 
 
@@ -11,7 +12,7 @@ SELECT
     r.user_id,
     r.major,
     r.course,
-    r.professor,
+    r.professor_id,
     r.purpose,
     r.type,
     r.file_name,
