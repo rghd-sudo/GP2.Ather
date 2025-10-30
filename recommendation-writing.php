@@ -7,17 +7,18 @@ $dbname = "agdb";
 
 $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) {
-    die("فشل الاتصال بقاعدة البيانات: " . $conn->connect_error);
+    die(" Database connection faild: " . $conn->connect_error);
 }
 
 // الحصول على معرف الخريج من الرابط
 $graduate_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-$sql = "SELECT g.*, u.name, u.email, u.department , u.National_ID,
-               r.major, r.purpose, r.type AS recommendation_type
+// جلب بيانات الخريج وربطها بطلباته
+$sql = "SELECT g.*, u.name, u.email, u.department, u.National_ID,
+               r.id AS request_id, r.major, r.purpose, r.type AS recommendation_type
         FROM graduates g
         JOIN users u ON g.user_id = u.id
-        LEFT JOIN requests r ON g.graduate_id = r.graduate_id
+        LEFT JOIN requests r ON g.user_id = r.user_id
         WHERE g.graduate_id = ?";
 
 $stmt = $conn->prepare($sql);
@@ -26,17 +27,16 @@ $stmt->execute();
 $result = $stmt->get_result();
 $graduate = $result->fetch_assoc();
 
-// حفظ التوصية عند الإرسال
+// حفظ التوصية عند الإرسال أو حفظها كمسودة
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $content = $_POST['recommendation_text'];
     $status = $_POST['action']; // "draft" أو "sent"
     $professor_id = 1; // لاحقًا من session
-    $major = $requests['major'] ?? ''; 
-    $purpose = $requests['purpose'] ?? '';
-    $type = $requests['recommendation_type'] ?? '';
+    $request_id = $graduate['request_id'] ?? null; // ربط التوصية بالطلب إذا موجود
 
-    $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, content, recommendation_type, major, purpose, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
-    $insert->bind_param("iisssss", $graduate_id, $professor_id, $content, $type, $major, $purpose, $status);
+    // إدخال التوصية في قاعدة البيانات
+    $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, content, request_id, status, date_created) VALUES (?, ?, ?, ?, ?, NOW())");
+    $insert->bind_param("iisis", $graduate_id, $professor_id, $content, $request_id, $status);
     $insert->execute();
 
     if($status === 'sent'){
@@ -119,8 +119,8 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
             <img src="LOGObl.PNG" width="80">
         </div>
         <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
-      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
+        <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
+        <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
     </div>
     <div class="bottom-section">
         <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span>Notification Settings</span></a>
@@ -137,9 +137,9 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
         <div class="info-item"><b>Department:</b> <?= htmlspecialchars($graduate['department']) ?></div>
         <div class="info-item"><b>Graduation Year:</b> <?= htmlspecialchars($graduate['graduation_year']) ?></div>
         <div class="info-item"><b>GPA:</b> <?= htmlspecialchars($graduate['gpa']) ?></div>
-        <div class="info-item"><b>Major:</b> <?= htmlspecialchars($requests['major'] ?? '-') ?></div>
-        <div class="info-item"><b>Purpose:</b> <?= htmlspecialchars($requests['purpose'] ?? '-') ?></div>
-        <div class="info-item"><b>Recommendation Type:</b> <?= htmlspecialchars($requests['type'] ?? '-') ?></div>
+        <div class="info-item"><b>Major:</b> <?= htmlspecialchars($graduate['major'] ?? '-') ?></div>
+        <div class="info-item"><b>Purpose:</b> <?= htmlspecialchars($graduate['purpose'] ?? '-') ?></div>
+        <div class="info-item"><b>Recommendation Type:</b> <?= htmlspecialchars($graduate['recommendation_type'] ?? '-') ?></div>
     </div>
 
     <form method="POST">
@@ -156,7 +156,3 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
 </div>
 </body>
 </html>
-
-
-
-
