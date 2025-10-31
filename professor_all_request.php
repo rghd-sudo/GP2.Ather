@@ -34,16 +34,15 @@ if (!$result) {
     die("❌ SQL Error: " . mysqli_error($conn));
 }
 
-
-
 $data = [];
-$stats = ['completed' => 0, 'rejected' => 0, 'draft' => 0];
+$stats = ['completed' => 0, 'rejected' => 0, 'draft' => 0, 'accepted' => 0];
 
 if(mysqli_num_rows($result) > 0){
     while($row = mysqli_fetch_assoc($result)){
         $data[] = $row;
         switch(strtolower($row['status'])){
             case 'completed': $stats['completed']++; break;
+            case 'accepted': $stats['accepted']++; break;
             case 'rejected': $stats['rejected']++; break;
             case 'draft': $stats['draft']++; break;
         }
@@ -165,7 +164,8 @@ body {
   tbody td { padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: right; font-size: 14px; color: #333; }
   tbody tr:hover { background-color: #f1f5f9; transform: translateY(-1px); transition: all 0.2s ease; }
   
-  .status-completed { background-color: #d4edda; color: #155724; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
+  .status-completed { background-color: #acd4b5ff; color: #155724; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
+  .status-accepted { background-color: rgba(205, 240, 213, 1); color: #155724; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
   .status-pending { background-color: #fff3cd; color: #856404; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
   .status-draft { background-color: #e2e3e5; color: #383d41; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
   .status-rejected { background-color: #f8d7da; color: #721c24; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
@@ -252,6 +252,7 @@ body {
         $statusClass = '';
         switch(strtolower($row['status'])){
           case 'completed': $statusClass = 'status-completed'; break;
+          case 'accepted': $statusClass = 'status-accepted'; break;
           case 'pending': $statusClass = 'status-pending'; break;
           case 'draft': $statusClass = 'status-draft'; break;
           case 'rejected': $statusClass = 'status-rejected'; break;

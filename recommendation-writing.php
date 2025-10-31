@@ -11,24 +11,24 @@ if ($conn->connect_error) {
 }
 
 // الحصول على معرف الخريج من الرابط
-$graduate_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$graduate = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-$sql = "SELECT g.*, u.name, u.email, u.department , u.National_ID,
+$sql = "SELECT g.*, u.name, u.email, u.department, u.National_ID,
                r.major, r.purpose, r.type AS recommendation_type
         FROM graduates g
         JOIN users u ON g.user_id = u.id
-        LEFT JOIN requests r ON g.graduate_id = r.graduate_id
+        LEFT JOIN requests r ON g.graduate_id = r.user_id
         WHERE g.graduate_id = ?";
 
-  $stmt = $conn->prepare($sql);
-  $stmt->bind_param("ii", $request_id, $professor_id);
-  $stmt->execute();
-  $result = $stmt->get_result();
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $graduate);
+$stmt->execute();
+$result = $stmt->get_result();
 
-  if ($result->num_rows > 0) {
+if ($result->num_rows > 0) {
     $graduate = $result->fetch_assoc();
-  }
 }
+
 
 // حفظ التوصية عند الإرسال
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -39,8 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $purpose = $requests['purpose'] ?? '';
     $type = $requests['recommendation_type'] ?? '';
 
-    $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, content, recommendation_type, major, purpose, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
-    $insert->bind_param("iisssss", $graduate_id, $professor_id, $content, $type, $major, $purpose, $status);
+    $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, content, date_created) VALUES (?, ?, ?, NOW())");
+    $insert->bind_param("iis", $graduate_id, $professor_id, $content);
     $insert->execute();
 
     if($status === 'sent'){
