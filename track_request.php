@@ -1,8 +1,10 @@
 <?php
+session_start();
+include 'index.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// الاتصال بقاعدة البيانات
+/*الاتصال بقاعدة البيانات
 $host = "localhost";
 $user = "root";
 $pass = "";
@@ -13,7 +15,7 @@ $conn = new mysqli($host, $user, $pass, $dbname);
 // التحقق من الاتصال
 if ($conn->connect_error) {
     die("فشل الاتصال: " . $conn->connect_error);
-}
+}*/
 
 // إنشاء جدول تتبع الطلبات إذا ما كان موجود
 $conn->query("CREATE TABLE IF NOT EXISTS track_request (
@@ -157,7 +159,7 @@ $result = $conn->query("SELECT * FROM track_request ORDER BY created_at DESC");
             <p>لا توجد طلبات بعد.</p>
         <?php endif; ?>
 
-        <button class="back-btn" onclick="window.location.href='index.php'">Back to Home</button>
+        <button class="back-btn" onclick="window.location.href='req_system.php'">Back to Home</button>
     </div>
 
 </body>

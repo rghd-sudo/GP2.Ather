@@ -22,10 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 0;
 
     // 📝 تحقق إذا يوجد سجل مسبق للطالب
-    $check = mysqli_query($conn, "SELECT * FROM notifications WHERE user_id='$user_id'");
+    $check = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'");
     if (mysqli_num_rows($check) > 0) {
         // تحديث السجل
-        mysqli_query($conn, "UPDATE notifications SET 
+        mysqli_query($conn, "UPDATE notification_settings SET 
             notify_new_request='$notify_new_request',
             notify_pending='$notify_pending',
             notify_rejected='$notify_rejected',
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             WHERE user_id='$user_id'");
     } else {
         // إدخال سجل جديد
-        mysqli_query($conn, "INSERT INTO notifications 
+        mysqli_query($conn, "INSERT INTO notification_settings 
             (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
             VALUES 
             ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', '$via_email', '$via_in_app', '$reminder_days')");
@@ -59,7 +59,8 @@ $settings = mysqli_fetch_assoc($result);
     <link rel="stylesheet" href="setting_style.css">
 </head>
 <body>
-
+<!-- Back Button -->
+<a href="req_system.php" class="back_btn">&#8592;</a>
  <!-- Header -->
 <header class="header">
     <h4>Welcome, <span class="student_name"><?php echo $user_name; ?></span></h4>

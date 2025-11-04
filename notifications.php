@@ -21,6 +21,7 @@ if ($conn->connect_error) {
     die("فشل الاتصال: " . $conn->connect_error);
 }
 
+<<<<<<< HEAD
 /* ============ 3) جلب التنبيهات للمستخدم الحالي (الأحدث أولاً) ============ */
 $notifications = [];
 $stmt = $conn->prepare("SELECT message, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC");
@@ -32,6 +33,10 @@ while ($row = $res->fetch_assoc()) {
 }
 $stmt->close();
 $conn->close();
+=======
+//جلب التنبيهات
+$result = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC");
+>>>>>>> 8a02fdad439cc877f690245b30612477b49163e0
 ?>
 <!DOCTYPE html>
 <html lang="en">
