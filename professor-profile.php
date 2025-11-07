@@ -52,13 +52,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <title>Professor Profile</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+ <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
 <style>
 body {
     margin: 0;
-    font-family: "Poppins", sans-serif;
-    background: #f9f9f9;
-    display: flex;
+  font-family: "Poppins", sans-serif;
+  background: #fdfaf6;
+  display: flex;
 }
 
 h2 {
@@ -69,7 +72,7 @@ h2 {
 
 /* Sidebar */
 .sidebar {
-  background-color: #cde3e8;
+  background-color: #c8e4eb;
   width: 230px;
   transition: width 0.3s;
   height: 100vh;
@@ -248,13 +251,13 @@ form input {
       <img src="LOGObl.PNG" alt="Logo">
     </div>
 
-   <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
-      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
+      <a href="requests.php" class="menu-item"><i class="fas fa-file-circle-plus"></i><span class="menu-text">New Request</span></a>
+      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
+      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     </div>
-    <div class="bottom-section">
-        <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span>Notification Settings</span></a>
-    </div>
+   <div class="bottom-section">
+    <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
+  </div>
 </div>
 
 <!-- Main Content -->

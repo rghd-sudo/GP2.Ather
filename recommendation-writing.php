@@ -77,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $req_update->execute();
 
         $message_alert = "✅ The recommendation has been saved as a draft.";
-    } elseif ($status === 'sent') {
-        $req_update = $conn->prepare("UPDATE requests SET status = 'sent' WHERE id = ?");
+    } elseif ($status === 'completed') {
+        $req_update = $conn->prepare("UPDATE requests SET status = 'completed' WHERE id = ?");
         $req_update->bind_param("i", $request_id);
         $req_update->execute();
 
@@ -98,7 +98,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <title>Recommendation Writing</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+ <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
 <style>
 body {
     margin: 0;
@@ -173,12 +176,13 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
         <div class="logo" style="text-align:center; margin-bottom:30px;">
             <img src="LOGObl.PNG" width="80">
         </div>
-        <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
-        <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-        <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
+       
+     <a href="requests.php" class="menu-item"><i class="fas fa-file-circle-plus"></i><span class="menu-text">New Request</span></a>
+        <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
+        <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     </div>
     <div class="bottom-section">
-        <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span>Notification Settings</span></a>
+        <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
     </div>
 </div>
 
@@ -208,7 +212,7 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
             <br>
             <button type="button" class="cancel-btn" onclick="history.back()">Cancel</button>
             <button type="submit" name="action" value="draft" class="draft-btn">Save Draft</button>
-            <button type="submit" name="action" value="sent" class="send-btn">Send Recommendation</button>
+            <button type="submit" name="action" value="completed" class="send-btn">Send Recommendation</button>
         </form>
     <?php else: ?>
         <p>No graduate found.</p>

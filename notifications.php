@@ -10,18 +10,8 @@ if (!isset($_SESSION['user_id'])) {
 }
 $user_id = intval($_SESSION['user_id']);
 
-/* ============ 2) الاتصال بقاعدة البيانات ============ */
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "agdb";
+include 'index.php'; // ملف الاتصال بقاعدة البيانات
 
-$conn = new mysqli($host, $user, $pass, $dbname);
-if ($conn->connect_error) {
-    die("فشل الاتصال: " . $conn->connect_error);
-}
-
-<<<<<<< HEAD
 /* ============ 3) جلب التنبيهات للمستخدم الحالي (الأحدث أولاً) ============ */
 $notifications = [];
 $stmt = $conn->prepare("SELECT message, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC");
@@ -33,10 +23,7 @@ while ($row = $res->fetch_assoc()) {
 }
 $stmt->close();
 $conn->close();
-=======
-//جلب التنبيهات
-$result = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC");
->>>>>>> 8a02fdad439cc877f690245b30612477b49163e0
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -191,8 +178,9 @@ $result = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC");
     <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
     <div>
       <div class="logo">
-        <img src="logo1.jpg" alt="Logo">
+       <img src="logobl.PNG" alt="Logo">
       </div>
+        <a href="req_system.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
       <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
       <a href="new_request.php" class="menu-item"><i class="fas fa-plus-square"></i><span class="menu-text">New Request</span></a>
       <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i><span class="menu-text">Track Request</span></a>

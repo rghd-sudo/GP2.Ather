@@ -146,7 +146,7 @@ $settings = mysqli_fetch_assoc($result);
     
                   
                   <button class="save">  Save Notitfcation setting</button>
-
+</form>
                   <script src="jave/settings_sd.js"></script>
 </body>
 </html>

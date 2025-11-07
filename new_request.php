@@ -1,11 +1,31 @@
 <?php
 session_start();
 include 'index.php'; // ملف الاتصال بقاعدة البيانات
+
+// 1. التحقق من الجلسة
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
-// إنشاء جدول requests إذا لم يكن موجود
+
+// 2. جلب بيانات الطالب تلقائياً (باستخدام الأعمدة الصحيحة National_id و name)
+$student_info = [
+    'name' => '',
+    'id_number' => '',
+];
+
+$user_id = $_SESSION['user_id'];
+// الاستعلام لجلب الاسم والرقم الوطني من جدول users
+$student_result = $conn->query("SELECT name, National_id FROM users WHERE id = $user_id");
+
+if ($student_result && $student_result->num_rows > 0) {
+    $student_data = $student_result->fetch_assoc();
+    $student_info['name'] = $student_data['name'];
+    // استخدام 'National_id' كما هو موجود في مخطط قاعدة البيانات
+    $student_info['id_number'] = $student_data['National_id'] ?? ''; 
+}
+
+// 3. إنشاء جدول requests إذا لم يكن موجود
 $conn->query("
 CREATE TABLE IF NOT EXISTS requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -22,7 +42,7 @@ CREATE TABLE IF NOT EXISTS requests (
 
 $message = "";
 
-// جلب قائمة الدكاترة من قاعدة البيانات
+// 4. جلب قائمة الدكاترة من قاعدة البيانات
 $professors = [];
 $prof_result = $conn->query("SELECT p.professor_id, u.name, u.email, u.department FROM professors p JOIN users u ON p.user_id = u.id");
 if($prof_result && $prof_result->num_rows > 0){
@@ -31,9 +51,12 @@ if($prof_result && $prof_result->num_rows > 0){
     }
 }
 
+// 5. معالجة النموذج (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // البيانات التلقائية
     $user_id = $_SESSION['user_id'];
-
+    
+    // البيانات المدخلة من النموذج
     $major = $conn->real_escape_string($_POST['major'] ?? '');
     $course = $conn->real_escape_string($_POST['course'] ?? '');
     $professor_id = intval($_POST['professor_id'] ?? 0);
@@ -107,8 +130,8 @@ body {
   margin:0; padding:0;
   background-color: var(--bg-color);
   color: var(--main-text);
-  display:flex; justify-content:center;
-  direction: ltr;
+display:flex; justify-content:center;
+  direction: ltr; /* تم الحفاظ عليها حسب الكود الأصلي */
 }
 
 .container {
@@ -170,8 +193,14 @@ body {
   box-shadow:0 0 4px rgba(240,121,99,0.4);
 }
 
+/* التعديل لتمكين عمودين للحقول الرئيسية */
 .form-wrap {
-  display:grid; grid-template-columns:1fr; gap:20px;
+  display:grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap:20px;
+}
+.full-width {
+    grid-column: 1 / -1; /* لجعل حقل يمتد على عرض الصف الكامل */
 }
 
 .field { margin-bottom:20px; }
@@ -238,10 +267,9 @@ textarea { min-height:100px; resize:vertical; }
     <div class="request-title">Recommendation Request</div>
     <div class="student-info-section">
       <span class="student-info-title">Student Information</span>
-      <input type="text" placeholder="Name" name="name" form="reqform" value="<?= htmlspecialchars($_POST['name'] ?? '') ?>">
-      <input type="text" placeholder="ID" name="id" form="reqform" value="<?= htmlspecialchars($_POST['id'] ?? '') ?>">
-      <input type="text" placeholder="Major" name="major" form="reqform" value="<?= htmlspecialchars($_POST['major'] ?? '') ?>">
-    </div>
+      <input type="text" placeholder="Name" name="name_display" form="reqform" value="<?= htmlspecialchars($student_info['name']); ?>" readonly>
+<input type="text" placeholder="ID" name="id_display" form="reqform" value="<?= htmlspecialchars($student_info['id_number']); ?>" readonly>
+      </div>
   </div>
 
   <?php if($message): ?>
@@ -249,6 +277,10 @@ textarea { min-height:100px; resize:vertical; }
   <?php endif; ?>
 
   <form id="reqform" class="form-wrap" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+
+    <div class="field">
+      <label>Major*</label> <input type="text" name="major" value="<?= htmlspecialchars($_POST['major'] ?? '') ?>" required>
+    </div>
 
     <div class="field">
       <label>Course Name*</label>
@@ -260,12 +292,17 @@ textarea { min-height:100px; resize:vertical; }
       <select name="professor_id" required>
         <option value="">-- Select Professor --</option>
         <?php foreach($professors as $p): ?>
-          <option value="<?= $p['professor_id'] ?>"><?= $p['name'] ?></option>
+          <option value="<?= $p['professor_id'] ?>" <?= (isset($_POST['professor_id']) && $_POST['professor_id']==$p['professor_id'])?'selected':'' ?>><?= $p['name'] ?></option>
         <?php endforeach; ?>
       </select>
     </div>
 
     <div class="field">
+      <label>Purpose of Recommendation*</label>
+      <textarea name="purpose" required><?= htmlspecialchars($_POST['purpose'] ?? '') ?></textarea>
+    </div>
+    
+    <div class="field full-width">
       <label>Recommendation Type</label>
       <div class="radios">
         <label><input type="radio" name="type" value="Academic" <?= (!isset($_POST['type']) || $_POST['type']=='Academic')?'checked':'' ?>><span>Academic</span></label>
@@ -273,22 +310,17 @@ textarea { min-height:100px; resize:vertical; }
       </div>
     </div>
 
-    <div class="field">
-      <label>Purpose of Recommendation*</label>
-      <textarea name="purpose" required><?= htmlspecialchars($_POST['purpose'] ?? '') ?></textarea>
-    </div>
-
-    <div class="field">
+    <div class="field full-width">
       <label>Upload CV (optional)</label>
       <input type="file" name="file" accept=".pdf,.doc,.docx">
     </div>
 
-    <div class="field">
+    <div class="field full-width">
       <label>Upload Grades*</label>
       <input type="file" name="grades" id="grades-file" accept=".pdf,.png,.jpg,.jpeg">
     </div>
 
-    <div class="submit-wrap">
+    <div class="submit-wrap full-width">
       <button type="submit" class="btn">Submit</button>
     </div>
   </form>
