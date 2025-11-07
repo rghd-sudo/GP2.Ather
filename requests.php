@@ -82,12 +82,15 @@ $notif_res = $notif_q->get_result();
 <head>
 <meta charset="utf-8">
 <title>Incoming Recommendation Requests</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+ <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
 <style>
  body {
     margin: 0;
     font-family: "Poppins", sans-serif;
-    background: #f9f9f9;
+    background: #fdfaf6;
     display: flex;
   }
 h2 {
@@ -98,7 +101,7 @@ h2 {
 }
 /* تصميم الشريط الجانبي */
 .sidebar {
-    background-color: #cde3e8;
+    background-color: #c8e4eb;
     width: 230px;
     transition: width 0.3s;
     height: 100vh;
@@ -134,6 +137,17 @@ h2 {
 .status-box { padding:8px 12px; border-radius:18px; font-weight:700; font-size:14px; }
 .accepted { background:#d4edda; color:#155724; }
 .rejected { background:#f8d7da; color:#721c24; }
+/* 🔹 Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 70px;
+  }
+  .sidebar {
+    width: 70px;
+  }
+  .menu-text {
+    display: none;
+  }}
 </style>
 </head>
 <body>
@@ -143,9 +157,9 @@ h2 {
     <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
     <div>
       <div class="logo"><img src="LOGObl.PNG" alt="Logo"></div>
-      <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
-      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
+      <a href="requests.php" class="menu-item"><i class="fas fa-file-circle-plus"></i><span class="menu-text">New Request</span></a>
+      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
+      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     </div>
     <div class="bottom-section">
       <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
