@@ -3,16 +3,29 @@ session_start();
 
 include 'index.php';
 
-// 📝 جلب student_id من السيشن
+//  التحقق من تسجيل الدخول
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php"); 
+    exit();
+}
 $user_id = $_SESSION['user_id'];
 
-// 📝 جلب الاسم الكامل للطالب
-$result = mysqli_query($conn, "SELECT name FROM users WHERE id='$user_id'");
-$row = mysqli_fetch_assoc($result);
-$user_name = $row['name'];
 
-// 📝 معالجة الفورم عند الضغط على Save
+// جلب اسم الطالب من جدول users باستخدام user_id
+$query = "SELECT name FROM users WHERE id = '$user_id'";
+$result = mysqli_query($conn, $query);
+if (!$result) {
+    die("Database error: " . mysqli_error($conn));
+}
+$row = mysqli_fetch_assoc($result);
+$student_name = $row['name'] ?? 'Student';
+
+
+
+// ✅ التحقق من إرسال النموذج وجلب القيم من الحقول
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // جلب القيم
     $notify_new_request = isset($_POST['notify_new_request']) ? 1 : 0;
     $notify_pending = isset($_POST['notify_pending']) ? 1 : 0;
     $notify_rejected = isset($_POST['notify_rejected']) ? 1 : 0;
@@ -21,10 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $via_in_app = isset($_POST['via_in_app']) ? 1 : 0;
     $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 0;
 
-    // 📝 تحقق إذا يوجد سجل مسبق للطالب
-    $check = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'");
+    // تحقق إذا عنده سجل
+    $check = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'")
+        or die("Database error (check): " . mysqli_error($conn));
+
     if (mysqli_num_rows($check) > 0) {
-        // تحديث السجل
         mysqli_query($conn, "UPDATE notification_settings SET 
             notify_new_request='$notify_new_request',
             notify_pending='$notify_pending',
@@ -33,22 +47,64 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             via_email='$via_email',
             via_in_app='$via_in_app',
             reminder_days='$reminder_days'
-            WHERE user_id='$user_id'");
+            WHERE user_id='$user_id'")
+            or die("Update error: " . mysqli_error($conn));
     } else {
-        // إدخال سجل جديد
         mysqli_query($conn, "INSERT INTO notification_settings 
             (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
             VALUES 
-            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', '$via_email', '$via_in_app', '$reminder_days')");
+            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', '$via_email', '$via_in_app', '$reminder_days')")
+            or die("Insert error: " . mysqli_error($conn));
     }
 
-    $message = "Settings saved successfully!";
+    // إعادة تحميل نظيفة
+    header("Location: " . $_SERVER['PHP_SELF'] . "?saved=1");
+    exit();
 }
 
-// 📝 جلب الإعدادات الحالية للعرض
-$result = mysqli_query($conn, "SELECT * FROM notifications WHERE user_id='$user_id'");
-$settings = mysqli_fetch_assoc($result);
-?>
+// ⚙️ جلب الإعدادات الحالية بعد أي حفظ أو تحميل
+$result = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'")
+    or die("Database error (settings): " . mysqli_error($conn));
+
+$settings = mysqli_fetch_assoc($result) ?: [];
+
+
+
+
+    // 📝 تحقق إذا يوجد سجل مسبق للطالب
+   // $check = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'");
+    //if(!$check){
+      //  die("Database error (check): " . mysqli_error($conn)); }
+    // if (mysqli_num_rows($check) > 0) {
+        // ✅ تحديث السجل
+       // $update = mysqli_query($conn, "UPDATE notification_settings SET 
+         //   notify_new_request='$notify_new_request',
+           // notify_pending='$notify_pending',
+            //notify_rejected='$notify_rejected',
+            //notify_uploaded='$notify_uploaded',
+            //via_email='$via_email',
+            //via_in_app='$via_in_app',
+            //reminder_days='$reminder_days'
+            //WHERE user_id='$user_id'");
+            // if(!$update){
+            //die("Update error: " . mysqli_error($conn));  }
+   // } else {
+        // ✅ إدخال سجل جديد
+      //  $insert = mysqli_query($conn, "INSERT INTO notification_settings 
+           // (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
+            //VALUES 
+           // ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', '$via_email', '$via_in_app', '$reminder_days')");
+
+        //if(!$insert){
+          //  die("Insert error: " . mysqli_error($conn));
+     //   }
+  //  }
+
+    ?>
+
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -59,11 +115,16 @@ $settings = mysqli_fetch_assoc($result);
     <link rel="stylesheet" href="setting_style.css">
 </head>
 <body>
+
+<?php if (isset($_GET['saved'])) { echo "<p>Settings saved successfully!</p>"; } ?>
+
+
 <!-- Back Button -->
 <a href="req_system.php" class="back_btn">&#8592;</a>
+
  <!-- Header -->
 <header class="header">
-    <h4>Welcome, <span class="student_name"><?php echo $user_name; ?></span></h4>
+    <h4>Welcome, <span class="student_name"><?php echo $student_name; ?></span></h4>
 </header>
 
 <!-- رسالة نجاح -->
@@ -72,9 +133,8 @@ $settings = mysqli_fetch_assoc($result);
 
 
     <!--main content الخيارات حق الاعدادت-->
-    <div class="content">
+    <form action="" method="POST" class="content">
 
-       <form method="POST">
     <!-- Request Pending -->
     <div class="item">
         <h3>Request Pending Reminder</h3>
@@ -128,6 +188,7 @@ $settings = mysqli_fetch_assoc($result);
     <!-- Save Button -->
     <button type="submit" class="save">Save Notification Settings</button>
 </form>
+
 
 <script src="jave/settings_sd.js"></script>
 </body>
