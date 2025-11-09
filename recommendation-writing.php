@@ -1,11 +1,14 @@
 <?php
 session_start();
-// الاتصال بقاعدة البيانات
+
 include 'index.php';
+
+// التحقق من تسجيل الدخول كدكتور
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
     header("Location: login.php");
     exit;
 }
+
 // الحصول على معرف الطلب من الرابط
 $request_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
@@ -13,9 +16,11 @@ if ($request_id <= 0) {
     die("Invalid request ID.");
 }
 
-// جلب بيانات الطلب مع الخريج والمستخدم
+// ✅ جلب بيانات الطلب والخريج والمستخدم
 $sql = "SELECT 
+            g.graduate_id,
             r.id AS request_id,
+            r.user_id,
             r.major, 
             r.purpose, 
             r.type AS recommendation_type, 
@@ -39,31 +44,44 @@ $stmt->bind_param("i", $request_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
-if ($result->num_rows > 0) {
+if ($result && $result->num_rows > 0) {
     $graduate = $result->fetch_assoc();
+    $graduate_id = $graduate['graduate_id'];
+    $student_user_id = $graduate['user_id'];
 } else {
-    die("Request not found.");
+    die("❌ Request not found or graduate not found.");
 }
 
-// جلب مسودة سابقة (إن وجدت)
+// ✅ جلب رقم الدكتور الحقيقي من جدول professors
+$user_id = $_SESSION['user_id'];
+$get_prof = $conn->prepare("SELECT professor_id FROM professors WHERE user_id = ?");
+$get_prof->bind_param("i", $user_id);
+$get_prof->execute();
+$prof_result = $get_prof->get_result();
+
+if ($prof_result->num_rows > 0) {
+    $professor_id = $prof_result->fetch_assoc()['professor_id'];
+} else {
+    die("Professor record not found for this user.");
+}
+
+// ✅ جلب مسودة سابقة (إن وجدت)
 $recommendation = null;
-$rec_query = $conn->prepare("SELECT * FROM recommendations WHERE graduate_id = ? AND professor_id = 1");
-$rec_query->bind_param("i", $graduate_id);
+$rec_query = $conn->prepare("SELECT * FROM recommendations WHERE graduate_id = ? AND professor_id = ?");
+$rec_query->bind_param("ii", $graduate_id, $professor_id);
 $rec_query->execute();
 $rec_result = $rec_query->get_result();
+
 if ($rec_result->num_rows > 0) {
     $recommendation = $rec_result->fetch_assoc();
 }
 
 $message_alert = ''; // متغير الرسالة
 
-// حفظ التوصية عند الإرسال أو المسودة
+// ✅ حفظ التوصية عند الإرسال أو المسودة
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $content = $_POST['recommendation_text'];
-    $status = $_POST['action']; // draft أو sent
-    $professor_id = 1; // لاحقًا من session
-    $request_id = $graduate['request_id'];
-    $student_user_id = $graduate['user_id'];
+    $status = $_POST['action']; // draft أو completed
 
     // تحقق إذا كانت التوصية موجودة مسبقًا
     $check = $conn->prepare("SELECT recommendation_id FROM recommendations WHERE graduate_id = ? AND professor_id = ?");
@@ -83,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert->execute();
     }
 
-    // تحديث حالة الطلب
+    // ✅ تحديث حالة الطلب
     if ($status === 'draft') {
         $req_update = $conn->prepare("UPDATE requests SET status = 'draft' WHERE id = ?");
         $req_update->bind_param("i", $request_id);

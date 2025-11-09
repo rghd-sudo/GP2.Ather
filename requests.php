@@ -16,18 +16,34 @@ $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
-
-// التعامل مع قبول أو رفض الطلبات
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST['action'])) {
     $request_id = intval($_POST['request_id']);
     $action = $_POST['action'];
 
     if ($action === 'accept' || $action === 'reject') {
         $newStatus = ($action === 'accept') ? 'accepted' : 'rejected';
+        
+        // تحديث حالة الطلب
         $stmt = $conn->prepare("UPDATE requests SET status = ? WHERE id = ?");
         $stmt->bind_param("si", $newStatus, $request_id);
         $stmt->execute();
         $stmt->close();
+
+        // جلب user_id واسم الطالب لإرسال الإشعار
+        $res = $conn->prepare("SELECT u.id AS student_user_id, u.name AS student_name FROM requests r JOIN users u ON r.user_id = u.id WHERE r.id = ?");
+        $res->bind_param("i", $request_id);
+        $res->execute();
+        $row = $res->get_result()->fetch_assoc();
+        $student_user_id = $row['student_user_id'];
+        $student_name = $row['student_name'];
+        $res->close();
+
+        // إرسال إشعار للطالب
+        $message = "Your request has been " . $newStatus . " by the professor.";
+        $notif = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
+        $notif->bind_param("is", $student_user_id, $message);
+        $notif->execute();
+        $notif->close();
 
         echo $newStatus; // يرجع النص مباشرة للـ fetch()
         exit;
@@ -230,9 +246,9 @@ function updateStatus(requestId, action) {
     .then(status => {
       const container = document.getElementById('request-' + requestId);
       if (status === 'accepted') {
-        container.innerHTML = '<div class="status-box accepted">Accepted</div><a href="write_recommendation.php?request_id=' + requestId + '" class="btn-accept" style="margin-left:10px;">Write Recommendation</a>';
+        container.innerHTML = '<div class="status-box accepted">Accepted</div><a href="recommendation-writing.php?id=' + requestId + '" class="btn-accept" style="margin-left:10px;">✏️</a>';
       } else if (status === 'rejected') {
-        container.innerHTML = '<div class="status-box rejected">Rejected</div><button type="button" class="btn-reject" style="margin-left:10px;" onclick="deleteCard(' + requestId + ')">Delete</button>';
+        container.innerHTML = '<div class="status-box rejected">Rejected</div><button type="button" class="btn-reject" style="margin-left:10px;" onclick="deleteCard(' + requestId + ')">🗑</button>';
       }
     })
     .catch(error => console.error('Error:', error));
