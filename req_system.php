@@ -302,7 +302,7 @@ background: #f8a5a5;
             <td class='".(strtolower($row['status'])=="pending"?"pending":"accepted")."'>".$row['status']."</td>
                 <td class='actions'>
                   <button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
-                  <button class='delete' onclick=\"deleteRequest(".$row['id'].")\">🗑 Delete</button>
+                  <button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>
                 </td>
               </tr>";
       }
@@ -328,11 +328,34 @@ function editRequest(id) {
   window.location.href = "new_request.php?id=" + id;
 }
 
-function deleteRequest(id) {
-  if (confirm("Are you sure you want to delete request #" + id + "?")) {
-    // 🚀 يتم التوجيه لصفحة الحذف، يجب إنشاء ملف delete_request.php
-    window.location.href = "delete_request.php?id=" + id;
-  }
+
+function deleteRequest(id, btn) {
+  if (!confirm("Are you sure you want to delete this request?")) return;
+
+  fetch("delete_request.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "id=" + id
+  })
+  .then(response => response.text())
+  .then(result => {
+    if (result.trim() === "success") {
+  const row = btn.closest("tr");
+  row.style.transition = "opacity 0.5s";
+  row.style.opacity = "0";
+    }
+  setTimeout(() => {
+    row.remove();
+    updateStats(); // ← هذا السطر يضاف هنا
+  }, 500);
+
+  alert("✅ تم حذف الطلب بنجاح");
+})
+  .catch(error => {
+    alert("⚠️ فشل الاتصال بالسيرفر");
+    console.error(error);
+  });
+
 }
 </script>
 </body>

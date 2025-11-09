@@ -2,7 +2,10 @@
 session_start();
 include 'index.php';
 
-
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
+    header("Location: login.php");
+    exit;
+}
 
 // Fetch professor and user info  professors.cv_path
 $query = "

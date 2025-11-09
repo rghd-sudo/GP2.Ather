@@ -134,6 +134,7 @@ h2 {
 .card-actions { position: absolute; right: 16px; bottom: 14px; display:flex; gap:10px; }
 .btn-accept { background: #7fcfbd; border: none; padding:8px 14px; border-radius:20px; cursor:pointer; color:#0b3b2e; font-weight:700; }
 .btn-reject { background: #f3a59a; border:none; padding:8px 14px; border-radius:20px; cursor:pointer; color:#6b0f0f; font-weight:700; }
+.btn-delet { background: #f3a59a; border:none; padding:8px 15px; border-radius:20px; cursor:pointer; color:#6b0f0f; font-weight:750; }
 .status-box { padding:8px 12px; border-radius:18px; font-weight:700; font-size:14px; }
 .accepted { background:#d4edda; color:#155724; }
 .rejected { background:#f8d7da; color:#721c24; }
@@ -197,10 +198,10 @@ h2 {
           <div class="card-actions" id="request-<?= $rid ?>">
             <?php if (strtolower($status) === 'accepted'): ?>
               <div class="status-box accepted">Accepted</div>
-              <a href="recommendation-writing.php?request_id=<?= $rid ?>" class="btn-accept" style="margin-left:10px;">Write Recommendation</a>
+              <a href="recommendation-writing.php?id=<?= $rid ?>" class="btn-accept" style="margin-left:10px;">✏️</a>
             <?php elseif (strtolower($status) === 'rejected'): ?>
               <div class="status-box rejected">Rejected</div>
-              <button type="button" class="btn-reject" style="margin-left:10px;" onclick="deleteCard(<?= $rid ?>)">Delete</button>
+              <button type="button" class="btn-delet" style="margin-left:10px;" onclick="deleteCard(<?= $rid ?>)">🗑</button>
             <?php else: ?>
               <button type="button" class="btn-accept" onclick="updateStatus(<?= $rid ?>, 'accept')">Accept</button>
               <button type="button" class="btn-reject" onclick="updateStatus(<?= $rid ?>, 'reject')">Reject</button>
