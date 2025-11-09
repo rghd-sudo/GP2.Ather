@@ -251,10 +251,9 @@ background: #f8a5a5;
 
     </div>
     <a href="req_system.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
-    <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
-    <a href="new_request.php" class="menu-item"><i class="fas fa-plus-square"></i><span class="menu-text">New Request</span></a>
     <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i><span class="menu-text">Track Request</span></a>
-  
+    <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+    
   </div>
 
   <div class="bottom-section">
