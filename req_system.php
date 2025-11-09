@@ -1,6 +1,7 @@
 <?php
 session_start();
-include 'index.php';
+// تأكد من أن index.php يقوم بتضمين اتصال قاعدة البيانات ($conn)
+include 'index.php'; 
 
 // تحقق من تسجيل الدخول
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'graduate') {
@@ -11,7 +12,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'graduate') {
 $user_id = $_SESSION['user_id'];
 
 // ✅ اجلب اسم المستخدم من قاعدة البيانات
-// جلب اسم المستخدم
 $sql_user = "SELECT name FROM users WHERE id = '$user_id'";
 $result_user = $conn->query($sql_user);
 $user_name = "User";
@@ -20,6 +20,8 @@ if ($result_user && $result_user->num_rows > 0) {
     $row_user = $result_user->fetch_assoc();
     $user_name = htmlspecialchars($row_user['name']);
 }
+
+// 🚀 الاستعلام السليم لجلب الطلبات مع اسم الأستاذ المضمون
 $sql = "
 SELECT 
     r.*,
@@ -31,14 +33,18 @@ WHERE r.user_id = $user_id
 ORDER BY r.id DESC
 ";
 
-$result = $conn->query($sql); // لا حاجة لاستخدام prepare هنا
+// نتيجة الاستعلام محفوظة في $result
+$result = $conn->query($sql); 
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Recommendation System</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
 <style>
 /* 🔹 General Layout */
 body {
@@ -215,7 +221,7 @@ th {
   font-weight: bold;
 }
 .delete {
-  background: #f8a5a5;
+background: #f8a5a5;
 }
 .edit {
   background: #a5d8f8;
@@ -237,7 +243,6 @@ th {
 </head>
 <body>
 
-<!-- 🔸 Sidebar -->
 <div class="sidebar" id="sidebar">
   <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
   <div>
@@ -246,10 +251,9 @@ th {
 
     </div>
     <a href="req_system.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
-    <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
-    <a href="new_request.php" class="menu-item"><i class="fas fa-plus-square"></i><span class="menu-text">New Request</span></a>
     <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i><span class="menu-text">Track Request</span></a>
-  
+    <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+    
   </div>
 
   <div class="bottom-section">
@@ -257,7 +261,6 @@ th {
   </div>
 </div>
 
-<!-- 🔸 Top Bar -->
 <div class="top-bar"> 
   <div class="top-icons">
     <button class="icon-btn" title="Notifications" onclick="window.location.href='notifications.php'"><i class="fas fa-bell"></i></button>
@@ -265,7 +268,6 @@ th {
   </div>
 </div>
 
-<!-- 🔸 Main Content -->
 <div class="main-content">
   <h2>Welcome, <?php echo $user_name; ?></h2>
 
@@ -284,21 +286,22 @@ th {
       <th>Actions</th>
     </tr>
     <?php
-    $sql = "SELECT * FROM requests WHERE user_id = $user_id ORDER BY id DESC";
-    $result = $conn->query($sql);
+    // ❌ تم إزالة الاستعلام المكرر هنا. يتم استخدام $result الذي تم جلبه في بداية الملف.
 
     if ($result->num_rows > 0) {
       while($row = $result->fetch_assoc()) {
-   // $professor_name = $row['professor_name'] ?? '—'; // إذا كان فارغ
+    // 🚀 سيظهر اسم الأستاذ الآن
+    $professor_name = $row['professor_name'] ?? '—'; 
 
-    echo "<tr>
+    echo
+     "<tr>
             <td>".$row['id']."</td>
-            <td>".$row['professor_name']."</td>
+            <td>".$professor_name."</td>
             <td>".$row['created_at']."</td>
-            <td class='".($row['status']=="Pending"?"pending":"accepted")."'>".$row['status']."</td>
+            <td class='".(strtolower($row['status'])=="pending"?"pending":"accepted")."'>".$row['status']."</td>
                 <td class='actions'>
                   <button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
-                  <button class='delete' onclick=\"deleteRequest(".$row['id'].")\">🗑 Delete</button>
+                  <button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>
                 </td>
               </tr>";
       }
@@ -317,17 +320,41 @@ toggleBtn.addEventListener("click", () => {
   sidebar.classList.toggle("collapsed");
 });
 
-// 🔸 Buttons (temporary JS actions)
+// 🔸 Buttons (تم تفعيلها للتوجيه لملفات المعالجة)
+
 function editRequest(id) {
-  alert("Edit request #" + id);
-  // window.location.href = "edit_request.php?id=" + id;
+  // 🚀 يتم التوجيه لصفحة التعديل، يجب إنشاء ملف edit_request.php
+  window.location.href = "new_request.php?id=" + id;
 }
 
-function deleteRequest(id) {
-  if (confirm("Are you sure you want to delete request #" + id + "?")) {
-    // إرسال طلب الحذف إلى PHP لاحقًا
-    alert("Request deleted!");
-  }
+
+function deleteRequest(id, btn) {
+  if (!confirm("Are you sure you want to delete this request?")) return;
+
+  fetch("delete_request.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "id=" + id
+  })
+  .then(response => response.text())
+  .then(result => {
+    if (result.trim() === "success") {
+  const row = btn.closest("tr");
+  row.style.transition = "opacity 0.5s";
+  row.style.opacity = "0";
+    }
+  setTimeout(() => {
+    row.remove();
+    updateStats(); // ← هذا السطر يضاف هنا
+  }, 500);
+
+  alert("✅ تم حذف الطلب بنجاح");
+})
+  .catch(error => {
+    alert("⚠️ فشل الاتصال بالسيرفر");
+    console.error(error);
+  });
+
 }
 </script>
 </body>

@@ -2,9 +2,11 @@
 session_start();
 include 'index.php';
 
-if (!isset($_SESSION['user_id'])) {
-     header("Location: login.php");
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
+    header("Location: login.php");
+    exit;
 }
+
 $user_id = $_SESSION['user_id'];
 // 📝 جلب student_id من السيشن
 $user_id = $_SESSION['user_id'];
@@ -65,7 +67,7 @@ $settings = mysqli_fetch_assoc($result);
 <body>
      
 <!-- Back Button -->
-<a href="req_system.php" class="back_btn">&#8592;</a>
+<a href="requests.php" class="back_btn">&#8592;</a>
 <!-- Header -->
 <header class="header">                 <!-- يتغير ع جدول الدكتور -->
     <h4>Welcome, <span class="student_name"><?php echo $user_name; ?></span></h4>
@@ -146,7 +148,7 @@ $settings = mysqli_fetch_assoc($result);
     
                   
                   <button class="save">  Save Notitfcation setting</button>
-
+</form>
                   <script src="jave/settings_sd.js"></script>
 </body>
 </html>

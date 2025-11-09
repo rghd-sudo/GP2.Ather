@@ -34,14 +34,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $cv_path = $professor['cv_path'] ?? null;
 
+    // رفع أو تحديث الـCV
     if (!empty($_FILES['cv_path']['name'])) {
         $upload_dir = "uploads/";
-        $cv_path = $upload_dir . basename($_FILES['cv_path']['name']);
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        // اسم فريد للملف الجديد
+        $cv_name = time() . "_" . basename($_FILES['cv_path']['name']);
+        $cv_path = $upload_dir . $cv_name;
+
         move_uploaded_file($_FILES['cv_path']['tmp_name'], $cv_path);
     }
 
+    // تحديث بيانات المستخدم
     $conn->query("UPDATE users SET name='$name', email='$email' WHERE id=$user_id");
-   // $conn->query("UPDATE professors SET department='$dept', university='$univ', cv_path='$cv_path' WHERE user_id=$user_id");
+
+    // تحديث بيانات البوفسور (بما فيهم الـCV)
+    $conn->query("UPDATE professors SET cv_path='$cv_path' WHERE user_id=$user_id");
+
+    $professor['cv_path'] = $cv_path;
 
     $success_message = "Profile updated successfully!";
 }
@@ -52,13 +65,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <title>Professor Profile</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+ <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
 <style>
 body {
     margin: 0;
-    font-family: "Poppins", sans-serif;
-    background: #f9f9f9;
-    display: flex;
+  font-family: "Poppins", sans-serif;
+  background: #fdfaf6;
+  display: flex;
 }
 
 h2 {
@@ -69,7 +85,7 @@ h2 {
 
 /* Sidebar */
 .sidebar {
-  background-color: #cde3e8;
+  background-color: #c8e4eb;
   width: 230px;
   transition: width 0.3s;
   height: 100vh;
@@ -248,13 +264,13 @@ form input {
       <img src="LOGObl.PNG" alt="Logo">
     </div>
 
-   <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
-      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
+      <a href="requests.php" class="menu-item"><i class="fas fa-file-circle-plus"></i><span class="menu-text">New Request</span></a>
+      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
+      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     </div>
-    <div class="bottom-section">
-        <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span>Notification Settings</span></a>
-    </div>
+   <div class="bottom-section">
+    <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
+  </div>
 </div>
 
 <!-- Main Content -->
@@ -282,8 +298,22 @@ form input {
       <label>University</label>
       <input type="text" name="university" value="<?= htmlspecialchars($professor['university'] ?? '') ?>">
 
+      <!-- CV Upload Section -->
       <label>CV:</label>
-      <input type="file" name="cv_path">
+      <input type="file" name="cv_path" accept=".pdf,.doc,.docx">
+
+      <?php if (!empty($professor['cv_path'])): ?>
+        <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+          <a href="<?= htmlspecialchars($professor['cv_path']) ?>" target="_blank" 
+            style="text-decoration: none; background: #7DAAFB; color: white; padding: 8px 14px; border-radius: 8px; font-weight: 500;">
+            <i class="fa-solid fa-file-lines"></i> View CV
+          </a>
+        </div>
+      <?php else: ?>
+        <div style="margin-top: 10px;">
+          <span style="color: #999;">No CV uploaded yet.</span>
+        </div>
+      <?php endif; ?>
 
       <div class="actions">
         <button type="submit" class="save-btn">Save changes</button>

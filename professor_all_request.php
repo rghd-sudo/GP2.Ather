@@ -1,6 +1,9 @@
 <?php
 session_start();
-
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
+    header("Location: login.php");
+    exit;
+}
 include 'index.php';
 
 
@@ -264,7 +267,7 @@ body {
        </td>
        <td>
       <!-- عمود الأزرار -->
-       <button class="btn edit" onclick="window.location.href='recommendation-writing.php?id=<?= $row['graduate_id']; ?>'">Edit</button>
+<button class="btn edit" onclick="window.location.href='recommendation-writing.php?id=<?= $row['request_id']; ?>, this'">Edit</button>
        <button class="btn delete" onclick="deleteRequest(<?= $row['request_id']; ?>, this)">Delete</button>
        </td>
     </tr>

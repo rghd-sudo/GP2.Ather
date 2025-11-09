@@ -16,18 +16,34 @@ $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
-
-// التعامل مع قبول أو رفض الطلبات
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST['action'])) {
     $request_id = intval($_POST['request_id']);
     $action = $_POST['action'];
 
     if ($action === 'accept' || $action === 'reject') {
         $newStatus = ($action === 'accept') ? 'accepted' : 'rejected';
+        
+        // تحديث حالة الطلب
         $stmt = $conn->prepare("UPDATE requests SET status = ? WHERE id = ?");
         $stmt->bind_param("si", $newStatus, $request_id);
         $stmt->execute();
         $stmt->close();
+
+        // جلب user_id واسم الطالب لإرسال الإشعار
+        $res = $conn->prepare("SELECT u.id AS student_user_id, u.name AS student_name FROM requests r JOIN users u ON r.user_id = u.id WHERE r.id = ?");
+        $res->bind_param("i", $request_id);
+        $res->execute();
+        $row = $res->get_result()->fetch_assoc();
+        $student_user_id = $row['student_user_id'];
+        $student_name = $row['student_name'];
+        $res->close();
+
+        // إرسال إشعار للطالب
+        $message = "Your request has been " . $newStatus . " by the professor.";
+        $notif = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
+        $notif->bind_param("is", $student_user_id, $message);
+        $notif->execute();
+        $notif->close();
 
         echo $newStatus; // يرجع النص مباشرة للـ fetch()
         exit;
@@ -82,12 +98,15 @@ $notif_res = $notif_q->get_result();
 <head>
 <meta charset="utf-8">
 <title>Incoming Recommendation Requests</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+ <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
 <style>
  body {
     margin: 0;
     font-family: "Poppins", sans-serif;
-    background: #f9f9f9;
+    background: #fdfaf6;
     display: flex;
   }
 h2 {
@@ -98,7 +117,7 @@ h2 {
 }
 /* تصميم الشريط الجانبي */
 .sidebar {
-    background-color: #cde3e8;
+    background-color: #c8e4eb;
     width: 230px;
     transition: width 0.3s;
     height: 100vh;
@@ -131,9 +150,21 @@ h2 {
 .card-actions { position: absolute; right: 16px; bottom: 14px; display:flex; gap:10px; }
 .btn-accept { background: #7fcfbd; border: none; padding:8px 14px; border-radius:20px; cursor:pointer; color:#0b3b2e; font-weight:700; }
 .btn-reject { background: #f3a59a; border:none; padding:8px 14px; border-radius:20px; cursor:pointer; color:#6b0f0f; font-weight:700; }
+.btn-delet { background: #f3a59a; border:none; padding:8px 15px; border-radius:20px; cursor:pointer; color:#6b0f0f; font-weight:750; }
 .status-box { padding:8px 12px; border-radius:18px; font-weight:700; font-size:14px; }
 .accepted { background:#d4edda; color:#155724; }
 .rejected { background:#f8d7da; color:#721c24; }
+/* 🔹 Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 70px;
+  }
+  .sidebar {
+    width: 70px;
+  }
+  .menu-text {
+    display: none;
+  }}
 </style>
 </head>
 <body>
@@ -143,9 +174,9 @@ h2 {
     <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
     <div>
       <div class="logo"><img src="LOGObl.PNG" alt="Logo"></div>
-      <a href="requests.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
-      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span>All Requests</span></a>
-      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span>Profile</span></a>
+      <a href="requests.php" class="menu-item"><i class="fas fa-file-circle-plus"></i><span class="menu-text">New Request</span></a>
+      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
+      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     </div>
     <div class="bottom-section">
       <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
@@ -183,10 +214,10 @@ h2 {
           <div class="card-actions" id="request-<?= $rid ?>">
             <?php if (strtolower($status) === 'accepted'): ?>
               <div class="status-box accepted">Accepted</div>
-              <a href="recommendation-writing.php?request_id=<?= $rid ?>" class="btn-accept" style="margin-left:10px;">Write Recommendation</a>
+              <a href="recommendation-writing.php?id=<?= $rid ?>" class="btn-accept" style="margin-left:10px;">✏️</a>
             <?php elseif (strtolower($status) === 'rejected'): ?>
               <div class="status-box rejected">Rejected</div>
-              <button type="button" class="btn-reject" style="margin-left:10px;" onclick="deleteCard(<?= $rid ?>)">Delete</button>
+              <button type="button" class="btn-delet" style="margin-left:10px;" onclick="deleteCard(<?= $rid ?>)">🗑</button>
             <?php else: ?>
               <button type="button" class="btn-accept" onclick="updateStatus(<?= $rid ?>, 'accept')">Accept</button>
               <button type="button" class="btn-reject" onclick="updateStatus(<?= $rid ?>, 'reject')">Reject</button>
@@ -215,9 +246,9 @@ function updateStatus(requestId, action) {
     .then(status => {
       const container = document.getElementById('request-' + requestId);
       if (status === 'accepted') {
-        container.innerHTML = '<div class="status-box accepted">Accepted</div><a href="write_recommendation.php?request_id=' + requestId + '" class="btn-accept" style="margin-left:10px;">Write Recommendation</a>';
+        container.innerHTML = '<div class="status-box accepted">Accepted</div><a href="recommendation-writing.php?id=' + requestId + '" class="btn-accept" style="margin-left:10px;">✏️</a>';
       } else if (status === 'rejected') {
-        container.innerHTML = '<div class="status-box rejected">Rejected</div><button type="button" class="btn-reject" style="margin-left:10px;" onclick="deleteCard(' + requestId + ')">Delete</button>';
+        container.innerHTML = '<div class="status-box rejected">Rejected</div><button type="button" class="btn-reject" style="margin-left:10px;" onclick="deleteCard(' + requestId + ')">🗑</button>';
       }
     })
     .catch(error => console.error('Error:', error));
