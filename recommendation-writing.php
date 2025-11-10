@@ -1,87 +1,57 @@
 <?php
-session_start();
+// الاتصال بقاعدة البيانات
+$host = "localhost";
+$user = "root";
+$pass = "";
+$dbname = "agdb";
 
-include 'index.php';
-
-// التحقق من تسجيل الدخول كدكتور
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
-    header("Location: login.php");
-    exit;
+$conn = new mysqli($host, $user, $pass, $dbname);
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
-// الحصول على معرف الطلب من الرابط
-$request_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+// الحصول على معرف الخريج من الرابط
+$graduate_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-if ($request_id <= 0) {
-    die("Invalid request ID.");
-}
-
-// ✅ جلب بيانات الطلب والخريج والمستخدم
-$sql = "SELECT 
-            g.graduate_id,
-            r.id AS request_id,
-            r.user_id,
-            r.major, 
-            r.purpose, 
-            r.type AS recommendation_type, 
-            r.status,
-            r.course,
-            g.gpa,
-            g.graduation_year,
-            g.cv_path,
-            u.name,
-            u.email,
-            u.department,
-            u.National_ID,
-            u.university
-        FROM requests r
-        INNER JOIN users u ON r.user_id = u.id
-        INNER JOIN graduates g ON u.id = g.user_id
-        WHERE r.id = ?";
+// جلب بيانات الخريج والطلب المرتبط به
+$sql = "SELECT g.*, u.name, u.email, u.department, u.National_ID,
+               r.id AS request_id, r.major, r.purpose, r.type AS recommendation_type, 
+               r.status, r.file_name
+        FROM graduates g
+        JOIN users u ON g.user_id = u.id
+        LEFT JOIN requests r ON g.user_id = r.user_id
+        WHERE g.graduate_id = ?";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $request_id);
+$stmt->bind_param("i", $graduate_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
-if ($result && $result->num_rows > 0) {
+if ($result->num_rows > 0) {
     $graduate = $result->fetch_assoc();
-    $graduate_id = $graduate['graduate_id'];
-    $student_user_id = $graduate['user_id'];
 } else {
-    die("❌ Request not found or graduate not found.");
+    die("Graduate not found.");
 }
 
-// ✅ جلب رقم الدكتور الحقيقي من جدول professors
-$user_id = $_SESSION['user_id'];
-$get_prof = $conn->prepare("SELECT professor_id FROM professors WHERE user_id = ?");
-$get_prof->bind_param("i", $user_id);
-$get_prof->execute();
-$prof_result = $get_prof->get_result();
-
-if ($prof_result->num_rows > 0) {
-    $professor_id = $prof_result->fetch_assoc()['professor_id'];
-} else {
-    die("Professor record not found for this user.");
-}
-
-// ✅ جلب مسودة سابقة (إن وجدت)
+// جلب مسودة سابقة (إن وجدت)
 $recommendation = null;
-$rec_query = $conn->prepare("SELECT * FROM recommendations WHERE graduate_id = ? AND professor_id = ?");
-$rec_query->bind_param("ii", $graduate_id, $professor_id);
+$rec_query = $conn->prepare("SELECT * FROM recommendations WHERE graduate_id = ? AND professor_id = 1");
+$rec_query->bind_param("i", $graduate_id);
 $rec_query->execute();
 $rec_result = $rec_query->get_result();
-
 if ($rec_result->num_rows > 0) {
     $recommendation = $rec_result->fetch_assoc();
 }
 
 $message_alert = ''; // متغير الرسالة
 
-// ✅ حفظ التوصية عند الإرسال أو المسودة
+// حفظ التوصية عند الإرسال أو المسودة
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $content = $_POST['recommendation_text'];
-    $status = $_POST['action']; // draft أو completed
+    $status = $_POST['action']; // draft أو sent
+    $professor_id = 1; // لاحقًا من session
+    $request_id = $graduate['request_id'];
+    $student_user_id = $graduate['user_id'];
 
     // تحقق إذا كانت التوصية موجودة مسبقًا
     $check = $conn->prepare("SELECT recommendation_id FROM recommendations WHERE graduate_id = ? AND professor_id = ?");
@@ -101,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert->execute();
     }
 
-    // ✅ تحديث حالة الطلب
+    // تحديث حالة الطلب
     if ($status === 'draft') {
         $req_update = $conn->prepare("UPDATE requests SET status = 'draft' WHERE id = ?");
         $req_update->bind_param("i", $request_id);
@@ -141,112 +111,35 @@ body {
     display: flex;
 }
 
-h2 {
-  font-size: 22px;
-  color: #003366;
-  margin-top: -19px;
-}
-
 /* Sidebar */
 .sidebar {
   background-color: #c8e4eb;
   width: 230px;
-  transition: width 0.3s;
   height: 100vh;
-  padding-top: 20px;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
   position: fixed;
+  padding-top: 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-.sidebar.collapsed {
-  width: 70px;
-}
-
-.sidebar .logo {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.sidebar .logo img {
-  width: 80px;
-}
-
 .menu-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 20px;
-  color: #333;
-  text-decoration: none;
-  transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.3s;
 }
+.menu-item:hover { background: #bcd5db; }
+.menu-item i { font-size: 20px; margin-right: 10px; width: 25px; text-align: center; }
 
-.menu-item:hover {
-  background: #bcd5db;
-}
-
-.menu-item i {
-  font-size: 20px;
-  margin-right: 10px;
-  width: 25px;
-  text-align: center;
-}
-
-.menu-text {
-  font-size: 15px;
-  white-space: nowrap;
-}
-
-.sidebar.collapsed .menu-text {
-  display: none;
-}
-
-/* Bottom Section */
-.bottom-section {
-  margin-bottom: 20px;
-}
-
-/* Collapse Button */
-.toggle-btn { position: absolute; top: 20px; right: -15px; background: #003366; color: #fff; border-radius: 50%; border: none; width: 30px; height: 30px; cursor: pointer; }
-.top-icons { position: absolute; top: 20px; right: 30px; display: flex; align-items: center; gap: 20px; }
-
-
-/* Top Icons */
-.top-icons {
-  position: absolute;
-  top: 20px;
-  right: 30px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 20px;
-  color: #333;
-}
-
-.icon-btn:hover {
-  color: #003366;
-}
-
-/* Main Content */
 .main-content {
-  margin-left: 230px;
-  padding: 30px;
-  transition: margin-left 0.3s;
-  width: 100%;
-  position: relative;
+    margin-left: 230px;
+    padding: 40px;
+    width: 100%;
 }
 
-.sidebar.collapsed + .main-content {
-  margin-left: 70px;
-}
 /* Info box */
 .info-box {
     background: #f1f1f1;
@@ -279,27 +172,22 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
 </head>
 <body>
 
-<!-- Sidebar -->
-<div class="sidebar" id="sidebar">
-  <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
-
-  <div>
-    <div class="logo">
-      <img src="LOGObl.PNG" alt="Logo">
+<div class="sidebar">
+    <div>
+        <div class="logo" style="text-align:center; margin-bottom:30px;">
+            <img src="LOGObl.PNG" width="80">
+        </div>
+       
+     <a href="requests.php" class="menu-item"><i class="fas fa-file-circle-plus"></i><span class="menu-text">New Request</span></a>
+        <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
+        <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     </div>
-
-      <a href="requests.php" class="menu-item"><i class="fas fa-file-circle-plus"></i><span class="menu-text">New Request</span></a>
-      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
-      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+    <div class="bottom-section">
+        <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
     </div>
-   <div class="bottom-section">
-    <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
-  </div>
 </div>
 
-
 <div class="main-content">
-    
     <h2>Recommendation Writing</h2>
 
     <?php if ($graduate): ?>
@@ -318,6 +206,12 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
             <div class="info-item"><b>Major:</b> <?= htmlspecialchars($graduate['major'] ?? '-') ?></div>
             <div class="info-item"><b>Purpose:</b> <?= htmlspecialchars($graduate['purpose'] ?? '-') ?></div>
             <div class="info-item"><b>Recommendation Type:</b> <?= htmlspecialchars($graduate['recommendation_type'] ?? '-') ?></div>
+            <div class="info-item"><b>CV:</b><?php if (!empty($graduate['cv_path'])): ?>
+             <a href="<?= htmlspecialchars($graduate['cv_path']) ?>" target="_blank">View CV</a>
+            <?php else: ?>  No CV uploaded. <?php endif; ?> </div>
+            <div class="info-item"><b>Transcript:</b><?php if (!empty($graduate['file_name'])): ?>
+             <a href="<?= htmlspecialchars($graduate['file_name']) ?>" target="_blank">View Transcript</a>
+            <?php else: ?>  No transcript uploaded. <?php endif; ?></div>
         </div>
 
         <form method="POST">
@@ -332,13 +226,5 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
     <?php endif; ?>
 
 </div>
-
-<script>
-const toggleBtn = document.getElementById("toggleBtn");
-const sidebar = document.getElementById("sidebar");
-toggleBtn.addEventListener("click", () => {
-  sidebar.classList.toggle("collapsed");
-});
-</script>
 </body>
 </html>
