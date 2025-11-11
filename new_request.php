@@ -266,9 +266,10 @@ textarea { min-height:100px; resize:vertical; }
     <div class="icon-container"></div>
     <div class="request-title">Recommendation Request</div>
     <div class="student-info-section">
-      <span class="student-info-title">Student Information</span>
+      <span class="student-info-title">Personal Information</span>
       <input type="text" placeholder="Name" name="name_display" form="reqform" value="<?= htmlspecialchars($student_info['name']); ?>" readonly>
-<input type="text" placeholder="ID" name="id_display" form="reqform" value="<?= htmlspecialchars($student_info['id_number']); ?>" readonly>
+      <input type="text" placeholder="ID" name="id_display" form="reqform" value="<?= htmlspecialchars($student_info['id_number']); ?>" readonly>
+
       </div>
   </div>
 
