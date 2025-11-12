@@ -251,6 +251,18 @@ form input {
   border: 1px solid #ddd;
   color: #555;
 }
+
+/* 🔹 Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 70px;
+  }
+  .sidebar {
+    width: 70px;
+  }
+  .menu-text {
+    display: none;
+  }
 </style>
 </head>
 <body>

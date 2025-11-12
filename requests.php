@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         $res->close();
 
         // إرسال إشعار للطالب
-        $message = "Your request has been " . $newStatus . " by the professor.";
+        $message = "Your request " . $purpose . " has been " . $newStatus . " by the professor.";
         $notif = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
         $notif->bind_param("is", $student_user_id, $message);
         $notif->execute();

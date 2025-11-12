@@ -6,6 +6,22 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
 }
 include 'index.php';
 
+// 1. الحصول على مُعرف المستخدم (User ID) من الجلسة.
+$current_user_id = $_SESSION['user_id']; 
+
+// 2. القيمة الافتراضية لـ Professor ID هي -1
+$current_professor_id = -1;
+
+// 3. البحث عن Professor ID المقابل باستخدام User ID الجلسة في جدول professors
+$pid_query = "SELECT professor_id FROM professors WHERE user_id = {$current_user_id}"; 
+$pid_result = mysqli_query($conn, $pid_query);
+
+// 4. إذا نجح الاستعلام ووجد نتائج، قم بتحديث الـ ID الصحيح
+if ($pid_result && mysqli_num_rows($pid_result) > 0) {
+    $pid_row = mysqli_fetch_assoc($pid_result);
+    $current_professor_id = $pid_row['professor_id']; 
+}
+
 
 $sql = "
 SELECT 
@@ -25,16 +41,19 @@ FROM
     requests r
 JOIN 
     users u ON r.user_id = u.id
+     
 JOIN
     graduates g ON r.user_id = g.user_id
+WHERE
+    r.professor_id = {$current_professor_id}  /* 💡 هذا هو سطر التصفية الصحيح */
 ORDER BY 
-    r.created_at DESC
-";
+    r.created_at DESC";
+
 
 $result = mysqli_query($conn, $sql);
 
 if (!$result) {
-    die("❌ SQL Error: " . mysqli_error($conn));
+    die("❌ SQL Error: " . mysqli_error($conn) . " Query: " . $sql);
 }
 
 $data = [];
@@ -178,6 +197,7 @@ body {
 </head>
 <body>
 
+ <a href="requests.php" class="back_btn">&#8592;</a>
 
 <div class="stats_container"> <!-- الحاوية الرئيسية لكل بطاقات الإحصائيات -->
   
@@ -250,6 +270,8 @@ body {
        <td><?php echo htmlspecialchars($row['type']); ?></td>
        <td><?php echo htmlspecialchars($row['created_at']); ?></td>
        <td><?php echo htmlspecialchars($row['purpose']); ?></td>
+
+   
        <td>
          <?php 
         $statusClass = '';

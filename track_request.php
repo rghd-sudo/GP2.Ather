@@ -4,8 +4,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 /* ------------------ إعداد الاتصال بقاعدة البيانات ------------------ */
-if (file_exists(_DIR_ . '/db.php')) {
-    require_once _DIR_ . '/db.php';
+if (file_exists(__DIR__. '/db.php')) {
+    require_once __DIR__ . '/db.php';
 } else {
     $host = "localhost";
     $user = "root";
@@ -40,7 +40,7 @@ $conn->query($create_sql);
 
 /* ------------------ جلب طلبات المستخدم الحالي ------------------ */
 $requests = [];
-if ($stmt = $conn->prepare("SELECT id, COALESCE(title, '') AS title, status AS current_status, created_at FROM requests WHERE user_id = ? ORDER BY created_at DESC")) {
+if ($stmt = $conn->prepare("SELECT id, COALESCE(purpose, '') AS purpose, status AS current_status, created_at FROM requests WHERE user_id = ? ORDER BY created_at DESC")) {
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -178,12 +178,13 @@ h2 { font-size: 22px; color: #003366; margin-top: 0; }
   <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
   <div>
     <div class="logo">
-      <img src="logo1.jpg" alt="Logo">
+      <img src="LOGObl.PNG" alt="Logo">
     </div>
-    <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
-    <a href="new_request.php" class="menu-item"><i class="fas fa-plus-square"></i><span class="menu-text">New Request</span></a>
-    <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i><span class="menu-text">Track Request</span></a>
-  </div>
+    
+      <a href="requests.php" class="menu-item"><i class="fas fa-file-circle-plus"></i><span class="menu-text">New Request</span></a>
+      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
+      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+    </div>
   <div class="bottom-section">
     <a href="setting_s.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
   </div>
@@ -204,11 +205,11 @@ h2 { font-size: 22px; color: #003366; margin-top: 0; }
 <?php else: ?>
   <?php foreach ($requests as $req):
     $reqId = intval($req['id']);
-    $reqTitle = $req['title'] ?: "Request #{$reqId}";
+    $reqTitle = $req['purpose'] ?: "Request #{$reqId}";
     $reqCreated = $req['created_at'];
 
     $tracks = [];
-    if ($s2 = $conn->prepare("SELECT status, note, created_at FROM track_request WHERE request_id = ? ORDER BY created_at DESC")) {
+    if ($s2 = $conn->prepare("SELECT status, created_at FROM track_request WHERE request_id = ? ORDER BY created_at DESC")) {
         $s2->bind_param("i", $reqId);
         $s2->execute();
         $r2 = $s2->get_result();
@@ -231,7 +232,7 @@ h2 { font-size: 22px; color: #003366; margin-top: 0; }
         <?php else: ?>
           <?php foreach ($tracks as $t):
             $st = $t['status'];
-            $note = $t['note'] ?? '';
+           $note = $t['note'] ?? '';
             $created = $t['created_at'];
 
             // اللون والرسالة حسب الحالة
