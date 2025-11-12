@@ -6,7 +6,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
 }
 include 'index.php';
 
-
+// 1. الحصول على مُعرف الأستاذ الذي قام بتسجيل الدخول
+$current_professor_id = $_SESSION['user_id'];
 $sql = "
 SELECT 
     r.id AS request_id,
@@ -25,8 +26,10 @@ FROM
     requests r
 JOIN 
     users u ON r.user_id = u.id
+     
 JOIN
     graduates g ON r.user_id = g.user_id
+  
 ORDER BY 
     r.created_at DESC
 ";
@@ -34,7 +37,7 @@ ORDER BY
 $result = mysqli_query($conn, $sql);
 
 if (!$result) {
-    die("❌ SQL Error: " . mysqli_error($conn));
+    die("❌ SQL Error: " . mysqli_error($conn) . " Query: " . $sql);
 }
 
 $data = [];
@@ -237,6 +240,7 @@ body {
       <th>Type</th>
       <th>Date</th>
       <th>Purpose</th>
+      <th>P. ID</th>
       <th>Status</th>
       <th>Actions</th> 
     </tr>
@@ -250,6 +254,8 @@ body {
        <td><?php echo htmlspecialchars($row['type']); ?></td>
        <td><?php echo htmlspecialchars($row['created_at']); ?></td>
        <td><?php echo htmlspecialchars($row['purpose']); ?></td>
+
+       <td>P. ID: <?php echo htmlspecialchars($row['professor_id']); ?></td>
        <td>
          <?php 
         $statusClass = '';
