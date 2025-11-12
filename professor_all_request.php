@@ -6,20 +6,20 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
 }
 include 'index.php';
 
-// 1. الحصول على مُعرف المستخدم (User ID) من الجلسة. (القيمة 55)
+// 1. الحصول على مُعرف المستخدم (User ID) من الجلسة.
 $current_user_id = $_SESSION['user_id']; 
 
-// 2. القيمة الافتراضية لـ Professor ID إذا فشل الربط هي -1 (لا تُظهر أي شيء)
+// 2. القيمة الافتراضية لـ Professor ID هي -1
 $current_professor_id = -1;
 
-// 3. البحث عن Professor ID المقابل (7) باستخدام User ID (55).
-$pid_query = "SELECT professor_id FROM professor WHERE user_id = {$current_user_id}"; 
+// 3. البحث عن Professor ID المقابل باستخدام User ID الجلسة في جدول professors
+$pid_query = "SELECT professor_id FROM professors WHERE user_id = {$current_user_id}"; 
 $pid_result = mysqli_query($conn, $pid_query);
 
-// 4. إذا نجح الاستعلام، قم بتحديث الـ ID الصحيح (7)
+// 4. إذا نجح الاستعلام ووجد نتائج، قم بتحديث الـ ID الصحيح
 if ($pid_result && mysqli_num_rows($pid_result) > 0) {
     $pid_row = mysqli_fetch_assoc($pid_result);
-    $current_professor_id = $pid_row['professor_id']; // القيمة 7
+    $current_professor_id = $pid_row['professor_id']; 
 }
 
 
