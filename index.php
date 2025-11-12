@@ -2,7 +2,9 @@
 
 $conn = new mysqli("localhost", "root", "", "agdb");
 
-if (!($conn)) {
+// ضبط الترميز
+$conn->set_charset("utf8mb4");
+if ($conn->connect_error) {
     echo "Connected not successfully!!!";
 }
 
