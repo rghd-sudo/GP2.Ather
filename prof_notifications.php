@@ -11,8 +11,8 @@ ini_set('display_errors', 1);
 */
 
 /* ------------------ 1) DB connection ------------------ */
-if (file_exists(_DIR_ . '/db.php')) {
-    require_once _DIR_ . '/db.php'; // expects $conn (mysqli)
+if (file_exists(__DIR__. '/db.php')) {
+    require_once __DIR__ . '/db.php'; // expects $conn (mysqli)
 } else {
     // fallback DB connection - edit if needed
     $host = "localhost";
@@ -26,11 +26,10 @@ if (file_exists(_DIR_ . '/db.php')) {
 }
 
 /* ------------------ 2) Auth & role check ------------------ */
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
-    die('Please log in.');
-}
-if ($_SESSION['role'] !== 'professor') {
-    die('Access denied: this page is for professors only.');
+
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
+    header("Location: login.php");
+    exit;
 }
 $user_id = intval($_SESSION['user_id']);
 
@@ -44,7 +43,7 @@ CREATE TABLE IF NOT EXISTS notification_settings (
   notify_rejected TINYINT(1) DEFAULT 1,
   notify_uploaded TINYINT(1) DEFAULT 1,
   via_email TINYINT(1) DEFAULT 0,
-  via_app TINYINT(1) DEFAULT 1,
+  via_in_app TINYINT(1) DEFAULT 1,
   reminder_days INT DEFAULT 2,
   PRIMARY KEY (user_id, role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -62,24 +61,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notify_rejected = isset($_POST['notify_rejected']) ? 1 : 0;
     $notify_uploaded = isset($_POST['notify_uploaded']) ? 1 : 0;
     $via_email = isset($_POST['via_email']) ? 1 : 0;
-    $via_app = isset($_POST['via_app']) ? 1 : 0;
+    $via_in_app = isset($_POST['via_in_app']) ? 1 : 0;
     $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 2;
 
     // upsert (INSERT ... ON DUPLICATE KEY UPDATE)
     $sql = "INSERT INTO notification_settings 
-        (user_id, role, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_app, reminder_days)
-        VALUES (?, 'professor', ?, ?, ?, ?, ?, ?, ?)
+        (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           notify_new_request = VALUES(notify_new_request),
           notify_pending = VALUES(notify_pending),
           notify_rejected = VALUES(notify_rejected),
           notify_uploaded = VALUES(notify_uploaded),
           via_email = VALUES(via_email),
-          via_app = VALUES(via_app),
+          via_in_app = VALUES(via_in_app),
           reminder_days = VALUES(reminder_days)";
 
     if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param("iiiiiiii", $user_id, $notify_new_request, $notify_pending, $notify_rejected, $notify_uploaded, $via_email, $via_app, $reminder_days);
+        $stmt->bind_param("iiiiiiii", $user_id, $notify_new_request, $notify_pending, $notify_rejected, $notify_uploaded, $via_email, $via_in_app, $reminder_days);
         if ($stmt->execute()) {
             $success_msg = "Settings saved successfully.";
         } else {
@@ -98,11 +97,11 @@ $settings = [
     'notify_rejected' => 1,
     'notify_uploaded' => 1,
     'via_email' => 0,
-    'via_app' => 1,
+    'via_in_app' => 1,
     'reminder_days' => 2
 ];
 
-if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_app, reminder_days FROM notification_settings WHERE user_id = ? AND role = 'professor'")) {
+if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days FROM notification_settings WHERE user_id = ? ")) {
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -112,7 +111,7 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
         $settings['notify_rejected'] = intval($row['notify_rejected']);
         $settings['notify_uploaded'] = intval($row['notify_uploaded']);
         $settings['via_email'] = intval($row['via_email']);
-        $settings['via_app'] = intval($row['via_app']);
+        $settings['via_in_app'] = intval($row['via_in_app']);
         $settings['reminder_days'] = intval($row['reminder_days']);
     }
     $stmt->close();
@@ -318,7 +317,7 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
           </div>
           <div class="toggles">
             <label style="margin-right:8px;"><input type="checkbox" name="via_email" <?php if($settings['via_email']) echo 'checked'; ?>> Email</label>
-            <label><input type="checkbox" name="via_app" <?php if($settings['via_app']) echo 'checked'; ?>> In-app</label>
+            <label><input type="checkbox" name="via_in_app" <?php if($settings['via_in_app']) echo 'checked'; ?>> In-app</label>
           </div>
         </div>
 
