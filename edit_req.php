@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_editing) {
     $grades_file = $request_data['grades_file'];
     
     // تحديد مسار الرفع (يفترض أنه نفس المسار في new_request.php)
-    $uploadDir = DIR.'/uploads/';
+    $uploadDir = __DIR__.'/uploads/';
     if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
     // رفع الملف الاختياري (CV) - تحديث الملف فقط إذا تم رفع ملف جديد
@@ -106,8 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_editing) {
                 course = '$course', 
                 professor_id = '$professor_id', 
                 purpose = '$purpose',
-
-type = '$type', 
+                type = '$type', 
                 file_name = " . ($file_name ? "'$file_name'" : "NULL") . ", 
                 grades_file = '$grades_file',
                 updated_at = NOW()
