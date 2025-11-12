@@ -114,38 +114,13 @@ $stmt->bind_param("i", $professor_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $settings = $result->fetch_assoc();
-
-if ($settings && $settings['notify_new_request'] == 1) {
-    // جلب player_id الخاص بالأستاذ
-    $query = $conn->prepare("SELECT player_id FROM users WHERE id = ?");
-    $query->bind_param("i", $professor_id);
-    $query->execute();
-    $res = $query->get_result();
-    $player = $res->fetch_assoc()['player_id'];
-
-    if ($player) {
-        $title = "طلب توصية جديد";
-        $message = "لديك طلب توصية جديد من أحد الطلاب.";
-
-        $fields = [
-            'app_id' => 'YOUR_ONESIGNAL_APP_ID',
-            'include_player_ids' => [$player],
-            'headings' => ["en" => $title],
-            'contents' => ["en" => $message]
-        ];
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "https://onesignal.com/api/v1/notifications");
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json; charset=utf-8',
-            'Authorization: Basic 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 ' // المفتاح السري هنا
-        ]);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($ch, CURLOPT_POST, TRUE);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
-        $response = curl_exec($ch);
-        curl_close($ch);
-    }
+if ($settings && $settings['notify_new_request']) {
+    // إرسال إشعار للأستاذ
+    $notif_message = "New recommendation request submitted by " . $student_info['name'] . ".";
+    $notif_sql = "INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())";
+    $notif_stmt = $conn->prepare($notif_sql);
+    $notif_stmt->bind_param("is", $professor_id, $notif_message);
+    $notif_stmt->execute();
 }
 ?>
 

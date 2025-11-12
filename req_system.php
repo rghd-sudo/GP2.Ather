@@ -44,29 +44,7 @@ $result = $conn->query($sql);
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-<!-- OneSignal Notification Setup -->
-<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
-<script>
-  window.OneSignal = window.OneSignal || [];
-  OneSignal.push(function() {
-    OneSignal.init({
-      appId: "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", // اكتبي هنا App ID فقط
-      notifyButton: { enable: true },
-      allowLocalhostAsSecureOrigin: true // عشان XAMPP
-    });
 
-    // نحفظ player_id الخاص بالمستخدم
-    OneSignal.getUserId(function(playerId) {
-      if (playerId) {
-        fetch("save_player_id.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: "player_id=" + playerId
-        });
-      }
-    });
-  });
-</script>
 <style>
 /* 🔹 General Layout */
 body {
