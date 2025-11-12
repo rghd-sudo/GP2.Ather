@@ -5,16 +5,14 @@ ini_set('display_errors', 1);
 
 /*
   prof_notifications.php
-  - Notifications settings page for professors
-  - LTR layout, sidebar on the left, Poppins + FontAwesome
-  - Requires db.php (or adjust DB credentials)
+  - Show professor's notifications (display only, like student notifications page)
+  - LTR layout, left sidebar, Poppins + FontAwesome
 */
 
 /* ------------------ 1) DB connection ------------------ */
-if (file_exists(__DIR__. '/db.php')) {
-    require_once __DIR__ . '/db.php'; // expects $conn (mysqli)
+if (file_exists(_DIR_ . '/db.php')) {
+    require_once _DIR_ . '/db.php'; // expects $conn (mysqli)
 } else {
-    // fallback DB connection - edit if needed
     $host = "localhost";
     $user = "root";
     $pass = "";
@@ -26,10 +24,11 @@ if (file_exists(__DIR__. '/db.php')) {
 }
 
 /* ------------------ 2) Auth & role check ------------------ */
-
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
-    header("Location: login.php");
-    exit;
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    die('Please log in.');
+}
+if ($_SESSION['role'] !== 'professor') {
+    die('Access denied: this page is for professors only.');
 }
 $user_id = intval($_SESSION['user_id']);
 
@@ -43,7 +42,7 @@ CREATE TABLE IF NOT EXISTS notification_settings (
   notify_rejected TINYINT(1) DEFAULT 1,
   notify_uploaded TINYINT(1) DEFAULT 1,
   via_email TINYINT(1) DEFAULT 0,
-  via_in_app TINYINT(1) DEFAULT 1,
+  via_app TINYINT(1) DEFAULT 1,
   reminder_days INT DEFAULT 2,
   PRIMARY KEY (user_id, role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -61,24 +60,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notify_rejected = isset($_POST['notify_rejected']) ? 1 : 0;
     $notify_uploaded = isset($_POST['notify_uploaded']) ? 1 : 0;
     $via_email = isset($_POST['via_email']) ? 1 : 0;
-    $via_in_app = isset($_POST['via_in_app']) ? 1 : 0;
+    $via_app = isset($_POST['via_app']) ? 1 : 0;
     $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 2;
 
     // upsert (INSERT ... ON DUPLICATE KEY UPDATE)
     $sql = "INSERT INTO notification_settings 
-        (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, role, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_app, reminder_days)
+        VALUES (?, 'professor', ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           notify_new_request = VALUES(notify_new_request),
           notify_pending = VALUES(notify_pending),
           notify_rejected = VALUES(notify_rejected),
           notify_uploaded = VALUES(notify_uploaded),
           via_email = VALUES(via_email),
-          via_in_app = VALUES(via_in_app),
+          via_app = VALUES(via_app),
           reminder_days = VALUES(reminder_days)";
 
     if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param("iiiiiiii", $user_id, $notify_new_request, $notify_pending, $notify_rejected, $notify_uploaded, $via_email, $via_in_app, $reminder_days);
+        $stmt->bind_param("iiiiiiii", $user_id, $notify_new_request, $notify_pending, $notify_rejected, $notify_uploaded, $via_email, $via_app, $reminder_days);
         if ($stmt->execute()) {
             $success_msg = "Settings saved successfully.";
         } else {
@@ -97,11 +96,11 @@ $settings = [
     'notify_rejected' => 1,
     'notify_uploaded' => 1,
     'via_email' => 0,
-    'via_in_app' => 1,
+    'via_app' => 1,
     'reminder_days' => 2
 ];
 
-if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days FROM notification_settings WHERE user_id = ? ")) {
+if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_app, reminder_days FROM notification_settings WHERE user_id = ? AND role = 'professor'")) {
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -111,7 +110,7 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
         $settings['notify_rejected'] = intval($row['notify_rejected']);
         $settings['notify_uploaded'] = intval($row['notify_uploaded']);
         $settings['via_email'] = intval($row['via_email']);
-        $settings['via_in_app'] = intval($row['via_in_app']);
+        $settings['via_app'] = intval($row['via_app']);
         $settings['reminder_days'] = intval($row['reminder_days']);
     }
     $stmt->close();
@@ -125,7 +124,6 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
 
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
   <style>
@@ -207,26 +205,23 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
   .sidebar.collapsed + .top-bar + .main-content { margin-left: 70px; }
   h2 { font-size: 22px; color: #003366; margin-top: 0; }
 
-  /* Settings layout */
-  .card {
+  /* Notification card */
+  .notification {
     background: #fff;
-    padding: 18px;
+    padding: 14px 16px;
+    margin: 10px 0;
     border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
     border: 1px solid #eef3f6;
-    max-width: 820px;
   }
-  .row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f1f5f7; }
-  .row:last-child { border-bottom:none; }
-  .label { font-size:15px; color:#222; }
-  .small { font-size:13px; color:#6f6f6f; margin-top:6px; }
+  .notification-icon { font-size: 20px; margin-right: 12px; line-height: 1; }
+  .notification .msg { font-size: 14px; color: #222; }
+  .notification .time { font-size: 12px; color: #6f6f6f; margin-top: 6px; }
 
-  .toggles { display:flex; gap:12px; align-items:center; }
-  .save-btn { margin-top:16px; background:#7adba2; color:#fff; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; }
+  .empty { color: #777; background: #fff; border: 1px dashed #cfd8dc; border-radius: 10px; padding: 18px; text-align: center; }
 
-  .msg { margin-bottom:12px; padding:10px; border-radius:8px; }
-  .success { background:#e6f8ef; color:#0a6b3a; border:1px solid #cdead6; }
-  .error { background:#fdebee; color:#8b1d1d; border:1px solid #f5c6c6; }
   </style>
 </head>
 <body>
@@ -235,11 +230,14 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
   <div class="sidebar" id="sidebar">
     <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
     <div>
-      <div class="logo"><img src="logo1.jpg" alt="Logo"></div>
+      <div class="logo">
+        <img src="logo1.jpg" alt="Logo">
+      </div>
       <a href="prof_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
       <a href="prof_requests.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">Requests</span></a>
       <a href="prof_notifications.php" class="menu-item"><i class="fas fa-bell"></i><span class="menu-text">Notifications</span></a>
     </div>
+
     <div class="bottom-section">
       <a href="logout.php" class="menu-item"><i class="fas fa-arrow-right-from-bracket"></i><span class="menu-text">Logout</span></a>
     </div>
@@ -248,19 +246,26 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
   <!-- Top bar -->
   <div class="top-bar">
     <div class="top-icons">
-      <a class="icon-btn" href="notifications.php" title="All Notifications"><i class="fas fa-bell"></i></a>
+      <a class="icon-btn" href="prof_notifications.php" title="Notifications"><i class="fas fa-bell"></i></a>
     </div>
   </div>
 
-  <!-- Main -->
+  <!-- Main content -->
   <div class="main-content">
     <h2>Notifications</h2>
 
-    <?php if (!empty($success_msg)): ?>
-      <div class="msg success"><?php echo htmlspecialchars($success_msg, ENT_QUOTES, 'UTF-8'); ?></div>
-    <?php endif; ?>
-    <?php if (!empty($error_msg)): ?>
-      <div class="msg error"><?php echo htmlspecialchars($error_msg, ENT_QUOTES, 'UTF-8'); ?></div>
+    <?php if (count($notifications) > 0): ?>
+        <?php foreach ($notifications as $n): ?>
+            <div class="notification">
+                <div class="notification-icon">🔔</div>
+                <div>
+                    <div class="msg"><?php echo htmlspecialchars($n['message'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                    <div class="time"><?php echo htmlspecialchars($n['created_at'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <div class="empty">No notifications yet.</div>
     <?php endif; ?>
 
     <div class="card">
@@ -317,7 +322,7 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
           </div>
           <div class="toggles">
             <label style="margin-right:8px;"><input type="checkbox" name="via_email" <?php if($settings['via_email']) echo 'checked'; ?>> Email</label>
-            <label><input type="checkbox" name="via_in_app" <?php if($settings['via_in_app']) echo 'checked'; ?>> In-app</label>
+            <label><input type="checkbox" name="via_app" <?php if($settings['via_app']) echo 'checked'; ?>> In-app</label>
           </div>
         </div>
 
