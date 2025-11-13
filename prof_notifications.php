@@ -9,9 +9,9 @@ ini_set('display_errors', 1);
   - LTR layout, left sidebar, Poppins + FontAwesome
 */
 
-/* ---------- DB connection (use db.php if exists) ---------- */
-if (file_exists(_DIR_ . '/db.php')) {
-    require_once _DIR_ . '/db.php'; // expects $conn (mysqli)
+/* ------------------ 1) DB connection ------------------ */
+if (file_exists(__DIR__. '/db.php')) {
+    require_once __DIR__ . '/db.php'; // expects $conn (mysqli)
 } else {
     $host = "localhost";
     $user = "root";
@@ -22,26 +22,101 @@ if (file_exists(_DIR_ . '/db.php')) {
         die("Connection failed: " . $conn->connect_error);
     }
 }
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
+    header("Location: login.php");
+    exit;
+}
 
-/* ---------- Auth & role check ---------- */
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
-    die('Please log in.');
-}
-if ($_SESSION['role'] !== 'professor') {
-    die('Access denied: this page is for professors only.');
-}
 $user_id = intval($_SESSION['user_id']);
 
+<<<<<<< HEAD
 /* ---------- Fetch notifications for this professor (newest first) ---------- */
 // ensure variable exists and is an array
 $notifications = [];
 
 if ($stmt = $conn->prepare("SELECT id, message, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC")) {
+=======
+/* ------------------ 3) Ensure settings table exists (safe to call) ------------------ */
+$create_sql = "
+CREATE TABLE IF NOT EXISTS notification_settings (
+  user_id INT NOT NULL,
+  role ENUM('student','professor') NOT NULL DEFAULT 'student',
+  notify_new_request TINYINT(1) DEFAULT 1,
+  notify_pending TINYINT(1) DEFAULT 1,
+  notify_rejected TINYINT(1) DEFAULT 1,
+  notify_uploaded TINYINT(1) DEFAULT 1,
+  via_email TINYINT(1) DEFAULT 0,
+  via_in_app TINYINT(1) DEFAULT 1,
+  reminder_days INT DEFAULT 2,
+  PRIMARY KEY (user_id, role)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+";
+$conn->query($create_sql); // ignore errors here
+
+/* ------------------ 4) Handle POST (save settings) ------------------ */
+$success_msg = '';
+$error_msg = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // read values (checkboxes may not be present if unchecked)
+    $notify_new_request = isset($_POST['notify_new_request']) ? 1 : 0;
+    $notify_pending = isset($_POST['notify_pending']) ? 1 : 0;
+    $notify_rejected = isset($_POST['notify_rejected']) ? 1 : 0;
+    $notify_uploaded = isset($_POST['notify_uploaded']) ? 1 : 0;
+    $via_email = isset($_POST['via_email']) ? 1 : 0;
+    $via_in_app = isset($_POST['via_in_app']) ? 1 : 0;
+    $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 2;
+
+    // upsert (INSERT ... ON DUPLICATE KEY UPDATE)
+    $sql = "INSERT INTO notification_settings 
+        (user_id, role, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
+        VALUES (?, 'professor', ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          notify_new_request = VALUES(notify_new_request),
+          notify_pending = VALUES(notify_pending),
+          notify_rejected = VALUES(notify_rejected),
+          notify_uploaded = VALUES(notify_uploaded),
+          via_email = VALUES(via_email),
+          via_in_app = VALUES(via_in_app),
+          reminder_days = VALUES(reminder_days)";
+
+    if ($stmt = $conn->prepare($sql)) {
+        $stmt->bind_param("iiiiiiii", $user_id, $notify_new_request, $notify_pending, $notify_rejected, $notify_uploaded, $via_email, $via_in_app, $reminder_days);
+        if ($stmt->execute()) {
+            $success_msg = "Settings saved successfully.";
+        } else {
+            $error_msg = "Failed to save settings: " . $stmt->error;
+        }
+        $stmt->close();
+    } else {
+        $error_msg = "Prepare failed: " . $conn->error;
+    }
+}
+
+/* ------------------ 5) Load current settings for this professor ------------------ */
+$settings = [
+    'notify_new_request' => 1,
+    'notify_pending' => 1,
+    'notify_rejected' => 1,
+    'notify_uploaded' => 1,
+    'via_email' => 0,
+    'via_in_app' => 1,
+    'reminder_days' => 2
+];
+
+if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days FROM notification_settings WHERE user_id = ? ")) {
+>>>>>>> 2048601fe74c39e1c2070958a08c25c76db0203b
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $res = $stmt->get_result();
-    while ($row = $res->fetch_assoc()) {
-        $notifications[] = $row;
+    if ($row = $res->fetch_assoc()) {
+        $settings['notify_new_request'] = intval($row['notify_new_request']);
+        $settings['notify_pending'] = intval($row['notify_pending']);
+        $settings['notify_rejected'] = intval($row['notify_rejected']);
+        $settings['notify_uploaded'] = intval($row['notify_uploaded']);
+        $settings['via_email'] = intval($row['via_email']);
+        $settings['via_im_app'] = intval($row['via_in_app']);
+        $settings['reminder_days'] = intval($row['reminder_days']);
     }
     $stmt->close();
 }
@@ -199,6 +274,70 @@ if ($stmt = $conn->prepare("SELECT id, message, created_at FROM notifications WH
     <?php else: ?>
         <div class="empty">No notifications yet.</div>
     <?php endif; ?>
+
+    <div class="card">
+      <form method="post" action="">
+        <div class="row">
+          <div>
+            <div class="label">New Request Submitted</div>
+            <div class="small">Notify when a student sends a new recommendation request to you.</div>
+          </div>
+          <div class="toggles">
+            <label><input type="checkbox" name="notify_new_request" <?php if($settings['notify_new_request']) echo 'checked'; ?>> </label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="label">Request Pending Reminder</div>
+            <div class="small">Send reminder if a request is still pending after set days.</div>
+          </div>
+          <div class="toggles">
+            <label><input type="checkbox" name="notify_pending" <?php if($settings['notify_pending']) echo 'checked'; ?>></label>
+            <select name="reminder_days" style="padding:6px;border-radius:6px;">
+              <?php for($d=1;$d<=14;$d++): ?>
+                <option value="<?php echo $d; ?>" <?php if($settings['reminder_days']==$d) echo 'selected'; ?>><?php echo $d; ?> days</option>
+              <?php endfor; ?>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="label">Request Rejected</div>
+            <div class="small">Notify when a request is rejected (by you or system).</div>
+          </div>
+          <div class="toggles">
+            <label><input type="checkbox" name="notify_rejected" <?php if($settings['notify_rejected']) echo 'checked'; ?>></label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="label">Recommendation Uploaded</div>
+            <div class="small">Notify when you upload the recommendation letter.</div>
+          </div>
+          <div class="toggles">
+            <label><input type="checkbox" name="notify_uploaded" <?php if($settings['notify_uploaded']) echo 'checked'; ?>></label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <div class="label">Send Notification Via</div>
+            <div class="small">Choose notification channels.</div>
+          </div>
+          <div class="toggles">
+            <label style="margin-right:8px;"><input type="checkbox" name="via_email" <?php if($settings['via_email']) echo 'checked'; ?>> Email</label>
+            <label><input type="checkbox" name="via_app" <?php if($settings['via_app']) echo 'checked'; ?>> In-app</label>
+          </div>
+        </div>
+
+        <div style="text-align:right;">
+          <button type="submit" class="save-btn">Save Notification Settings</button>
+        </div>
+      </form>
+    </div>
 
   </div>
 

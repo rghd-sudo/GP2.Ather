@@ -70,37 +70,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $request_id = $graduate['request_id'];
     $student_user_id = $graduate['user_id'];
 
-    // مسار حفظ PDF داخل مجلد uploads
-    $pdf_file = 'uploads/recommendation_' . time() . '.pdf';
+// جلب النص من الفورم
+$content = $_POST['recommendation_text'];
 
-    // إنشاء ملف PDF جديد
-    $pdf = new TCPDF();
-    $pdf->AddPage();
-    $pdf->SetFont('helvetica', '', 14);
-    $pdf->MultiCell(0, 10, $content); // كتابة النص في PDF
-    $pdf->Output($pdf_file, 'F'); // حفظ الملف في المجلد
+// 1️⃣ إزالة التعليقات الخاصة بـ Word/VML
+$clean_content = preg_replace('/<!--\[if.*?<!\[endif\]-->/is', '', $content);
 
-$upload_dir = DIR . '/uploads';
-if (!file_exists($upload_dir)) {
-    mkdir($upload_dir, 0777, true); // إنشاء المجلد مع صلاحيات كتابة
+// 2️⃣ إزالة أكواد VML مثل <v:shape> و <v:shapetype>
+$clean_content = preg_replace('/<v:.*?<\/v:.*?>/is', '', $clean_content);
+
+// 3️⃣ إزالة أكواد Office الخاصة بـ <o:p>
+$clean_content = preg_replace('/<o:p>\s*<\/o:p>/is', '', $clean_content);
+
+// 4️⃣ إزالة السمات المزعجة الخاصة بـ Word داخل span (mso-*)
+$clean_content = preg_replace('/<span[^>]*mso-[^>]*>/is', '<span>', $clean_content);
+
+// 5️⃣ إزالة أي فقرات فارغة أو زائدة
+$clean_content = preg_replace('/<p[^>]*>\s*<\/p>/is', '', $clean_content);
+
+// 6️⃣ تحويل النص لـ UTF-8
+$content_utf8 = mb_convert_encoding($clean_content, 'UTF-8', 'auto');
+
+$pdf = new TCPDF();
+$pdf->AddPage();
+$pdf->SetFont('helvetica', '', 14);
+
+// كتابة النص مع الحفاظ على بعض التنسيقات
+$pdf->writeHTML($content_utf8, true, false, true, false, '');
+
+// كتابة النص داخل PDF
+$pdf->MultiCell(0, 10, $content_utf8);
+
+// 🟩 تحديد مجلد الرفع الكامل
+$upload_dir = __DIR__. '/uploads';
+
+// ✅ إذا المجلد ما وُجد، يتم إنشاؤه تلقائيًا بصلاحيات الكتابة
+if (!is_dir($upload_dir)) {
+    mkdir($upload_dir, 0777, true);
 }
-    // تحقق إذا كانت التوصية موجودة مسبقًا
-    $check = $conn->prepare("SELECT recommendation_id FROM recommendations WHERE graduate_id = ? AND professor_id = ?");
-    $check->bind_param("ii", $graduate_id, $professor_id);
-    $check->execute();
-    $exists = $check->get_result();
 
-    if ($exists->num_rows > 0) {
-        // تحديث التوصية الموجودة
-        $update = $conn->prepare("UPDATE recommendations SET content = ?, date_created = NOW(), request_id = ? pdf_path = ? WHERE graduate_id = ? AND professor_id = ?");
-        $update->bind_param("siii", $content, $request_id, $graduate_id, $professor_id);
-        $update->execute();
-    } else {
-        // إنشاء توصية جديدة
-        $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, content, pdf_path, date_created) VALUES (?, ?, ?, ?, NOW())");
-        $insert->bind_param("iiss", $graduate_id, $professor_id, $content, $pdf_file);
-        $insert->execute();
-    }
+// 🟩 تحديد اسم ومسار الملف الكامل
+$pdf_file = $upload_dir . '/recommendation_' . time() . '.pdf';
+
+// ✅ حفظ الملف داخل المجلد المحدد
+$pdf->Output($pdf_file, 'F');
+
+   // جلب معرف الدكتور الفعلي من جدول professors
+$get_prof = $conn->prepare("SELECT professor_id FROM professors WHERE user_id = ?");
+$get_prof->bind_param("i", $_SESSION['user_id']);
+$get_prof->execute();
+$prof_result = $get_prof->get_result();
+$professor_id = $prof_result->fetch_assoc()['professor_id'];
+
+// تحقق إذا كانت التوصية موجودة مسبقًا
+$check = $conn->prepare("SELECT recommendation_id FROM recommendations WHERE graduate_id = ? AND professor_id = ?");
+$check->bind_param("ii", $graduate_id, $professor_id);
+$check->execute();
+$exists = $check->get_result();
+
+// إذا موجودة → تحديث، إذا لا → إدخال جديد
+if ($exists->num_rows > 0) {
+    $update = $conn->prepare("UPDATE recommendations SET content = ?, date_created = NOW(), request_id = ? WHERE graduate_id = ? AND professor_id = ?");
+    $update->bind_param("siii", $content, $request_id, $graduate_id, $professor_id);
+    $update->execute();
+} else {
+    $insert = $conn->prepare("INSERT INTO recommendations (graduate_id, professor_id, content, date_created, request_id) VALUES (?, ?, ?, NOW(), ?)");
+    $insert->bind_param("iisi", $graduate_id, $professor_id, $content, $request_id);
+    $insert->execute();
+}
 
     // تحديث حالة الطلب
     if ($status === 'draft') {

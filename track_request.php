@@ -173,18 +173,20 @@ h2 { font-size: 22px; color: #003366; margin-top: 0; }
 </style>
 </head>
 <body>
-
+  
 <div class="sidebar" id="sidebar">
   <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
   <div>
     <div class="logo">
-      <img src="LOGObl.PNG" alt="Logo">
+      <img src="logobl.PNG" alt="Logo">
+
     </div>
+    <a href="req_system.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
+    <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i><span class="menu-text">Track Request</span></a>
+   <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     
-      <a href="requests.php" class="menu-item"><i class="fas fa-file-circle-plus"></i><span class="menu-text">New Request</span></a>
-      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
-      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
-    </div>
+  </div>
+
   <div class="bottom-section">
     <a href="setting_s.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
   </div>
