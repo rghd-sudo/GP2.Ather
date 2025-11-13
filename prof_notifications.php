@@ -33,7 +33,9 @@ if ($_SESSION['role'] !== 'professor') {
 $user_id = intval($_SESSION['user_id']);
 
 /* ---------- Fetch notifications for this professor (newest first) ---------- */
+// ensure variable exists and is an array
 $notifications = [];
+
 if ($stmt = $conn->prepare("SELECT id, message, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC")) {
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
@@ -43,6 +45,8 @@ if ($stmt = $conn->prepare("SELECT id, message, created_at FROM notifications WH
     }
     $stmt->close();
 }
+// if something went wrong above, $notifications remains an array (empty)
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -182,8 +186,8 @@ if ($stmt = $conn->prepare("SELECT id, message, created_at FROM notifications WH
   <div class="main-content">
     <h2>Notifications</h2>
 
-    <?php if (count($notifications) > 0): ?>
-        <?php foreach ($notifications as $n): ?>
+    <?php if (!empty($notifications)): ?>
+        <?php foreach ((array)$notifications as $n): ?>
             <div class="notification">
                 <div class="notification-icon">🔔</div>
                 <div>
@@ -206,5 +210,6 @@ if ($stmt = $conn->prepare("SELECT id, message, created_at FROM notifications WH
     sidebar.classList.toggle("collapsed");
   });
 </script>
+
 </body>
 </html>
