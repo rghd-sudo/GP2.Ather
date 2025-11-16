@@ -94,16 +94,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // إدخال البيانات إذا لم يكن هناك رسالة خطأ
-    if (!$message) {
-        $sql = "INSERT INTO requests (user_id, major, course, professor_id, purpose, type, file_name, grades_file)
-                VALUES ('$user_id', '$major', '$course', '$professor_id', '$purpose', '$type', " .
-                ($file_name ? "'$file_name'" : "NULL") . ", '$grades_file')";
-        if ($conn->query($sql)) {
-            $message = "✅ تم حفظ الطلب بنجاح";
-        } else {
-            $message = "❌ خطأ: " . $conn->error;
-        }
+   // إدخال البيانات إذا لم يكن هناك رسالة خطأ
+if (!$message) {
+    $sql = "INSERT INTO requests (user_id, major, course, professor_id, purpose, type, file_name, grades_file)
+            VALUES ('$user_id', '$major', '$course', '$professor_id', '$purpose', '$type', " .
+            ($file_name ? "'$file_name'" : "NULL") . ", '$grades_file')";
+    if ($conn->query($sql)) {
+        $message = "✅ تم حفظ الطلب بنجاح";
+
+        // ⭐ بعد نجاح الإدخال — إضافة سجل في track_request
+        $newRequestId = $conn->insert_id;  // رقم الطلب الجديد
+        $requestId = $newRequestId;
+        $studentUserId = $_SESSION['user_id'];
+        $status = 'Created';
+        $note = 'Student submitted request';
+
+        $stmt = $conn->prepare("INSERT INTO track_request (request_id, status) VALUES (?, ?)");
+        $stmt->bind_param("is", $requestId, $status);
+        $stmt->execute();
+        $stmt->close();
+
+    } else {
+        $message = "❌ خطأ: " . $conn->error;
     }
+}
     // ✅ بعد إدخال الطلب في قاعدة البيانات
 $professor_id ;
 
