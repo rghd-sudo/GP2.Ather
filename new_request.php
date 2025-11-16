@@ -118,10 +118,10 @@ if (!$message) {
         $message = "❌ خطأ: " . $conn->error;
     }
 }
-    // ✅ بعد إدخال الطلب في قاعدة البيانات
-$professor_id ;
-
-// تحقق من إعدادات التنبيهات للأستاذ
+    // ✅ بعد إدخال الطلب في قاعدة البيانات — إرسال إشعار للدكتور
+include 'notify.php';
+sendNotify($professor_id, "New recommendation request submitted by " . $student_info['name'] . ".", "new_request");
+/* تحقق من إعدادات التنبيهات للأستاذ
 $sql = "SELECT notify_new_request FROM notification_settings WHERE user_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $professor_id);
@@ -134,8 +134,8 @@ if ($settings && $settings['notify_new_request']) {
     $notif_sql = "INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())";
     $notif_stmt = $conn->prepare($notif_sql);
     $notif_stmt->bind_param("is", $professor_id, $notif_message);
-    $notif_stmt->execute();
-}
+    $notif_stmt->execute();*/
+
 ?>
 
 <!doctype html>

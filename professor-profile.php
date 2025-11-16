@@ -2,9 +2,19 @@
 session_start();
 include 'index.php';
 
+// تأكد من تسجيل الدخول
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
+    header("Location: login.php");
+    exit();
+}
+
+// ------------------
+//  🔥 حل المشكلة هنا
+// ------------------
+$user_id = $_SESSION['user_id'];
 
 
-// Fetch professor and user info  professors.cv_path
+// Fetch professor and user info
 $query = "
     SELECT 
         users.id AS uid,
@@ -17,6 +27,7 @@ $query = "
     JOIN users ON professors.user_id = users.id
     WHERE users.id = ?
 ";
+
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -27,21 +38,18 @@ $success_message = "";
 
 // Update professor data when form submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name  = $_POST['name'];
-    $email = $_POST['email'];
-    $dept  = $_POST['department'];
-    $univ  = $_POST['university'];
+    $name  = $conn->real_escape_string($_POST['name']);
+    $email = $conn->real_escape_string($_POST['email']);
+    $dept  = $conn->real_escape_string($_POST['department']);
+    $univ  = $conn->real_escape_string($_POST['university']);
 
     $cv_path = $professor['cv_path'] ?? null;
 
     // رفع أو تحديث الـCV
     if (!empty($_FILES['cv_path']['name'])) {
         $upload_dir = "uploads/";
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
-        }
+        if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
 
-        // اسم فريد للملف الجديد
         $cv_name = time() . "_" . basename($_FILES['cv_path']['name']);
         $cv_path = $upload_dir . $cv_name;
 
@@ -51,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // تحديث بيانات المستخدم
     $conn->query("UPDATE users SET name='$name', email='$email' WHERE id=$user_id");
 
-    // تحديث بيانات البوفسور (بما فيهم الـCV)
+    // تحديث بيانات البروفسور
     $conn->query("UPDATE professors SET cv_path='$cv_path' WHERE user_id=$user_id");
 
     $professor['cv_path'] = $cv_path;
