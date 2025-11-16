@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (move_uploaded_file($_FILES['file']['tmp_name'], $target)) {
             $file_name = $safeName;
         }
-    }
+    }}
 
     // رفع سجل الدرجات (إجباري)
     if (!empty($_FILES['grades']['name'])) {
@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     // ✅ بعد إدخال الطلب في قاعدة البيانات
-$professor_id = $professor_id_from_request;
+$professor_id ;
 
 // تحقق من إعدادات التنبيهات للأستاذ
 $sql = "SELECT notify_new_request FROM notification_settings WHERE user_id = ?";

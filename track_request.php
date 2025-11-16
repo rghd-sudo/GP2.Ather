@@ -9,28 +9,20 @@ ini_set('display_errors', 1);
 */
 
 /* ------------------ DB connection ------------------ */
-if (file_exists(_DIR_ . '/db.php')) {
-    require_once _DIR_ . '/db.php'; // expects $conn (mysqli)
+if (file_exists(__DIR__. '/db.php')) {
+    require_once __DIR__ . '/db.php'; // expects $conn (mysqli)
 } else {
-    $host = "localhost";
-    $user = "root";
-    $pass = "";
-    $dbname = "agdb";
-    $conn = new mysqli($host, $user, $pass, $dbname);
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-}
+ include 'index.php';
 
-/* ------------------ Auth ------------------ */
-if (!isset($_SESSION['user_id'])) {
-    die('Please log in first.');
+//  التحقق من تسجيل الدخول
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'graduate') {
+    header("Location: login.php");
+    exit;
 }
-$user_id = intval($_SESSION['…
- <?php
-session_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+}
+$user_id = $_SESSION['user_id'];
+
+
 
 /*
  track_request.php
@@ -39,9 +31,9 @@ ini_set('display_errors', 1);
  - IMPORTANT: demo-data is for local testing only; remove it in production
 */
 
-/* ------------------ DB connection (uses db.php if present) ------------------ */
-if (file_exists(_DIR_ . '/db.php')) {
-    require_once _DIR_ . '/db.php'; // must define $conn (mysqli)
+/* ------------------ DB connection (uses db.php if present) ------------------ 
+if (file_exists(__DIR__ . '/db.php')) {
+    (require_once( __DIR__-. '/db.php')); // must define $conn (mysqli)
 } else {
     // fallback: change these if your MySQL credentials differ
     $host = "localhost";
@@ -54,7 +46,7 @@ if (file_exists(_DIR_ . '/db.php')) {
     }
 }
 
-/* ------------------ Auth check ------------------ */
+ ------------------ Auth check ------------------ 
 if (!isset($_SESSION['user_id'])) {
     // For quick local testing you can uncomment the following two lines:
     // $_SESSION['user_id'] = 1;
@@ -62,7 +54,7 @@ if (!isset($_SESSION['user_id'])) {
     die('Please log in first (or set $_SESSION[\'user_id\'] for local testing).');
 }
 $user_id = intval($_SESSION['user_id']);
-
+*/
 /* ------------------ Ensure tables exist (safe operations) ------------------ */
 /* We create minimal tables only if missing so the page can run locally for testing.
    If you already have tables in your app, these CREATE TABLE IF NOT EXISTS will do nothing.
@@ -99,11 +91,11 @@ $demo_msg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['insert_demo'])) {
     // create one demo request for this user + track entries
     $now = date('Y-m-d H:i:s');
-    $stmt = $conn->prepare("INSERT INTO requests (user_id, title, purpose, status, created_at) VALUES (?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO requests (user_id, purpose, status, created_at) VALUES (?, ?, ?, ?)");
     $title = "Demo Recommendation Request";
     $purpose = "Recommendation for Master's application";
     $status = "Created";
-    $stmt->bind_param("issss", $user_id, $title, $purpose, $status, $now);
+    $stmt->bind_param("isss", $user_id, $purpose, $status, $now);
     if ($stmt->execute()) {
         $newReqId = $stmt->insert_id;
         $stmt->close();
@@ -114,9 +106,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['insert_demo'])) {
             ['Professor Approval', 'Prof. A approved', date('Y-m-d H:i:s', strtotime('-1 day'))],
             ['Recommendation Sent', 'Letter uploaded', date('Y-m-d H:i:s')]
         ];
-        $ins = $conn->prepare("INSERT INTO track_request (request_id, user_id, status, note, created_at) VALUES (?, ?, ?, ?, ?)");
+        $ins = $conn->prepare("INSERT INTO track_request (request_id, status, created_at) VALUES (?, ?, ?)");
         foreach ($tracks as $tr) {
-            $ins->bind_param("iisss", $newReqId, $user_id, $tr[0], $tr[1], $tr[2]);
+            $ins->bind_param("iss", $newReqId, $tr[0], $tr[2]);
             $ins->execute();
         }
         $ins->close();
@@ -128,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['insert_demo'])) {
 
 /* ------------------ Fetch user's requests (newest first) ------------------ */
 $requests = [];
-if ($stmt = $conn->prepare("SELECT id, COALESCE(title, '') AS title, COALESCE(purpose,'') AS purpose, status AS current_status, created_at FROM requests WHERE user_id = ? ORDER BY created_at DESC")) {
+if ($stmt = $conn->prepare("SELECT id, COALESCE(purpose, '') AS purpose, COALESCE(purpose,'') AS purpose, status AS current_status, created_at FROM requests WHERE user_id = ? ORDER BY created_at DESC")) {
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -174,16 +166,127 @@ function match_step($trackStatus, $stepKey) {
 <meta charset="utf-8">
 <title>Track Requests</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-<style>
-  body { margin:0; font-family:"Poppins",sans-serif; background:#fdfaf6; display:flex; direction:ltr; }
-  .sidebar { background:#c8e4eb; width:230px; position:fixed; height:100vh; padding-top:20px; box-shadow:2px 0 5px rgba(0,0,0,0.1); left:0; display:flex; flex-direction:column; justify-content:space-between; }
-  .sidebar .logo img{ display:block; margin:0 auto 12px; width:80px; }
-  .menu-item{ display:flex; align-items:center; padding:12px 20px; color:#333; text-decoration:none;}
-  .menu-item i{ font-size:20px; margin-right:10px;}
-  .top-bar{ position:fixed; left:230px; right:0; top:0; height:60px; display:flex; align-items:center; justify-content:flex-end; padding:0 20px; z-index:10;}
-  .main-content{ margin-left:230px; margin-top:70px; padding:30px; width:100%; }
-  .request-card{ background:#fff; border-radius:10px; padding:18px; margin-bottom:18px; border:1px solid #eef3f6; box-shadow:0 2px 6px rgba(0,0,0,0.06);}
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+/* 🔹 General Layout */
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #fdfaf6;
+  display: flex;
+}
+
+/* 🔹 Sidebar */
+.sidebar {
+  background-color: #c8e4eb;
+  width: 230px;
+  transition: width 0.3s;
+  height: 100vh;
+  padding-top: 20px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.sidebar.collapsed {
+  width: 70px;
+}
+.sidebar .logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.sidebar .logo img {
+  width: 80px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.3s;
+}
+.menu-item:hover {
+  background: #bcd5db;
+}
+.menu-item i {
+  font-size: 20px;
+  margin-right: 10px;
+  width: 25px;
+  text-align: center;
+}
+.menu-text {
+  font-size: 15px;
+  white-space: nowrap;
+}
+.sidebar.collapsed .menu-text {
+  display: none;
+}
+.bottom-section {
+  margin-bottom: 20px;
+}
+
+/* 🔹 Toggle Button */
+.toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: -15px;
+  background: #003366;
+  color: #fff;
+  border-radius: 50%;
+  border: none;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+/* 🔹 Top Bar */
+.top-bar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 230px;
+  height: 60px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 20px;
+  transition: left 0.3s;
+  z-index: 10;
+}
+.sidebar.collapsed ~ .top-bar {
+  left: 70px;
+}
+.top-icons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #333;
+}
+.icon-btn:hover {
+  color: #003366;
+}
+
+/* 🔹 Main Content */
+.main-content {
+  margin-left: 230px;
+  margin-top: 70px;
+  padding: 30px;
+  transition: margin-left 0.3s;
+  width: 100%;
+}
+.sidebar.collapsed + .top-bar + .main-content {
+  margin-left: 70px;
+}
+.request-card{ background:#fff; border-radius:10px; padding:18px; margin-bottom:18px; border:1px solid #eef3f6; box-shadow:0 2px 6px rgba(0,0,0,0.06);}
   .request-header{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
   .req-title{ font-weight:700; color:#003366; }
   .timeline{ margin-top:12px; }
@@ -197,27 +300,43 @@ function match_step($trackStatus, $stepKey) {
   .no-requests{ text-align:center; padding:26px; background:#fff; border-radius:8px; border:1px dashed #cfd8dc; color:#777; }
   .demo-box{ margin-bottom:16px; padding:12px; background:#fff; border-radius:8px; border:1px solid #eef3f6; }
   .btn{ background:#7adba2; color:#fff; padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
+
+/* 🔹 Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 70px;
+  }
+  .sidebar {
+    width: 70px;
+  }
+  .menu-text {
+    display: none;
+  }}
 </style>
 </head>
 <body>
-
-<!-- Sidebar -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
+  <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
   <div>
-    <img src="logobl.PNG" alt="Logo">
-    <a href="req_system.php" class="menu-item"><i class="fas fa-home"></i> <span>Home</span></a>
-    <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i> <span>Track Request</span></a>
-    <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i> <span>Profile</span></a>
+    <div class="logo">
+      <img src="logobl.PNG" alt="Logo">
+
+    </div>
+    <a href="req_system.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
+    <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i><span class="menu-text">Track Request</span></a>
+   <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+    
   </div>
-  <div style="padding:12px;">
-    <a href="setting_s.php" class="menu-item"><i class="fas fa-gear"></i> <span>Notification Settings</span></a>
+
+  <div class="bottom-section">
+    <a href="setting_s.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
   </div>
 </div>
 
-<!-- Topbar -->
-<div class="top-bar">
-  <div style="display:flex; gap:12px;">
-    <a href="notifications.php" title="Notifications" style="text-decoration:none;color:#333;"><i class="fas fa-bell"></i></a>
+<div class="top-bar"> 
+  <div class="top-icons">
+    <button class="icon-btn" title="Notifications" onclick="window.location.href='notifications.php'"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout" onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
   </div>
 </div>
 
@@ -239,13 +358,13 @@ function match_step($trackStatus, $stepKey) {
   <?php else: ?>
     <?php foreach ($requests as $req):
       $reqId = intval($req['id']);
-      $reqTitle = $req['title'] ?: "Request #{$reqId}";
+      $reqTitle = $req['purpose'] ?: "Request #{$reqId}";
       $reqCreated = $req['created_at'];
       $current = $req['current_status'] ?? '';
 
       // fetch track entries (ascending)
       $tracks = [];
-      if ($s2 = $conn->prepare("SELECT status, note, created_at FROM track_request WHERE request_id = ? ORDER BY created_at ASC")) {
+      if ($s2 = $conn->prepare("SELECT status, created_at FROM track_request WHERE request_id = ? ORDER BY created_at ASC")) {
           $s2->bind_param("i", $reqId);
           $s2->execute();
           $r2 = $s2->get_result();
@@ -258,7 +377,7 @@ function match_step($trackStatus, $stepKey) {
       foreach ($tracks as $tr) {
           foreach ($steps_order as $stepKey => $label) {
               if (!isset($map[$label]) && match_step($tr['status'], $stepKey)) {
-                  $map[$label] = ['time'=>$tr['created_at'], 'note'=>$tr['note'] ?? '', 'raw'=>$tr['status']];
+                  $map[$label] = ['time'=>$tr['created_at'] ?? '', 'raw'=>$tr['status']];
               }
           }
       }
@@ -312,5 +431,13 @@ function match_step($trackStatus, $stepKey) {
   <button class="btn" onclick="location.href='req_system.php'">Back to Home</button>
 </div>
 
+ <script>
+// 🔸 Toggle sidebar
+const toggleBtn = document.getElementById("toggleBtn");
+const sidebar = document.getElementById("sidebar");
+toggleBtn.addEventListener("click", () => {
+  sidebar.classList.toggle("collapsed");
+});
+</script>
 </body>
 </html>
