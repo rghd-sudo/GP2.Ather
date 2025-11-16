@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS track_request (
 ";
 $conn->query($create_track_sql);
 
-/* ------------------ Demo data insertion (optional) ------------------ */
+/* ------------------ Demo data insertion (optional) ------------------ 
 $demo_msg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['insert_demo'])) {
     // create one demo request for this user + track entries
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['insert_demo'])) {
     } else {
         $demo_msg = "Demo creation failed: " . $stmt->error;
     }
-}
+}*/
 
 /* ------------------ Fetch user's requests (newest first) ------------------ */
 $requests = [];
@@ -344,14 +344,14 @@ body {
 <div class="main-content">
   <h2>Track Requests</h2>
 
-  <!-- Demo creation box (optional) -->
+  <!-- Demo creation box (optional) 
   <div class="demo-box">
     <form method="post" style="display:inline;">
       <button name="insert_demo" class="btn" type="submit">Insert demo request + timeline (for testing)</button>
     </form>
-    <span style="margin-left:12px;color:#666;"><?php echo safe($demo_msg); ?></span>
+    <span style="margin-left:12px;color:#666;"><?php //echo safe($demo_msg); ?></span>
     <div style="margin-top:8px;color:#666;font-size:13px;">(Use demo button only for local testing; remove in production)</div>
-  </div>
+  </div>-->
 
   <?php if (empty($requests)): ?>
     <div class="no-requests">No requests yet.</div>
