@@ -183,12 +183,12 @@ h2 {
     </div>
   </div>
 
-  <!-- Main Content -->
-  <div class="main-content">
-    <div class="top-icons">
-      <button class="icon-btn"><i class="fas fa-bell"></i></button>
-      <button class="icon-btn" title="Logout"><i class="fas fa-arrow-right-from-bracket"></i></button>
-    </div>
+ <!-- Main Content -->
+<div class="main-content">
+  <div class="top-icons">
+    <button class="icon-btn"title="Notifications" onclick="window.location.href='prof_notifications.php'"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout"onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
+  </div>
 
     <h2>Incoming Recommendation Requests</h2>
 
