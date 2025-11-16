@@ -119,11 +119,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['insert_demo'])) {
             $ins->bind_param("iisss", $newReqId, $user_id, $tr[0], $tr[1], $tr[2]);
             $ins->execute();
         }
-        $ins->close();
-        $demo_msg = "Demo request & track entries created (request id: $newReqId). Refresh the page to see it.";
-    } else {
-        $demo_msg = "Demo creation failed: " . $stmt->error;
-    }
+       // $ins->close();
+       // $demo_msg = "Demo request & track entries created (request id: $newReqId). Refresh the page to see it.";
+    //} else {
+    //    $demo_msg = "Demo creation failed: " . $stmt->error;
+   // }
 }
 
 /* ------------------ Fetch user's requests (newest first) ------------------ */
