@@ -113,16 +113,27 @@ if (!$message) {
         $stmt->bind_param("is", $requestId, $status);
         $stmt->execute();
         $stmt->close();
+        
+        if ($settings['notify_new_request']) {
+    $message = "You have a new recommendation request from " . $student_data['name'] . ".";
+    
+        $notif = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
+        $notif->bind_param("is", $professor_id, $message);
+        $notif->execute();
+        $notif->close();
+}
 
     } else {
         $message = "❌ خطأ: " . $conn->error;
     }
 }
-    // ✅ بعد إدخال الطلب في قاعدة البيانات — إرسال إشعار للدكتور
+  /* تحقق من إعدادات التنبيهات للأستاذ
+
+  // ✅ بعد إدخال الطلب في قاعدة البيانات — إرسال إشعار للدكتور
 include 'notify.php';
 sendNotify($professor_id, "New recommendation request submitted by " . $student_info['name'] . ".", "new_request");
-/* تحقق من إعدادات التنبيهات للأستاذ
-$sql = "SELECT notify_new_request FROM notification_settings WHERE user_id = ?";
+
+  $sql = "SELECT notify_new_request FROM notification_settings WHERE user_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $professor_id);
 $stmt->execute();
