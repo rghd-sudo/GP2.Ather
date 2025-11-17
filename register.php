@@ -1,348 +1,194 @@
 <?php
 session_start();
 include 'index.php';
-/*
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
 
-require 'phpmailer/Exception.php';
-require 'phpmailer/PHPMailer.php';
-require 'phpmailer/SMTP.php';
-*/
-// عرض الرسالة إذا موجودة
+// Display session message if exists
 if (isset($_SESSION['message'])) {
     echo "<script>alert('" . $_SESSION['message'] . "');</script>";
     unset($_SESSION['message']);
 }
 
-// إنشاء الجداول (اختياري في أول مرة فقط)
-$conn->query("CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    paasword VARCHAR(255) NOT NULL,
-    department VARCHAR(255),
-    National_ID VARCHAR(50),
-    university VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)");
-
-$conn->query("CREATE TABLE IF NOT EXISTS graduates (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    graduation_year YEAR NULL,
-    gpa DECIMAL(3,2) NULL,
-    cv_path VARCHAR(500) NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)");
-
+// Process POST request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $role        = $_POST['role'] ?? '';
     $name        = trim($_POST['name'] ?? '');
     $email       = trim($_POST['email'] ?? '');
-    $paasword    = trim($_POST['paasword'] ?? '');
+    $password    = trim($_POST['password'] ?? '');
     $confirm_password = trim($_POST['confirm_password'] ?? '');
-    $National_ID = trim($_POST['National_ID'] ?? '');
+    $national_id = trim($_POST['national_id'] ?? '');
     $university  = trim($_POST['university'] ?? '');
     $department  = trim($_POST['department'] ?? '');
-
-    if ($name && $email && $paasword && $department && $National_ID && $university) {
-        if ($paasword !== $confirm_password) {
+    $specialization = trim($_POST['specialization'] ?? '');
+    
+    if($role && $name && $email && $password && $confirm_password){
+        if($password !== $confirm_password){
             $_SESSION['message'] = "⚠️ Passwords do not match";
             header("Location: register.php");
             exit;
         }
 
-        // تشفير كلمة المرور
-        $hashed = password_hash($paasword, PASSWORD_BCRYPT);
+        $hashed = password_hash($password, PASSWORD_BCRYPT);
 
-        // التحقق من أن البريد غير مسجل مسبقًا
-        $check = $conn->prepare("SELECT id FROM users WHERE email = ?");
-        $check->bind_param("s", $email);
-        $check->execute();
-        $check->store_result();
-        if ($check->num_rows > 0) {
+        // Check if email exists
+        $stmt = $conn->prepare("SELECT id FROM users WHERE email=?");
+        $stmt->bind_param("s",$email);
+        $stmt->execute();
+        $stmt->store_result();
+        if($stmt->num_rows > 0){
             $_SESSION['message'] = "⚠️ Email already exists";
             header("Location: register.php");
             exit;
         }
-        $check->close();
+        $stmt->close();
 
-        // تخزين بيانات المستخدم في جدول users
-        $stmt = $conn->prepare("INSERT INTO users (name, email, paasword, department, National_ID, university) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssss", $name, $email, $hashed, $department, $National_ID, $university);
-
-        if ($stmt->execute()) {
+        // Insert into users
+        $stmt = $conn->prepare("INSERT INTO users (name,email,paasword,department,National_ID,university,role) VALUES (?,?,?,?,?,?,?)");
+        $stmt->bind_param("sssssss",$name,$email,$hashed,$department,$national_id,$university,$role);
+        if($stmt->execute()){
             $user_id = $stmt->insert_id;
 
-            // إدخال الخريج تلقائيًا في جدول graduates
-            $graduation_year = NULL;
-            $gpa = NULL;
-            $cv_path = NULL;
-            
-            $stmt2 = $conn->prepare("INSERT INTO graduates (user_id, graduation_year, gpa, cv_path) VALUES (?, ?, ?, ?)");
-            $stmt2->bind_param("iids", $user_id, $graduation_year, $gpa, $cv_path);
-            $stmt2->execute();
-            $stmt2->close();
+            // Insert into graduates or professors
+            if($role=='graduate'){
+                $stmt2 = $conn->prepare("INSERT INTO graduates (user_id) VALUES (?)");
+                $stmt2->bind_param("i",$user_id);
+                $stmt2->execute();
+                $stmt2->close();
+            } elseif($role=='professor'){
+                $stmt2 = $conn->prepare("INSERT INTO professors (user_id,specialization) VALUES (?,?)");
+                $stmt2->bind_param("is",$user_id,$specialization);
+                $stmt2->execute();
+                $stmt2->close();
+            }
 
             $_SESSION['message'] = "✅ Registration successful!";
-            header("Location: req_system.php");
+            header("Location: login.php");
             exit;
-        } else {
-            $_SESSION['message'] = "❌ Error: " . $stmt->error;
         }
         $stmt->close();
     } else {
-        $_SESSION['message'] = "⚠️ Please fill all fields";
+        $_SESSION['message'] = "⚠️ Please fill all required fields";
     }
 }
-/*
-        // إرسال رمز التحقق عبر PHPMailer
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'yourgmail@gmail.com'; // بريدك
-            $mail->Password = 'app-password';       // كلمة مرور التطبيقات من Google
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = 587;
-
-            $mail->setFrom('yourgmail@gmail.com', 'نظام التوصيات');
-            $mail->addAddress($email, $name);
-
-            $mail->isHTML(true);
-            $mail->Subject = 'رمز التحقق من البريد الإلكتروني';
-            $mail->Body = "مرحباً <b>$name</b>،<br>رمز التحقق الخاص بك هو: <b>$verify_code</b>";
-
-            $mail->send();
-     // تحويل المستخدم لصفحة إدخال 
-     header("Location: verify.php?email=" . urlencode($email));
-            exit;
-        } catch (Exception $e) {
-            $_SESSION['message'] = "❌ حدث خطأ أثناء إرسال البريد: {$mail->ErrorInfo}";
-            header("Location: register.php");
-            exit;
-        }
-    } else {
-        $_SESSION['message'] = "❌ Error: " . $stmt->error;
-    }
-    $stmt->close();
-}
-عرض الرسالة إذا موجودة
-if (isset($_SESSION['message'])) {
-    echo "<script>alert('" . $_SESSION['message'] . "');</script>";
-    unset($_SESSION['message']); // مسح الرسالة بعد عرضها مرة واحدة
-}
-      // 2. إدخال البيانات الخاصة بالخريج في graduates
-                $stmt = $conn->prepare("INSERT INTO graduates (user_id,graduation_year,gpa,cv_path) VALUES (?,?,?,?)");
-                $stmt->bind_param("iids", $user_id, $graduation_year, $gpa, $cv_path);
-                $stmt->execute();
-                $stmt->close();
-// إنشاء جدول إذا لم يكن موجود
-$conn->query("CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    paasword VARCHAR(255) NOT NULL,
-    department VARCHAR(255),
-    National_ID VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)");
-$message = "";
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name        = $conn->real_escape_string($_POST['name'] ?? '');
-    $email       = $conn->real_escape_string($_POST['email'] ?? '');
-    $paasword    = $conn->real_escape_string($_POST['paasword'] ?? '');
-    $confirm_password = $conn->real_escape_string($_POST['confirm_password'] ?? '');
-    $National_ID = $conn->real_escape_string($_POST['National_ID'] ?? '');
-    $university = $conn->real_escape_string($_POST['university'] ?? '');
-    $department  = $conn->real_escape_string($_POST['department'] ?? '');
- if ($name && $email && $paasword && $department && $National_ID && $university) {
-        // تشفير كلمة المرور
-        $hashed = password_hash($paasword, PASSWORD_BCRYPT);
-        if ($paasword !== $confirm_password) {
-            $_SESSION['message'] = "⚠️ Passwords do not match";
-        } 
-        $check = $conn->prepare("SELECT id FROM users WHERE email = ?");
-        $check->bind_param("s", $email);
-        $check->execute();
-        $check->store_result();
-        if ($check->num_rows > 0) {
-            $_SESSION['message'] = "⚠️ Email already exists";
-        } else {
-            $check->close();
-        // استخدام prepared statement للتخزين
-       $stmt = $conn->prepare("INSERT INTO users (name, email, paasword, department, National_ID, university) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssss", $name, $email, $hashed, $department, $National_ID, $university);
-         if ($stmt->execute()) {
-            $_SESSION['message'] = "Successful registration✅";
-            header("Location: req_system.php");
-        } else {
-            $_SESSION['message'] = "Error: " . $stmt->error;
-        }
-    $stmt->close();
- }
- }
-}*/
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-    <title>Register</title>
-    <style>
-    body{ margin: 0;
-  padding: 0;
-  text-decoration: none;
-  font-family: 'preconnect', sans-serif;
-  background: #fdfaf5;display:flex;justify-content:center;align-items:center;}
-    .card{background:#fff;padding:0px;border-radius:10px;background: #fdfaf5;width:400px}
-    h2{text-align:center;margin-bottom:0px}
-    .field{margin-bottom:8px}
-    .field label{display:block;margin-bottom:5px;font-weight:regular;font-size:14px}
-    .field input{width:99%;padding:9px;border:0px solid #ccc;border-radius:5px}
-    /* أزرار */
-.btn-primary {
-  background: #f27360;
-  color: white;
-  border: none;
-  border-radius: 25px;
-  padding: 10px 25px;
-  cursor: pointer;
-  font-size: 16px;
-}
-.btn-primary:hover {
-  background: #e45a46;
-}
-.small-text {
-  font-size: 12px;
-  color: gray;
-}
-        .shapes {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 40%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
-        }
-
-        .shape {
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            border-radius: 50px;
-            transform: rotate(-30deg);
-        }
-
-        .shape1 {
-            background-color: #63b999;
-            top: -100px;
-            left: -70px;
-        }
-
-        .shape2 {
-            background-color: #adc0d9;
-            top: 50px;
-            left: -50px;
-        }
-
-        .shape3 {
-            background-color:  #f27360;
-            top: 200px;
-            left: -150px;
-        }
-        
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            text-align: left;
-            margin-bottom: 5px;
-            color: #555;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            background-color: #e0d9d3;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-/* 🔹 Responsive */
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 70px;
-  }
-  .sidebar {
-    width: 70px;
-  }
-  .menu-text {
-    display: none;
-  }
-}
-    .message{margin-top:15px;text-align:left;font-weight:bold;color:#333}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Registration - Athar Graduate</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Poppins',sans-serif;background:#fdfaf5;margin:0;padding:0;}
+.container{max-width:500px;margin:50px auto;padding:20px;position:relative;}
+.card{background:#fff;border-radius:15px;padding:30px;box-shadow:0 4px 15px rgba(0,0,0,0.08);}
+h2{font-size:2rem;text-align:center;margin-bottom:20px;color:#2c3e50;}
+.input-group{margin-bottom:15px;}
+.input-group label{display:block;margin-bottom:5px;color:#555;font-weight:600;}
+.input-group input, .input-group select{width:100%;padding:12px;border:none;border-radius:10px;background:#e0d9d3;font-size:16px;box-sizing:border-box;}
+button{width:100%;padding:15px;background:#ff7f50;color:#fff;border:none;border-radius:50px;font-size:16px;font-weight:700;cursor:pointer;transition:0.3s;}
+button:hover{background:#e6603d;transform:translateY(-2px);}
+.error-msg{color:red;font-size:0.85rem;display:none;margin-top:5px;}
+.small-text{font-size:12px;color:gray;text-align:center;margin-top:15px;}
+.shape{position:absolute;width:300px;height:300px;border-radius:50px;transform:rotate(-30deg);}
+.shape1{background:#63b999;top:-100px;left:-70px;}
+.shape2{background:#adc0d9;top:50px;left:-50px;}
+.shape3{background:#f27360;top:200px;left:-150px;}
+.shapes{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;z-index:-1;}
+@media(max-width:576px){.container{margin:20px;}}
+</style>
 </head>
 <body>
-     <div class="shapes">
-        <div class="shape shape1"></div>
-        <div class="shape shape2"></div>
-        <div class="shape shape3"></div>
-    </div>
-    <div class="card">
-        
-        <h2>Register</h2>
-    <!-- <sage): ?>
-      <p style="margin:20px 0;padding:12px;background:#fff8e6;border-radius:6px;box-shadow:var(--shadow)"><></p>
-     ?> -->
-        <div class="container">
-        <form action="register.php" method="POST">
-           <div class="input-group">
-            <label for="name">Full Name:</label>
-            <input  type="text" id="name" name="name" required>
-            </div>
-            <div class="input-group">
-           <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-           </div>
-           <div class="input-group">
-               <label for="paasword">Password:</label>
-            <input type="password" id="paasword" name="paasword" required>
-        </div>
-<div class="input-group">
-            <label for="confirm_password">Confirm Password:</label>
-            <input type="password" id="confirm_password" name="confirm_password" required>
-</div>
-<div class="input-group">
-           <label for="National_ID">National ID:</label>
-            <input type="text" id="National_ID" name="National_ID" required>
-</div>
-<div class="input-group">
-
-           <label for="university">University:</label>
-            <input type="text" id="university" name="university" required>
-            </div>
-<div class="input-group">
-            <label for="department">Department:</label>
-            <input type="text" id="department" name="department" required>
+<div class="shapes">
+    <div class="shape shape1"></div>
+    <div class="shape shape2"></div>
+    <div class="shape shape3"></div>
 </div>
 
-          <button class="btn-primary" type="submit">Register</button> 
-          <p class="small-text">Already have an account? <a href="login.php">Login here</a></p>
-        </form>
-        </div>
+<div class="container">
+<div class="card">
+<h2>Register</h2>
+<form method="POST" action="register.php" id="regForm">
+    <div class="input-group">
+        <label>Role:</label>
+        <select name="role" id="role" required>
+            <option value="">-- Select Role --</option>
+            <option value="graduate">Graduate</option>
+            <option value="professor">Professor</option>
+        </select>
+        <div class="error-msg" id="roleError">Please select a role</div>
     </div>
+
+    <div class="input-group">
+        <label>Full Name:</label>
+        <input type="text" name="name" required>
+    </div>
+
+    <div class="input-group">
+        <label>Email:</label>
+        <input type="email" name="email" id="email" required>
+        <div class="error-msg" id="emailExists">Email already exists</div>
+    </div>
+
+    <div class="input-group">
+        <label>Password:</label>
+        <input type="password" name="password" id="password" required>
+    </div>
+
+    <div class="input-group">
+        <label>Confirm Password:</label>
+        <input type="password" name="confirm_password" id="confirm_password" required>
+        <div class="error-msg" id="confirmError">Passwords do not match</div>
+    </div>
+
+    <div class="input-group graduateFields" style="display:none;">
+        <label>National ID:</label>
+        <input type="text" name="national_id">
+        <label>University:</label>
+        <input type="text" name="university">
+        <label>Department:</label>
+        <input type="text" name="department">
+    </div>
+
+    <div class="input-group professorFields" style="display:none;">
+        <label>Specialization:</label>
+        <input type="text" name="specialization">
+    </div>
+
+    <button type="submit">Register</button>
+    <p class="small-text">Already have an account? <a href="login.php">Login here</a></p>
+</form>
+</div>
+</div>
+
+<script>
+const roleSelect = document.getElementById('role');
+const gradFields = document.querySelectorAll('.graduateFields');
+const profFields = document.querySelectorAll('.professorFields');
+
+roleSelect.addEventListener('change', ()=>{
+    if(roleSelect.value==='graduate'){
+        gradFields.forEach(f=>f.style.display='block');
+        profFields.forEach(f=>f.style.display='none');
+    } else if(roleSelect.value==='professor'){
+        gradFields.forEach(f=>f.style.display='none');
+        profFields.forEach(f=>f.style.display='block');
+    } else{
+        gradFields.forEach(f=>f.style.display='none');
+        profFields.forEach(f=>f.style.display='none');
+    }
+});
+
+// Password match check
+const form = document.getElementById('regForm');
+form.addEventListener('submit', e=>{
+    const pass = document.getElementById('password').value;
+    const confirm = document.getElementById('confirm_password').value;
+    if(pass !== confirm){
+        document.getElementById('confirmError').style.display='block';
+        e.preventDefault();
+    } else { document.getElementById('confirmError').style.display='none'; }
+});
+</script>
 </body>
 </html>
-

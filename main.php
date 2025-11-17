@@ -9,7 +9,7 @@ try {
     // Attempt to connect and execute the query
     $sql = "
     SELECT 
-        (SELECT COUNT(*) FROM requests WHERE status='approved') AS completed_requests,
+        (SELECT COUNT(*) FROM requests WHERE status='completed') AS completed_requests,
         (SELECT COUNT(*) FROM users) AS total_users,
         (SELECT COUNT(*) FROM visitors) AS total_visitors
     ";
