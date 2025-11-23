@@ -85,9 +85,11 @@ $list_q = $conn->prepare("
         users u ON r.user_id = u.id
     WHERE 
         r.professor_id = ?
+        AND r.status IN ('pending', 'submitted')
     ORDER BY 
         r.created_at DESC
 ");
+
 
 $list_q->bind_param("i", $professor_id);
 $list_q->execute();

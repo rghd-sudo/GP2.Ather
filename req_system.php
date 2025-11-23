@@ -292,18 +292,36 @@ background: #f8a5a5;
       while($row = $result->fetch_assoc()) {
     // 🚀 سيظهر اسم الأستاذ الآن
     $professor_name = $row['professor_name'] ?? '—'; 
+$status = strtolower($row['status']);
 
-    echo
-     "<tr>
-            <td>".$row['id']."</td>
-            <td>".$professor_name."</td>
-            <td>".$row['created_at']."</td>
-            <td class='".(strtolower($row['status'])=="pending"?"pending":"accepted")."'>".$row['status']."</td>
-                <td class='actions'>
-                  <button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
-                  <button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>
-                </td>
-              </tr>";
+if ($status == "draft") {
+    $display_status = "Under Process";
+    $class = "pending";
+} elseif ($status == "pending") {
+    $display_status = "Under Process";
+    $class = "pending";
+} elseif ($status == "accepted") {
+    $display_status = "Accepted";
+    $class = "accepted";
+} elseif ($status == "rejected") {
+    $display_status = "Rejected";
+    $class = "rejected";
+} else {
+    $display_status = ucfirst($row['status']);
+    $class = "pending";
+}
+echo "<tr>
+        <td>".$row['id']."</td>
+        <td>".$professor_name."</td>
+        <td>".$row['created_at']."</td>
+        <td class='".$class."'>".$display_status."</td>
+        <td class='actions'>
+            <button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
+            <button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>
+        </td>
+      </tr>";
+
+
       }
     } else {
       echo "<tr><td colspan='5'>No requests found</td></tr>";
