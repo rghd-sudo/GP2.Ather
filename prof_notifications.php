@@ -29,13 +29,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
 
 $user_id = intval($_SESSION['user_id']);
 
-<<<<<<< HEAD
-/* ---------- Fetch notifications for this professor (newest first) ---------- */
-// ensure variable exists and is an array
-$notifications = [];
-
-if ($stmt = $conn->prepare("SELECT id, message, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC")) {
-=======
 /* ------------------ 3) Ensure settings table exists (safe to call) ------------------ */
 $create_sql = "
 CREATE TABLE IF NOT EXISTS notification_settings (
@@ -105,7 +98,6 @@ $settings = [
 ];
 
 if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days FROM notification_settings WHERE user_id = ? ")) {
->>>>>>> 2048601fe74c39e1c2070958a08c25c76db0203b
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -274,7 +266,7 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
     <?php else: ?>
         <div class="empty">No notifications yet.</div>
     <?php endif; ?>
-
+<!--
     <div class="card">
       <form method="post" action="">
         <div class="row">
@@ -337,7 +329,7 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
           <button type="submit" class="save-btn">Save Notification Settings</button>
         </div>
       </form>
-    </div>
+    </div>-->
 
   </div>
 

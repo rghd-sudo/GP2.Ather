@@ -3,9 +3,10 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-/* track_request.php
-   - Timeline for each request with step timestamps
-   - LTR layout, Poppins, sidebar same style as other pages
+/*
+  track_request.php
+  - Detailed timeline view for user's requests (LTR / English)
+  - Requires $conn (mysqli) from db.php; falls back to local credentials if missing
 */
 
 /* ------------------ DB connection ------------------ */
@@ -22,52 +23,15 @@ if (file_exists(_DIR_ . '/db.php')) {
     }
 }
 
-/* ------------------ Auth ------------------ */
-if (!isset($_SESSION['user_id'])) {
-    die('Please log in first.');
-}
-$user_id = intval($_SESSION['…
- <?php
-session_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-/*
- track_request.php
- - Detailed timeline view for user's requests (LTR / English)
- - Includes optional demo-data button to populate sample requests + track entries for testing
- - IMPORTANT: demo-data is for local testing only; remove it in production
-*/
-
-/* ------------------ DB connection (uses db.php if present) ------------------ */
-if (file_exists(_DIR_ . '/db.php')) {
-    require_once _DIR_ . '/db.php'; // must define $conn (mysqli)
-} else {
-    // fallback: change these if your MySQL credentials differ
-    $host = "localhost";
-    $user = "root";
-    $pass = "";
-    $dbname = "agdb";
-    $conn = new mysqli($host, $user, $pass, $dbname);
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-}
-
 /* ------------------ Auth check ------------------ */
 if (!isset($_SESSION['user_id'])) {
-    // For quick local testing you can uncomment the following two lines:
-    // $_SESSION['user_id'] = 1;
-    // $_SESSION['role'] = 'student';
-    die('Please log in first (or set $_SESSION[\'user_id\'] for local testing).');
+    // for local testing you may temporarily set: $_SESSION['user_id'] = 1;
+    die('Please log in first.');
 }
 $user_id = intval($_SESSION['user_id']);
 
-/* ------------------ Ensure tables exist (safe operations) ------------------ */
-/* We create minimal tables only if missing so the page can run locally for testing.
-   If you already have tables in your app, these CREATE TABLE IF NOT EXISTS will do nothing.
-*/
-
+/* ------------------ Ensure minimal tables exist (safe) ------------------ */
+/* These CREATE statements use IF NOT EXISTS so they do nothing if you already have tables */
 $create_requests_sql = "
 CREATE TABLE IF NOT EXISTS requests (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -94,41 +58,12 @@ CREATE TABLE IF NOT EXISTS track_request (
 ";
 $conn->query($create_track_sql);
 
-/* ------------------ Demo data insertion (optional) ------------------ */
-$demo_msg = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['insert_demo'])) {
-    // create one demo request for this user + track entries
-    $now = date('Y-m-d H:i:s');
-    $stmt = $conn->prepare("INSERT INTO requests (user_id, title, purpose, status, created_at) VALUES (?, ?, ?, ?, ?)");
-    $title = "Demo Recommendation Request";
-    $purpose = "Recommendation for Master's application";
-    $status = "Created";
-    $stmt->bind_param("issss", $user_id, $title, $purpose, $status, $now);
-    if ($stmt->execute()) {
-        $newReqId = $stmt->insert_id;
-        $stmt->close();
-        // insert track entries for that request (chronological)
-        $tracks = [
-            ['Created', 'Student submitted request', date('Y-m-d H:i:s', strtotime('-3 days'))],
-            ['Under Review', 'Office checking documents', date('Y-m-d H:i:s', strtotime('-2 days'))],
-            ['Professor Approval', 'Prof. A approved', date('Y-m-d H:i:s', strtotime('-1 day'))],
-            ['Recommendation Sent', 'Letter uploaded', date('Y-m-d H:i:s')]
-        ];
-        $ins = $conn->prepare("INSERT INTO track_request (request_id, user_id, status, note, created_at) VALUES (?, ?, ?, ?, ?)");
-        foreach ($tracks as $tr) {
-            $ins->bind_param("iisss", $newReqId, $user_id, $tr[0], $tr[1], $tr[2]);
-            $ins->execute();
-        }
-       // $ins->close();
-       // $demo_msg = "Demo request & track entries created (request id: $newReqId). Refresh the page to see it.";
-    //} else {
-    //    $demo_msg = "Demo creation failed: " . $stmt->error;
-   // }
-}
 
 /* ------------------ Fetch user's requests (newest first) ------------------ */
 $requests = [];
-if ($stmt = $conn->prepare("SELECT id, COALESCE(title, '') AS title, COALESCE(purpose,'') AS purpose, status AS current_status, created_at FROM requests WHERE user_id = ? ORDER BY created_at DESC")) {
+$sql = "SELECT id, COALESCE(title,'') AS title, COALESCE(purpose,'') AS purpose, COALESCE(status,'') AS current_status, created_at 
+        FROM requests WHERE user_id = ? ORDER BY created_at DESC";
+if ($stmt = $conn->prepare($sql)) {
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -138,10 +73,10 @@ if ($stmt = $conn->prepare("SELECT id, COALESCE(title, '') AS title, COALESCE(pu
 if (!$requests) $requests = [];
 
 /* ------------------ Helpers ------------------ */
-function safe($s){ return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
-function fmt_dt($dt){ return safe($dt); }
+function safe($s) { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
+function fmt_dt($dt) { return safe($dt); }
 
-/* Ordered steps to show in timeline (adjust labels if your app uses different words) */
+/* Steps order */
 $steps_order = [
     'Created' => 'Created',
     'Under Review' => 'Under Review',
@@ -195,8 +130,11 @@ function match_step($trackStatus, $stepKey) {
   .status-time{ font-size:12px; color:#888; margin-top:4px; }
   .current{ box-shadow:0 0 0 4px rgba(122,219,162,0.12); }
   .no-requests{ text-align:center; padding:26px; background:#fff; border-radius:8px; border:1px dashed #cfd8dc; color:#777; }
-  .demo-box{ margin-bottom:16px; padding:12px; background:#fff; border-radius:8px; border:1px solid #eef3f6; }
   .btn{ background:#7adba2; color:#fff; padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
+  @media (max-width: 768px) {
+    .main-content { margin-left:70px; }
+    .sidebar { width:70px; }
+  }
 </style>
 </head>
 <body>
@@ -225,25 +163,16 @@ function match_step($trackStatus, $stepKey) {
 <div class="main-content">
   <h2>Track Requests</h2>
 
-  <!-- Demo creation box (optional) -->
-  <div class="demo-box">
-    <form method="post" style="display:inline;">
-      <button name="insert_demo" class="btn" type="submit">Insert demo request + timeline (for testing)</button>
-    </form>
-    <span style="margin-left:12px;color:#666;"><?php echo safe($demo_msg); ?></span>
-    <div style="margin-top:8px;color:#666;font-size:13px;">(Use demo button only for local testing; remove in production)</div>
-  </div>
-
   <?php if (empty($requests)): ?>
     <div class="no-requests">No requests yet.</div>
   <?php else: ?>
     <?php foreach ($requests as $req):
       $reqId = intval($req['id']);
-      $reqTitle = $req['title'] ?: "Request #{$reqId}";
+      $reqTitle = $req['title'] ?: ($req['purpose'] ?: "Request #{$reqId}");
       $reqCreated = $req['created_at'];
       $current = $req['current_status'] ?? '';
 
-      // fetch track entries (ascending)
+      // fetch track entries (ascending) with note
       $tracks = [];
       if ($s2 = $conn->prepare("SELECT status, note, created_at FROM track_request WHERE request_id = ? ORDER BY created_at ASC")) {
           $s2->bind_param("i", $reqId);
@@ -253,12 +182,12 @@ function match_step($trackStatus, $stepKey) {
           $s2->close();
       }
 
-      // map earliest matching track for each step
+      // build map: earliest matching entry per step
       $map = [];
       foreach ($tracks as $tr) {
           foreach ($steps_order as $stepKey => $label) {
               if (!isset($map[$label]) && match_step($tr['status'], $stepKey)) {
-                  $map[$label] = ['time'=>$tr['created_at'], 'note'=>$tr['note'] ?? '', 'raw'=>$tr['status']];
+                  $map[$label] = ['time'=>$tr['created_at'] ?? '', 'note'=>$tr['note'] ?? '', 'raw'=>$tr['status']];
               }
           }
       }
@@ -311,6 +240,4 @@ function match_step($trackStatus, $stepKey) {
 
   <button class="btn" onclick="location.href='req_system.php'">Back to Home</button>
 </div>
-
-</body>
 </html>
