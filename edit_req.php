@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_editing) {
     }
 
 
-    // إدخال البيانات إذا لم يكن هناك رسالة خطأ
+    // إدخال البيانات إذا لم يكن هناك رسالة خطأ updated_at = NOW()
     if (!$message) {
         $sql = "UPDATE requests SET 
                 major = '$major', 
@@ -108,10 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_editing) {
                 purpose = '$purpose',
                 type = '$type', 
                 file_name = " . ($file_name ? "'$file_name'" : "NULL") . ", 
-                grades_file = '$grades_file',
-                updated_at = NOW()
+                grades_file = '$grades_file'
                 WHERE id = '$current_request_id' AND user_id = '$user_id'";
-                
+    
         if ($conn->query($sql)) {
             $message = "✅ تم تحديث الطلب بنجاح";
             // إعادة تعبئة الـ request_data بالبيانات المحدثة
@@ -122,6 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_editing) {
             $request_data['type'] = $type;
             $request_data['file_name'] = $file_name;
             $request_data['grades_file'] = $grades_file;
+            
         } else {
             $message = "❌ خطأ أثناء التحديث: " . $conn->error;
         }

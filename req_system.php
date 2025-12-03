@@ -8,10 +8,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'graduate') {
   header("Location: login.php");
   exit();
 }
-
 $user_id = $_SESSION['user_id'];
 
-// ✅ اجلب اسم المستخدم من قاعدة البيانات
+// اجلب اسم المستخدم
 $sql_user = "SELECT name FROM users WHERE id = '$user_id'";
 $result_user = $conn->query($sql_user);
 $user_name = "User";
@@ -21,20 +20,24 @@ if ($result_user && $result_user->num_rows > 0) {
     $user_name = htmlspecialchars($row_user['name']);
 }
 
-// 🚀 الاستعلام السليم لجلب الطلبات مع اسم الأستاذ المضمون
+// استعلام الطلبات مع اسم الأستاذ والتوصية (إن وجدت)
 $sql = "
 SELECT 
     r.*,
-    u.name AS professor_name
+    u.name AS professor_name,
+    rec.recommendation_id,
+    rec.pdf_path,
+    rec.content
 FROM requests r
 JOIN professors p ON r.professor_id = p.professor_id
 JOIN users u ON p.user_id = u.id
+LEFT JOIN recommendations rec ON rec.request_id = r.id
 WHERE r.user_id = $user_id
 ORDER BY r.id DESC
 ";
 
-// نتيجة الاستعلام محفوظة في $result
-$result = $conn->query($sql); 
+// تنفيذ الاستعلام
+$result = $conn->query($sql);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -209,6 +212,18 @@ th {
   font-weight: bold;
 }
 .accepted {
+  color:  #3b9a86;
+  font-weight: bold;
+}
+.rejected {
+  color: red;
+  font-weight: bold;
+}
+.draft {
+  color: gray;
+  font-weight: bold;
+}
+.Completed{
   color: green;
   font-weight: bold;
 }
@@ -286,29 +301,59 @@ background: #f8a5a5;
       <th>Actions</th>
     </tr>
     <?php
-    // ❌ تم إزالة الاستعلام المكرر هنا. يتم استخدام $result الذي تم جلبه في بداية الملف.
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
 
-    if ($result->num_rows > 0) {
-      while($row = $result->fetch_assoc()) {
-    // 🚀 سيظهر اسم الأستاذ الآن
-    $professor_name = $row['professor_name'] ?? '—'; 
+        $professor_name = $row['professor_name'] ?? '—'; 
+        $status = strtolower($row['status']);
 
-    echo
-     "<tr>
-            <td>".$row['id']."</td>
-            <td>".$professor_name."</td>
-            <td>".$row['created_at']."</td>
-            <td class='".(strtolower($row['status'])=="pending"?"pending":"accepted")."'>".$row['status']."</td>
-                <td class='actions'>
-                  <button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
-                  <button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>
-                </td>
+        if ($status == "draft") {
+            $display_status = "Under Process";
+            $class = "draft";
+        } elseif ($status == "pending") {
+            $display_status = "Pending";
+            $class = "pending";
+        } elseif ($status == "accepted") {
+            $display_status = "Accepted";
+            $class = "accepted";
+        } elseif ($status == "completed") {
+            $display_status = "Completed";
+            $class = "completed";
+        } elseif ($status == "rejected") {
+            $display_status = "Rejected";
+            $class = "rejected";
+        } else {
+            $display_status = ucfirst($row['status']);
+            $class = "completed";
+        }
+
+        echo "<tr>
+                <td>".$row['id']."</td>
+                <td>".$professor_name."</td>
+                <td>".$row['created_at']."</td>
+                <td class='".$class."'>".$display_status."</td>
+                
+                <td class='actions'>";
+
+        // ✔ زر Edit
+        echo "<button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>";
+
+        // ✔ زر Delete
+        echo "<button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>";
+
+        // ⭐ زر Download يظهر فقط إذا الطلب Completed
+        if ($status == "completed" || $status == "completed") {
+            echo "<a href='download_recommendation.php?id=".$row['recommendation_id']."'>⬇ Download</a>";
+        }
+
+        echo "</td>
               </tr>";
-      }
-    } else {
-      echo "<tr><td colspan='5'>No requests found</td></tr>";
     }
-    ?>
+} else {
+    echo "<tr><td colspan='5'>No requests found</td></tr>";
+}
+?>
+
   </table>
 </div>
 

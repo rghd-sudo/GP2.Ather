@@ -16,6 +16,7 @@ $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST['action'])) {
     $request_id = intval($_POST['request_id']);
     $action = $_POST['action'];
@@ -30,12 +31,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         $stmt->close();
 
         // جلب user_id واسم الطالب لإرسال الإشعار
-        $res = $conn->prepare("SELECT u.id AS student_user_id, u.name AS student_name FROM requests r JOIN users u ON r.user_id = u.id WHERE r.id = ?");
+        $res = $conn->prepare("SELECT u.id AS student_user_id, u.name AS student_name, r.purpose 
+                               FROM requests r 
+                               JOIN users u ON r.user_id = u.id 
+                               WHERE r.id = ?");
         $res->bind_param("i", $request_id);
         $res->execute();
         $row = $res->get_result()->fetch_assoc();
         $student_user_id = $row['student_user_id'];
         $student_name = $row['student_name'];
+        $purpose = $row['purpose'];
         $res->close();
 
         // إرسال إشعار للطالب
@@ -45,7 +50,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         $notif->execute();
         $notif->close();
 
-        echo $newStatus; // يرجع النص مباشرة للـ fetch()
+        // ⭐ إضافة سجل في track_request (الإضافة الوحيدة المطلوبة)
+        $profUserId = $_SESSION['user_id']; 
+        $statusTrack = ($action === 'accept') ? 'Professor Approval' : 'Professor Rejection';
+        $noteTrack = ($action === 'accept') ? 'Approved by Professor' : 'Rejected by Professor';
+
+        $track = $conn->prepare("INSERT INTO track_request (request_id, user_id, status, note) VALUES (?, ?, ?, ?)");
+        $track->bind_param("iiss", $request_id, $profUserId, $statusTrack, $noteTrack);
+        $track->execute();
+        $track->close();
+
+        echo $newStatus; 
         exit;
     }
 }
@@ -70,9 +85,11 @@ $list_q = $conn->prepare("
         users u ON r.user_id = u.id
     WHERE 
         r.professor_id = ?
+        AND r.status IN ('pending', 'submitted')
     ORDER BY 
         r.created_at DESC
 ");
+
 
 $list_q->bind_param("i", $professor_id);
 $list_q->execute();
@@ -183,12 +200,12 @@ h2 {
     </div>
   </div>
 
-  <!-- Main Content -->
-  <div class="main-content">
-    <div class="top-icons">
-      <button class="icon-btn"><i class="fas fa-bell"></i></button>
-      <button class="icon-btn" title="Logout"><i class="fas fa-arrow-right-from-bracket"></i></button>
-    </div>
+ <!-- Main Content -->
+<div class="main-content">
+  <div class="top-icons">
+    <button class="icon-btn"title="Notifications" onclick="window.location.href='prof_notifications.php'"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout"onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
+  </div>
 
     <h2>Incoming Recommendation Requests</h2>
 

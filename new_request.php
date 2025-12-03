@@ -94,21 +94,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // إدخال البيانات إذا لم يكن هناك رسالة خطأ
-    if (!$message) {
-        $sql = "INSERT INTO requests (user_id, major, course, professor_id, purpose, type, file_name, grades_file)
-                VALUES ('$user_id', '$major', '$course', '$professor_id', '$purpose', '$type', " .
-                ($file_name ? "'$file_name'" : "NULL") . ", '$grades_file')";
-        if ($conn->query($sql)) {
-            $message = "✅ تم حفظ الطلب بنجاح";
-        } else {
-            $message = "❌ خطأ: " . $conn->error;
-        }
-    }
-    // ✅ بعد إدخال الطلب في قاعدة البيانات
-$professor_id ;
+   // إدخال البيانات إذا لم يكن هناك رسالة خطأ
+// بعد التأكد أن بيانات الطلب صحيحة
+if (!$message) {
+    // إدخال الطلب
+    $sql = "INSERT INTO requests (user_id, major, course, professor_id, purpose, type, file_name, grades_file)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ississss", $user_id, $major, $course, $professor_id, $purpose, $type, $file_name, $grades_file);
+    if ($stmt->execute()) {
+        $newRequestId = $stmt->insert_id;
+        $stmt->close();
 
-// تحقق من إعدادات التنبيهات للأستاذ
-$sql = "SELECT notify_new_request FROM notification_settings WHERE user_id = ?";
+        $message = "✅ تم حفظ الطلب بنجاح";
+
+        // ------------------ Track entry ------------------
+        $status = 'Created';
+        $note = 'Student submitted request';
+        $trackStmt = $conn->prepare("
+    INSERT INTO track_request (request_id, user_id, status, note) 
+    VALUES (?, ?, ?, ?)
+");
+$trackStmt->bind_param("iiss", $newRequestId, $user_id, $status, $note);
+$trackStmt->execute();
+$trackStmt->close();
+        
+
+        // ------------------ Fetch professor notification settings ------------------
+        $settings = [];
+        if ($professor_id) {
+            $s = $conn->prepare("SELECT notify_new_request FROM notification_settings WHERE user_id = ? LIMIT 1");
+            $s->bind_param("i", $professor_id);
+            $s->execute();
+            $res = $s->get_result();
+            $settings = $res->fetch_assoc() ?? [];
+            $s->close();
+        }
+
+        // ------------------ Send notification if enabled ------------------
+        if (!empty($settings['notify_new_request'])) {
+            $notifMessage = "You have a new recommendation request from " . ($student_data['name'] ?? 'Student') . ".";
+            $notifStmt = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
+            $notifStmt->bind_param("is", $professor_id, $notifMessage);
+            $notifStmt->execute();
+            $notifStmt->close();
+        }
+
+    } else {
+        $message = "❌ خطأ: " . $stmt->error;
+    }
+}
+
+  /* تحقق من إعدادات التنبيهات للأستاذ
+
+  // ✅ بعد إدخال الطلب في قاعدة البيانات — إرسال إشعار للدكتور
+include 'notify.php';
+sendNotify($professor_id, "New recommendation request submitted by " . $student_info['name'] . ".", "new_request");
+
+  $sql = "SELECT notify_new_request FROM notification_settings WHERE user_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $professor_id);
 $stmt->execute();
@@ -120,8 +163,8 @@ if ($settings && $settings['notify_new_request']) {
     $notif_sql = "INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())";
     $notif_stmt = $conn->prepare($notif_sql);
     $notif_stmt->bind_param("is", $professor_id, $notif_message);
-    $notif_stmt->execute();
-}
+    $notif_stmt->execute();*/
+
 ?>
 
 <!doctype html>

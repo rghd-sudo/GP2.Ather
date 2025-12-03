@@ -188,11 +188,11 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
     z-index: 10;
     background: transparent;
   }
-  .sidebar.collapsed ~ .top-bar { left: 70px; }
-  .top-icons { display: flex; align-items: center; gap: 20px; }
-  .icon-btn { background: none; border: none; cursor: pointer; font-size: 20px; color: #333; text-decoration: none; }
-  .icon-btn:hover { color: #003366; }
-
+  .bottom-section { margin-bottom: 20px; }
+.toggle-btn { position: absolute; top: 20px; right: -15px; background: #003366; color: #fff; border-radius: 50%; border: none; width: 30px; height: 30px; cursor: pointer; }
+.top-icons { position: absolute; top: 20px; right: 30px; display: flex; align-items: center; gap: 20px; }
+.icon-btn { background: none; border: none; cursor: pointer; font-size: 20px; color: #333; }
+.icon-btn:hover { color: #003366; }
   /* Main Content */
   .main-content {
     margin-left: 230px;
@@ -225,32 +225,29 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
 </head>
 <body>
 
-  <!-- Sidebar -->
+ <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
     <div>
-      <div class="logo">
-        <img src="logo1.jpg" alt="Logo">
-      </div>
-      <a href="prof_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
-      <a href="prof_requests.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">Requests</span></a>
-      <a href="prof_notifications.php" class="menu-item"><i class="fas fa-bell"></i><span class="menu-text">Notifications</span></a>
+      <div class="logo"><img src="LOGObl.PNG" alt="Logo"></div>
+      <a href="requests.php" class="menu-item"><i class="fas fa-file-circle-plus"></i><span class="menu-text">New Request</span></a>
+      <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
+      <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     </div>
 
     <div class="bottom-section">
-      <a href="logout.php" class="menu-item"><i class="fas fa-arrow-right-from-bracket"></i><span class="menu-text">Logout</span></a>
+      <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
     </div>
   </div>
 
-  <!-- Top bar -->
-  <div class="top-bar">
-    <div class="top-icons">
-      <a class="icon-btn" href="prof_notifications.php" title="Notifications"><i class="fas fa-bell"></i></a>
-    </div>
+ <!-- Main Content -->
+<div class="main-content">
+  <div class="top-icons">
+    <button class="icon-btn"title="Notifications" onclick="window.location.href='prof_notifications.php'"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout"onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
   </div>
 
-  <!-- Main content -->
-  <div class="main-content">
+ 
     <h2>Notifications</h2>
 
     <?php if (!empty($notifications)): ?>
