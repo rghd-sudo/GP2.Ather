@@ -2,6 +2,9 @@
 session_start();
 include 'index.php';
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // 1. التحقق من الجلسة
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -89,11 +92,21 @@ if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
         $message = "❌ Grades file is required!";
     }
 
+
+
+
+
+
+
     // إدخال الطلب
     if (!$message) {
         $sql = "INSERT INTO requests (user_id, major, course, professor_id, purpose, type, file_name, grades_file)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
+
+         // ✅ أروى: فحص التحضير قبل bind_param
+         if (!$stmt) die("Prepare failed (requests): " . $conn->error);
+
         $stmt->bind_param("ississss", $user_id, $major, $course, $professor_id, $purpose, $type, $file_name, $grades_file);
 
         if ($stmt->execute()) {
@@ -109,6 +122,7 @@ if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
                 INSERT INTO track_request (request_id, user_id, status, note)
                 VALUES (?, ?, ?, ?)
             ");
+             if (!$trackStmt) die("Prepare failed (track_request): " . $conn->error); // ✅ فحص prepare
             $trackStmt->bind_param("iiss", $newRequestId, $user_id, $status, $note);
             $trackStmt->execute();
             $trackStmt->close();
@@ -135,6 +149,11 @@ if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
     }
 }
 ?>
+
+
+
+
+
 
 <!doctype html>
 <html lang="en">
