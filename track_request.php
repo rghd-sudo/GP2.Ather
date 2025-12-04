@@ -10,9 +10,11 @@ ini_set('display_errors', 1);
 */
 
 /* ------------------ DB connection ------------------ */
-if (file_exists(_DIR_ . '/db.php')) {
-    require_once _DIR_ . '/db.php'; // expects $conn (mysqli)
-} else {
+if (file_exists(__DIR__ . '/db.php')) {
+    require_once __DIR__ . '/db.php'; // expects $conn (mysqli)
+}
+
+ else {
     $host = "localhost";
     $user = "root";
     $pass = "";
