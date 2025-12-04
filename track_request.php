@@ -16,7 +16,7 @@ if (file_exists(_DIR_ . '/db.php')) {
     $host = "localhost";
     $user = "root";
     $pass = "";
-    $dbname = "agdb";
+    $dbname = "dbag";
     $conn = new mysqli($host, $user, $pass, $dbname);
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
