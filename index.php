@@ -1,6 +1,6 @@
 <?php
 
-$conn = new mysqli("localhost", "root", "", "dbag");
+$conn = new mysqli("localhost", "root", "", "agdb");
 
 // ضبط الترميز
 $conn->set_charset("utf8mb4");
