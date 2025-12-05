@@ -126,25 +126,7 @@ $settings = mysqli_fetch_assoc($result);
     </div>
 
                     
-          <!-- Notification Method -->
-    <div class="choices_reminder"> 
-        <div class="choices">
-            <h4>Send Notification via:</h4>
-            <label><input type="checkbox" name="via_email" value="1" <?= isset($settings['via_email']) && $settings['via_email'] ? 'checked' : '' ?>> Email</label>
-            <label><input type="checkbox" name="via_in_app" value="1" <?= isset($settings['via_in_app']) && $settings['via_in_app'] ? 'checked' : '' ?>> In-app</label>
-        </div>    
-
-        <!-- Reminder Days -->
-        <div class="reminder">
-            <label>Send Reminder After:</label>
-            <select name="reminder_days" class="days">
-                <option value="0" <?= isset($settings['reminder_days']) && $settings['reminder_days']==0 ? 'selected' : '' ?>>No reminder</option>
-                <option value="1" <?= isset($settings['reminder_days']) && $settings['reminder_days']==1 ? 'selected' : '' ?>>1 Day</option>
-                <option value="2" <?= isset($settings['reminder_days']) && $settings['reminder_days']==2 ? 'selected' : '' ?>>2 Days</option>
-                <option value="3" <?= isset($settings['reminder_days']) && $settings['reminder_days']==3 ? 'selected' : '' ?>>3 Days</option>
-            </select>
-        </div>
-    </div>
+    
     
                   
                   <button class="save">  Save Notitfcation setting</button>
