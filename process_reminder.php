@@ -6,7 +6,7 @@ ini_set('display_errors', 1);
 session_start();
 // تأكد من تضمين اتصال قاعدة البيانات (يجب أن يوفر المتغير $conn)
 include 'index.php'; 
-header('Content-Type: text/plain'); // للتعامل مع الرد كنص عادي في JavaScript
+header('Content-Type: text/plain'); 
 
 // التحقق من أن المستخدم مسجل الدخول
 if (!isset($_SESSION['user_id'])) {
@@ -22,15 +22,17 @@ if (!isset($_POST['request_id']) || empty($_POST['request_id'])) {
 
 $request_id = (int)$_POST['request_id'];
 
-// 1. استرجاع بيانات الطلب واسم الأستاذ ومعرّفه
+// 1. استرجاع بيانات الطلب، اسم الطالب، واسم ومعرّف الأستاذ
 $sql_fetch = "
 SELECT 
     r.professor_id,
-    u.id AS professor_user_id,
-    u.name AS professor_name
+    u_prof.id AS professor_user_id,
+    u_prof.name AS professor_name,
+    u_stud.name AS student_name  -- ✅✅ عمود اسم الطالب
 FROM requests r
 JOIN professors p ON r.professor_id = p.professor_id
-JOIN users u ON p.user_id = u.id
+JOIN users u_prof ON p.user_id = u_prof.id
+JOIN users u_stud ON r.student_id = u_stud.id  -- ✅✅ ربط بجدول الطلاب لجلب الاسم
 WHERE r.id = ?
 ";
 
@@ -52,15 +54,15 @@ if ($result_fetch->num_rows === 0) {
 $row = $result_fetch->fetch_assoc();
 $professor_user_id = $row['professor_user_id'];
 $professor_name = $row['professor_name'];
+$student_name = $row['student_name']; // ✅✅ استخراج اسم الطالب
 $stmt_fetch->close();
 
 
-// 2. إنشاء رسالة الإشعار
-$notification_message = "تذكير: لديك طلب توصية معلّق (رقم: {$request_id}) من طالب، يرجى مراجعته.";
+// 2. إنشاء رسالة الإشعار باللغة الإنجليزية مع اسم الطالب
+$notification_message = "REMINDER: You have a pending recommendation request (ID: {$request_id}) from student: **{$student_name}**. Please review it."; // ✅✅ الرسالة الجديدة بالإنجليزية واسم الطالب
 
 
 // 3. إدراج الإشعار في جدول notifications
-// ملاحظة: يتم تعيين status كـ 'unread' تلقائياً
 $sql_insert = "
 INSERT INTO notifications (user_id, message, status, created_at)
 VALUES (?, ?, 'unread', NOW())
@@ -75,7 +77,7 @@ if (!$stmt_insert) {
 $stmt_insert->bind_param("is", $professor_user_id, $notification_message);
 
 if ($stmt_insert->execute()) {
-    echo "تم إرسال التذكير بنجاح كإشعار داخلي للأستاذ الدكتور: {$professor_name}";
+    echo "Reminder successfully sent internally to Professor: {$professor_name}."; // ✅ رسالة تأكيد بالإنجليزية
 } else {
     echo "Error: Failed to record reminder notification. " . $stmt_insert->error;
 }
