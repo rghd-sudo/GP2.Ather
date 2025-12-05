@@ -47,8 +47,9 @@ $result = $conn->query($sql);
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    
-<style>
+  
+ 
+  <style>
 /* 🔹 General Layout */
 body {
   margin: 0;
@@ -223,10 +224,11 @@ th {
   color: gray;
   font-weight: bold;
 }
-.Completed{
+.completed {
   color: green;
   font-weight: bold;
 }
+
 .actions button {
   border: none;
   padding: 6px 10px;
@@ -300,59 +302,58 @@ background: #f8a5a5;
       <th>Status</th>
       <th>Actions</th>
     </tr>
-    <?php
-if ($result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
+<?php
+if ($result) { // الاستعلام نجح
+    if ($result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
 
-        $professor_name = $row['professor_name'] ?? '—'; 
-        $status = strtolower($row['status']);
+            $professor_name = $row['professor_name'] ?? '—'; 
+            $status = strtolower($row['status']);
 
-        if ($status == "draft") {
-            $display_status = "Under Process";
-            $class = "draft";
-        } elseif ($status == "pending") {
-            $display_status = "Pending";
-            $class = "pending";
-        } elseif ($status == "accepted") {
-            $display_status = "Accepted";
-            $class = "accepted";
-        } elseif ($status == "completed") {
-            $display_status = "Completed";
-            $class = "completed";
-        } elseif ($status == "rejected") {
-            $display_status = "Rejected";
-            $class = "rejected";
-        } else {
-            $display_status = ucfirst($row['status']);
-            $class = "completed";
+            if ($status == "draft") {
+                $display_status = "Under Process";
+                $class = "draft";
+            } elseif ($status == "pending") {
+                $display_status = "Pending";
+                $class = "pending";
+            } elseif ($status == "accepted") {
+                $display_status = "Accepted";
+                $class = "accepted";
+            } elseif ($status == "completed") {
+                $display_status = "Completed";
+                $class = "completed";
+            } elseif ($status == "rejected") {
+                $display_status = "Rejected";
+                $class = "rejected";
+            } else {
+                $display_status = ucfirst($row['status']);
+                $class = "completed";
+            }
+
+            echo "<tr>
+                    <td>".$row['id']."</td>
+                    <td>".$professor_name."</td>
+                    <td>".$row['created_at']."</td>
+                    <td class='".$class."'>".$display_status."</td>
+                    <td class='actions'>
+                        <button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
+                        <button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>";
+
+            if ($status == "completed") {
+                echo "<a href='download_recommendation.php?request_id=".$row['id']."'>⬇ Download</a>";
+            }
+
+            echo "</td></tr>";
         }
-
-        echo "<tr>
-                <td>".$row['id']."</td>
-                <td>".$professor_name."</td>
-                <td>".$row['created_at']."</td>
-                <td class='".$class."'>".$display_status."</td>
-                
-                <td class='actions'>";
-
-        // ✔ زر Edit
-        echo "<button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>";
-
-        // ✔ زر Delete
-        echo "<button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>";
-
-        // ⭐ زر Download يظهر فقط إذا الطلب Completed
-        if ($status == "completed" || $status == "completed") {
-            echo "<a href='download_recommendation.php?id=".$row['recommendation_id']."'>⬇ Download</a>";
-        }
-
-        echo "</td>
-              </tr>";
+    } else {
+        echo "<tr><td colspan='5'>No requests found</td></tr>";
     }
-} else {
-    echo "<tr><td colspan='5'>No requests found</td></tr>";
+} else { // الاستعلام فشل
+    echo "<tr><td colspan='5'>Error: " . $conn->error . "</td></tr>";
 }
 ?>
+
+
 
   </table>
 </div>
