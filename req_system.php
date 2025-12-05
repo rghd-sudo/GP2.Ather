@@ -243,7 +243,10 @@ background: #f8a5a5;
 .edit {
   background: #a5d8f8;
 }
+.load{
+ background:green;
 
+}
 /* 🔹 Responsive */
 @media (max-width: 768px) {
   .main-content {
@@ -329,31 +332,37 @@ if ($result) { // الاستعلام نجح
                 $display_status = ucfirst($row['status']);
                 $class = "completed";
             }
+echo "<tr> 
+        <td>".$row['id']."</td>
+        <td>".$professor_name."</td>
+        <td>".$row['created_at']."</td>
+        <td class='".$class."'>".$display_status."</td>
+        <td class='actions'>";
+        echo "<button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>";
 
-            echo "<tr>
-                    <td>".$row['id']."</td>
-                    <td>".$professor_name."</td>
-                    <td>".$row['created_at']."</td>
-                    <td class='".$class."'>".$display_status."</td>
-                    <td class='actions'>
-                        <button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
-                        <button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>";
+// إذا كانت الحالة "completed" يظهر زر تحميل فقط
+if ($status == "completed") {
+    echo "<button class='load' onclick=\"loadRequest(".$row['id'].")\"> ⬇ Download</button>";
+}
+// إذا كانت الحالة "accepted" يظهر زر تحميل فقط (يمكن تعديل حسب الحاجة)
+elseif ($status == "accepted") {
+    echo "<!-- accepted, لا يسمح بالتعديل -->";
+} 
+// إذا لم تكن الحالة completed أو accepted، يظهر زر التعديل والحذف
+else {
+    echo "<button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
+          ";
+}
 
-            if ($status == "completed") {
-                echo "<a href='download_recommendation.php?request_id=".$row['id']."'>⬇ Download</a>";
-            }
-
-            echo "</td></tr>";
+echo "</td></tr>";
         }
     } else {
-        echo "<tr><td colspan='5'>No requests found</td></tr>";
+        echo "<tr><td colspan='5'>No requests found.</td></tr>";
     }
-} else { // الاستعلام فشل
-    echo "<tr><td colspan='5'>Error: " . $conn->error . "</td></tr>";
+} else {
+    echo "<tr><td colspan='5'>Error fetching requests.</td></tr>";
 }
 ?>
-
-
 
   </table>
 </div>
@@ -367,6 +376,11 @@ toggleBtn.addEventListener("click", () => {
 });
 
 // 🔸 Buttons (تم تفعيلها للتوجيه لملفات المعالجة)
+function loadRequest(id) {
+  // 🚀 توجيه لصفحة التحميل
+  window.location.href = "download_recommendation.php?request_id=" + id;
+}
+
 
 function editRequest(id) {
   // 🚀 يتم التوجيه لصفحة التعديل، يجب إنشاء ملف edit_request.php

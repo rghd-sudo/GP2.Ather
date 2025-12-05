@@ -5,13 +5,13 @@ ini_set('display_errors', 1);
 
 /*
   prof_notifications.php
-  - Show professor's notifications (display only, like student notifications page)
+  - Show professor's notifications
   - LTR layout, left sidebar, Poppins + FontAwesome
 */
 
 /* ------------------ 1) DB connection ------------------ */
-if (file_exists(_DIR_. '/db.php')) {
-    require_once _DIR_ . '/db.php'; // expects $conn (mysqli)
+if (file_exists(__DIR__ . '/db.php')) {
+    require_once __DIR__ . '/db.php'; // expects $conn (mysqli)
 } else {
     $host = "localhost";
     $user = "root";
@@ -23,6 +23,7 @@ if (file_exists(_DIR_. '/db.php')) {
     }
 }
 
+/* ------------------ 2) Check user role ------------------ */
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
     header("Location: login.php");
     exit;
@@ -43,7 +44,7 @@ CREATE TABLE IF NOT EXISTS notification_settings (
   via_in_app TINYINT(1) DEFAULT 1,
   reminder_days INT DEFAULT 2,
   PRIMARY KEY (user_id, role)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ";
 $conn->query($create_sql); // ignore errors here
 
@@ -113,8 +114,7 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
     $stmt->close();
 }
 
-/* ------------------ 6) Load professor notifications (THE FIX) ------------------ */
-
+/* ------------------ 6) Load professor notifications ------------------ */
 $notifications = [];
 
 $sql = "SELECT message, created_at 
@@ -248,9 +248,10 @@ if ($stmt = $conn->prepare($sql)) {
     </div>
 </div>
 
+
 <div class="main-content">
   <div class="top-icons">
-    <button class="icon-btn"title="Notifications" onclick="window.location.href='prof_notifications.php'"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Notifications" onclick="window.location.href='prof_notifications.php'"><i class="fas fa-bell"></i></button>
     <button class="icon-btn" title="Logout" onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
   </div>
 
