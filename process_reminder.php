@@ -23,16 +23,16 @@ if (!isset($_POST['request_id']) || empty($_POST['request_id'])) {
 $request_id = (int)$_POST['request_id'];
 
 // 1. استرجاع بيانات الطلب، اسم الطالب، واسم ومعرّف الأستاذ
+
 $sql_fetch = "
 SELECT 
-    r.professor_id,
-    u_prof.id AS professor_user_id,
+    p.user_id AS professor_user_id,
     u_prof.name AS professor_name,
-    u_stud.name AS student_name  -- ✅✅ عمود اسم الطالب
+    u_stud.name AS student_name  
 FROM requests r
 JOIN professors p ON r.professor_id = p.professor_id
 JOIN users u_prof ON p.user_id = u_prof.id
-JOIN users u_stud ON r.student_id = u_stud.id  -- ✅✅ ربط بجدول الطلاب لجلب الاسم
+JOIN users u_stud ON r.user_id = u_stud.id  -- ✅✅ تم تصحيح student_id إلى user_id هنا
 WHERE r.id = ?
 ";
 
