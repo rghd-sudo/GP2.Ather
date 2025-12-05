@@ -26,21 +26,6 @@ if ($student_result && $student_result->num_rows > 0) {
     $student_info['id_number'] = $student_data['National_id'] ?? '';
 }
 
-// 3. إنشاء جدول الطلبات إذا لم يكن موجود
-$conn->query("
-CREATE TABLE IF NOT EXISTS requests (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    major VARCHAR(100),
-    course VARCHAR(50),
-    professor_id INT NOT NULL,
-    purpose TEXT,
-    type VARCHAR(50),
-    file_name VARCHAR(255),
-    grades_file VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)");
-
 $message = "";
 
 // 4. جلب الدكاترة
@@ -94,15 +79,23 @@ if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
 
     // إدخال الطلب
-    if (!$message) {
-        $sql = "INSERT INTO requests (user_id, major, course, professor_id, purpose, type, file_name, grades_file)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare("
+    INSERT INTO requests (user_id, major, course, professor_id, purpose, type, file_name, grades_file)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+");
 
-         // ✅ أروى: فحص التحضير قبل bind_param
-         if (!$stmt) die("Prepare failed (requests): " . $conn->error);
+$stmt->bind_param(
+    "ississss",
+    $user_id,
+    $major,
+    $course,
+    $professor_id,
+    $purpose,
+    $type,
+    $file_name,
+    $grades_file
+);
 
-        $stmt->bind_param("ississss", $user_id, $major, $course, $professor_id, $purpose, $type, $file_name, $grades_file);
 
         if ($stmt->execute()) {
             $newRequestId = $stmt->insert_id;
@@ -113,12 +106,11 @@ if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
             // ⬇️ أول خطوة تتبع للطلب
             $status = 'Created';
             $note = 'Student submitted the request';
-            $trackStmt = $conn->prepare("
-                INSERT INTO track_request (request_id, user_id, status, note)
-                VALUES (?, ?, ?, ?)
-            ");
-             if (!$trackStmt) die("Prepare failed (track_request): " . $conn->error); // ✅ فحص prepare
-            $trackStmt->bind_param("iiss", $newRequestId, $user_id, $status, $note);
+           $trackStmt = $conn->prepare("
+    INSERT INTO track_request (request_id, user_id, status, note)
+    VALUES (?, ?, ?, ?)
+");
+$trackStmt->bind_param("iiss", $newRequestId, $user_id, $status, $note);
             $trackStmt->execute();
             $trackStmt->close();
 
@@ -142,7 +134,7 @@ if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
             $message = "❌ Error: " . $stmt->error;
         }
     }
-}
+
 ?>
 
 

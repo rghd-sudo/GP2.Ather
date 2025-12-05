@@ -51,14 +51,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         $notif->close();
 
         // ⭐ إضافة سجل في track_request (الإضافة الوحيدة المطلوبة)
-        $profUserId = $_SESSION['user_id']; 
-        $statusTrack = ($action === 'accept') ? 'Professor Approval' : 'Professor Rejection';
-        $noteTrack = ($action === 'accept') ? 'Approved by Professor' : 'Rejected by Professor';
+       
+    // ⭐ إضافة سجل في track_request
+    $profUserId = $_SESSION['user_id']; 
+    $statusTrack = ($action === 'accept') ? 'Professor Approval' : 'Professor Rejection';
+    $noteTrack   = ($action === 'accept') ? 'Approved by Professor' : 'Rejected by Professor';
 
-        $track = $conn->prepare("INSERT INTO track_request (request_id, user_id, status, note) VALUES (?, ?, ?, ?)");
-        $track->bind_param("iiss", $request_id, $profUserId, $statusTrack, $noteTrack);
-        $track->execute();
-        $track->close();
+    $track = $conn->prepare("
+        INSERT INTO track_request (request_id, user_id, status, note)
+        VALUES (?, ?, ?, ?)
+    ");
+    $track->bind_param("iiss", $request_id, $profUserId, $statusTrack, $noteTrack);
+    $track->execute();
+    $track->close();
 
         echo $newStatus; 
         exit;

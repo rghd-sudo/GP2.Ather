@@ -168,6 +168,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $notif = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
         $notif->bind_param("is", $student_user_id, $msg);
         $notif->execute();
+        // ⭐ إضافة سجل في track_request
+    $profUserId = $_SESSION['user_id']; 
+    $statusTrack = ($status === 'completed') ? 'Recommendation Sent' : 'Recommendation Sent';
+    $noteTrack   = ($status === 'completed') ? 'Recommendation Sent' : 'Recommendation Sent';
+
+    $track = $conn->prepare("
+        INSERT INTO track_request (request_id, user_id, status, note)
+        VALUES (?, ?, ?, ?)
+    ");
+    $track->bind_param("iiss", $request_id, $profUserId, $statusTrack, $noteTrack);
+    $track->execute();
+    $track->close();
+
+       
 
         $message_alert = "✅ The recommendation has been sent successfully!";
     }
