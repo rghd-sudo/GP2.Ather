@@ -10,8 +10,8 @@ ini_set('display_errors', 1);
 */
 
 /* ------------------ 1) DB connection ------------------ */
-if (file_exists(__DIR__. '/db.php')) {
-    require_once __DIR__ . '/db.php'; // expects $conn (mysqli)
+if (file_exists(_DIR_. '/db.php')) {
+    require_once _DIR_ . '/db.php'; // expects $conn (mysqli)
 } else {
     $host = "localhost";
     $user = "root";
@@ -22,6 +22,7 @@ if (file_exists(__DIR__. '/db.php')) {
         die("Connection failed: " . $conn->connect_error);
     }
 }
+
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
     header("Location: login.php");
     exit;
@@ -29,7 +30,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
 
 $user_id = intval($_SESSION['user_id']);
 
-/* ------------------ 3) Ensure settings table exists (safe to call) ------------------ */
+/* ------------------ 3) Ensure settings table exists ------------------ */
 $create_sql = "
 CREATE TABLE IF NOT EXISTS notification_settings (
   user_id INT NOT NULL,
@@ -51,7 +52,7 @@ $success_msg = '';
 $error_msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // read values (checkboxes may not be present if unchecked)
+
     $notify_new_request = isset($_POST['notify_new_request']) ? 1 : 0;
     $notify_pending = isset($_POST['notify_pending']) ? 1 : 0;
     $notify_rejected = isset($_POST['notify_rejected']) ? 1 : 0;
@@ -60,7 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $via_in_app = isset($_POST['via_in_app']) ? 1 : 0;
     $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 2;
 
-    // upsert (INSERT ... ON DUPLICATE KEY UPDATE)
     $sql = "INSERT INTO notification_settings 
         (user_id, role, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
         VALUES (?, 'professor', ?, ?, ?, ?, ?, ?, ?)
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-/* ------------------ 5) Load current settings for this professor ------------------ */
+/* ------------------ 5) Load current settings ------------------ */
 $settings = [
     'notify_new_request' => 1,
     'notify_pending' => 1,
@@ -107,12 +107,32 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
         $settings['notify_rejected'] = intval($row['notify_rejected']);
         $settings['notify_uploaded'] = intval($row['notify_uploaded']);
         $settings['via_email'] = intval($row['via_email']);
-        $settings['via_im_app'] = intval($row['via_in_app']);
+        $settings['via_in_app'] = intval($row['via_in_app']);
         $settings['reminder_days'] = intval($row['reminder_days']);
     }
     $stmt->close();
 }
-// if something went wrong above, $notifications remains an array (empty)
+
+/* ------------------ 6) Load professor notifications (THE FIX) ------------------ */
+
+$notifications = [];
+
+$sql = "SELECT message, created_at 
+        FROM notifications 
+        WHERE professor_id = ? 
+        ORDER BY created_at DESC";
+
+if ($stmt = $conn->prepare($sql)) {
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    while ($row = $res->fetch_assoc()) {
+        $notifications[] = $row;
+    }
+
+    $stmt->close();
+}
 
 ?>
 <!DOCTYPE html>
@@ -121,12 +141,10 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
   <meta charset="UTF-8" />
   <title>Professor Notifications</title>
 
-  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
   <style>
-  /* General Layout */
   body {
     margin: 0;
     font-family: "Poppins", sans-serif;
@@ -135,7 +153,6 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
     direction: ltr;
   }
 
-  /* Sidebar */
   .sidebar {
     background-color: #c8e4eb;
     width: 230px;
@@ -157,9 +174,7 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
   .menu-item i { font-size: 20px; margin-right: 10px; width: 25px; text-align: center; }
   .menu-text { font-size: 15px; white-space: nowrap; }
   .sidebar.collapsed .menu-text { display: none; }
-  .bottom-section { margin-bottom: 20px; }
 
-  /* Toggle Button */
   .toggle-btn {
     position: absolute;
     top: 20px;
@@ -173,27 +188,16 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
     cursor: pointer;
   }
 
-  /* Top Bar */
-  .top-bar {
-    position: fixed;
-    top: 0;
-    right: 0;
-    left: 230px;
-    height: 60px;
+  .top-icons {
+    position: absolute;
+    top: 20px;
+    right: 30px;
     display: flex;
-    justify-content: flex-end;
     align-items: center;
-    padding: 0 20px;
-    transition: left 0.3s;
-    z-index: 10;
-    background: transparent;
+    gap: 20px;
   }
-  .bottom-section { margin-bottom: 20px; }
-.toggle-btn { position: absolute; top: 20px; right: -15px; background: #003366; color: #fff; border-radius: 50%; border: none; width: 30px; height: 30px; cursor: pointer; }
-.top-icons { position: absolute; top: 20px; right: 30px; display: flex; align-items: center; gap: 20px; }
-.icon-btn { background: none; border: none; cursor: pointer; font-size: 20px; color: #333; }
-.icon-btn:hover { color: #003366; }
-  /* Main Content */
+  .icon-btn { background: none; border: none; cursor: pointer; font-size: 20px; color: #333; }
+
   .main-content {
     margin-left: 230px;
     margin-top: 70px;
@@ -201,10 +205,9 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
     transition: margin-left 0.3s;
     width: 100%;
   }
-  .sidebar.collapsed + .top-bar + .main-content { margin-left: 70px; }
+
   h2 { font-size: 22px; color: #003366; margin-top: 0; }
 
-  /* Notification card */
   .notification {
     background: #fff;
     padding: 14px 16px;
@@ -215,18 +218,23 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
     box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
     border: 1px solid #eef3f6;
   }
-  .notification-icon { font-size: 20px; margin-right: 12px; line-height: 1; }
+  .notification-icon { font-size: 20px; margin-right: 12px; }
   .notification .msg { font-size: 14px; color: #222; }
   .notification .time { font-size: 12px; color: #6f6f6f; margin-top: 6px; }
 
-  .empty { color: #777; background: #fff; border: 1px dashed #cfd8dc; border-radius: 10px; padding: 18px; text-align: center; }
-
+  .empty {
+    color: #777;
+    background: #fff;
+    border: 1px dashed #cfd8dc;
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+  }
   </style>
 </head>
 <body>
 
- <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
+<div class="sidebar" id="sidebar">
     <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
     <div>
       <div class="logo"><img src="LOGObl.PNG" alt="Logo"></div>
@@ -238,105 +246,38 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
     <div class="bottom-section">
       <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
     </div>
-  </div>
+</div>
 
- <!-- Main Content -->
 <div class="main-content">
   <div class="top-icons">
     <button class="icon-btn"title="Notifications" onclick="window.location.href='prof_notifications.php'"><i class="fas fa-bell"></i></button>
-    <button class="icon-btn" title="Logout"onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
+    <button class="icon-btn" title="Logout" onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
   </div>
 
- 
-    <h2>Notifications</h2>
+  <h2>Notifications</h2>
 
-    <?php if (!empty($notifications)): ?>
-        <?php foreach ((array)$notifications as $n): ?>
-            <div class="notification">
-                <div class="notification-icon">🔔</div>
-                <div>
-                    <div class="msg"><?php echo htmlspecialchars($n['message'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
-                    <div class="time"><?php echo htmlspecialchars($n['created_at'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
-                </div>
-            </div>
-        <?php endforeach; ?>
-    <?php else: ?>
-        <div class="empty">No notifications yet.</div>
-    <?php endif; ?>
-<!--
-    <div class="card">
-      <form method="post" action="">
-        <div class="row">
-          <div>
-            <div class="label">New Request Submitted</div>
-            <div class="small">Notify when a student sends a new recommendation request to you.</div>
+  <?php if (!empty($notifications)): ?>
+      <?php foreach ($notifications as $n): ?>
+          <div class="notification">
+              <div class="notification-icon">🔔</div>
+              <div>
+                  <div class="msg"><?php echo htmlspecialchars($n['message'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div class="time"><?php echo htmlspecialchars($n['created_at'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+              </div>
           </div>
-          <div class="toggles">
-            <label><input type="checkbox" name="notify_new_request" <?php if($settings['notify_new_request']) echo 'checked'; ?>> </label>
-          </div>
-        </div>
+      <?php endforeach; ?>
+  <?php else: ?>
+      <div class="empty">No notifications yet.</div>
+  <?php endif; ?>
 
-        <div class="row">
-          <div>
-            <div class="label">Request Pending Reminder</div>
-            <div class="small">Send reminder if a request is still pending after set days.</div>
-          </div>
-          <div class="toggles">
-            <label><input type="checkbox" name="notify_pending" <?php if($settings['notify_pending']) echo 'checked'; ?>></label>
-            <select name="reminder_days" style="padding:6px;border-radius:6px;">
-              <?php for($d=1;$d<=14;$d++): ?>
-                <option value="<?php echo $d; ?>" <?php if($settings['reminder_days']==$d) echo 'selected'; ?>><?php echo $d; ?> days</option>
-              <?php endfor; ?>
-            </select>
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <div class="label">Request Rejected</div>
-            <div class="small">Notify when a request is rejected (by you or system).</div>
-          </div>
-          <div class="toggles">
-            <label><input type="checkbox" name="notify_rejected" <?php if($settings['notify_rejected']) echo 'checked'; ?>></label>
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <div class="label">Recommendation Uploaded</div>
-            <div class="small">Notify when you upload the recommendation letter.</div>
-          </div>
-          <div class="toggles">
-            <label><input type="checkbox" name="notify_uploaded" <?php if($settings['notify_uploaded']) echo 'checked'; ?>></label>
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <div class="label">Send Notification Via</div>
-            <div class="small">Choose notification channels.</div>
-          </div>
-          <div class="toggles">
-            <label style="margin-right:8px;"><input type="checkbox" name="via_email" <?php if($settings['via_email']) echo 'checked'; ?>> Email</label>
-            <label><input type="checkbox" name="via_app" <?php if($settings['via_app']) echo 'checked'; ?>> In-app</label>
-          </div>
-        </div>
-
-        <div style="text-align:right;">
-          <button type="submit" class="save-btn">Save Notification Settings</button>
-        </div>
-      </form>
-    </div>-->
-
-  </div>
+</div>
 
 <script>
-  // Toggle sidebar
-  const toggleBtn = document.getElementById("toggleBtn");
-  const sidebar = document.getElementById("sidebar");
-  toggleBtn.addEventListener("click", () => {
-    sidebar.classList.toggle("collapsed");
-  });
+const toggleBtn = document.getElementById("toggleBtn");
+const sidebar = document.getElementById("sidebar");
+toggleBtn.addEventListener("click", () => {
+  sidebar.classList.toggle("collapsed");
+});
 </script>
 
 </body>
