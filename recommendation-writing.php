@@ -109,16 +109,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 4.1 توليد ملف PDF
     // ========================================================
 
-    $pdf = new TCPDF();
-    $pdf->AddPage();
-    $pdf->SetFont('helvetica', '', 14);
-    $pdf->writeHTML($content, true, false, true, false, '');
 
-    $upload_dir = __DIR__ . "/uploads";
-    if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+// تفعيل دعم العربية
+$pdf = new TCPDF();
+$pdf->SetCreator(PDF_CREATOR);
+$pdf->SetAuthor('Ather System');
+$pdf->SetTitle('Recommendation Letter');
+$pdf->SetSubject('Recommendation');
 
-    $pdf_path = $upload_dir . "/recommendation_" . time() . ".pdf";
-    $pdf->Output($pdf_path, "F");
+// عشان اللغه العربيه تظهر بشكل صحيح
+$pdf->setPrintHeader(false);
+$pdf->setPrintFooter(false);
+$pdf->SetMargins(15, 15, 15);
+$pdf->SetAutoPageBreak(TRUE, 15);
+$pdf->SetFont('dejavusans', '', 14, '', true);
+
+$pdf->AddPage();
+$pdf->writeHTML($content, true, false, true, false, '');
+
+// مسار الحفظ
+$upload_dir = __DIR__ . "/uploads";
+if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+
+$pdf_path = $upload_dir . "/recommendation_" . time() . ".pdf";
+$pdf->Output($pdf_path, "F");
 
     // ========================================================
     // 4.2 INSERT / UPDATE
