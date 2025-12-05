@@ -340,7 +340,7 @@ if ($result) { // الاستعلام نجح
                         <button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>";
 
             if ($status == "completed") {
-                echo "<a href='download_recommendation.php?id=".$row['recommendation_id']."'>⬇ Download</a>";
+                echo "<a href='download_recommendation.php?request_id=".$row['id']."'>⬇ Download</a>";
             }
 
             echo "</td></tr>";

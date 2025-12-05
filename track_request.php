@@ -63,7 +63,7 @@ $conn->query($create_track_sql);
 
 /* ------------------ Fetch user's requests (newest first) ------------------ */
 $requests = [];
-$sql = "SELECT id, COALESCE(title,'') AS title, COALESCE(purpose,'') AS purpose, COALESCE(status,'') AS current_status, created_at 
+$sql = "SELECT id, COALESCE(purpose,'') AS purpose, COALESCE(purpose,'') AS purpose, COALESCE(status,'') AS current_status, created_at 
         FROM requests WHERE user_id = ? ORDER BY created_at DESC";
 if ($stmt = $conn->prepare($sql)) {
     $stmt->bind_param("i", $user_id);
@@ -100,7 +100,7 @@ function match_step($trackStatus, $stepKey) {
         return (strpos($t, 'prof') !== false || strpos($t, 'approve') !== false || strpos($t, 'accepted') !== false);
     }
     if ($k === 'recommendation sent') {
-        return (strpos($t, 'sent') !== false || strpos($t, 'uploaded') !== false || strpos($t, 'recommend') !== false);
+        return (strpos($t, 'sent') !== false || strpos($t, 'uploaded') !== false || strpos($t, 'completed') !== false);
     }
     return stripos($trackStatus, $stepKey) !== false;
 }
@@ -113,13 +113,112 @@ function match_step($trackStatus, $stepKey) {
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 <style>
-  body { margin:0; font-family:"Poppins",sans-serif; background:#fdfaf6; display:flex; direction:ltr; }
-  .sidebar { background:#c8e4eb; width:230px; position:fixed; height:100vh; padding-top:20px; box-shadow:2px 0 5px rgba(0,0,0,0.1); left:0; display:flex; flex-direction:column; justify-content:space-between; }
-  .sidebar .logo img{ display:block; margin:0 auto 12px; width:80px; }
-  .menu-item{ display:flex; align-items:center; padding:12px 20px; color:#333; text-decoration:none;}
-  .menu-item i{ font-size:20px; margin-right:10px;}
-  .top-bar{ position:fixed; left:230px; right:0; top:0; height:60px; display:flex; align-items:center; justify-content:flex-end; padding:0 20px; z-index:10;}
-  .main-content{ margin-left:230px; margin-top:70px; padding:30px; width:100%; }
+  /* 🔹 General Layout */
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #fdfaf6;
+  display: flex;
+}
+
+/* 🔹 Sidebar */
+.sidebar {
+  background-color: #c8e4eb;
+  width: 230px;
+  transition: width 0.3s;
+  height: 100vh;
+  padding-top: 20px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.sidebar.collapsed {
+  width: 70px;
+}
+.sidebar .logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.sidebar .logo img {
+  width: 80px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.3s;
+}
+.menu-item:hover {
+  background: #bcd5db;
+}
+.menu-item i {
+  font-size: 20px;
+  margin-right: 10px;
+  width: 25px;
+  text-align: center;
+}
+.menu-text {
+  font-size: 15px;
+  white-space: nowrap;
+}
+.sidebar.collapsed .menu-text {
+  display: none;
+}
+.bottom-section {
+  margin-bottom: 20px;
+}
+
+/* 🔹 Toggle Button */
+.toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: -15px;
+  background: #003366;
+  color: #fff;
+  border-radius: 50%;
+  border: none;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+/* 🔹 Top Bar */
+.top-bar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 230px;
+  height: 60px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 20px;
+  transition: left 0.3s;
+  z-index: 10;
+}
+.sidebar.collapsed ~ .top-bar {
+  left: 70px;
+}
+.top-icons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #333;
+}
+.icon-btn:hover {
+  color: #003366;
+}
+.main-content{ margin-left:230px; margin-top:70px; padding:30px; width:100%; }
   .request-card{ background:#fff; border-radius:10px; padding:18px; margin-bottom:18px; border:1px solid #eef3f6; box-shadow:0 2px 6px rgba(0,0,0,0.06);}
   .request-header{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
   .req-title{ font-weight:700; color:#003366; }
@@ -140,28 +239,31 @@ function match_step($trackStatus, $stepKey) {
 </style>
 </head>
 <body>
-
-<!-- Sidebar -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
+  <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
   <div>
-    <img src="logobl.PNG" alt="Logo">
-    <a href="req_system.php" class="menu-item"><i class="fas fa-home"></i> <span>Home</span></a>
-    <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i> <span>Track Request</span></a>
-    <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i> <span>Profile</span></a>
+    <div class="logo">
+      <img src="logobl.PNG" alt="Logo">
+
+    </div>
+    <a href="req_system.php" class="menu-item"><i class="fas fa-home"></i><span class="menu-text">Home</span></a>
+    <a href="track_request.php" class="menu-item"><i class="fas fa-clock"></i><span class="menu-text">Track Request</span></a>
+   <a href="student_profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
+    
   </div>
-  <div style="padding:12px;">
-    <a href="setting_s.php" class="menu-item"><i class="fas fa-gear"></i> <span>Notification Settings</span></a>
+
+  <div class="bottom-section">
+    <a href="setting_s.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
   </div>
 </div>
 
-<!-- Topbar -->
-<div class="top-bar">
-  <div style="display:flex; gap:12px;">
-    <a href="notifications.php" title="Notifications" style="text-decoration:none;color:#333;"><i class="fas fa-bell"></i></a>
+<div class="top-bar"> 
+  <div class="top-icons">
+    <button class="icon-btn" title="Notifications" onclick="window.location.href='notifications.php'"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout" onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
   </div>
 </div>
 
-<!-- Main -->
 <div class="main-content">
   <h2>Track Requests</h2>
 
@@ -170,7 +272,7 @@ function match_step($trackStatus, $stepKey) {
   <?php else: ?>
     <?php foreach ($requests as $req):
       $reqId = intval($req['id']);
-      $reqTitle = $req['title'] ?: ($req['purpose'] ?: "Request #{$reqId}");
+      $reqTitle = $req['purpose'] ?: ($req['purpose'] ?: "Request #{$reqId}");
       $reqCreated = $req['created_at'];
       $current = $req['current_status'] ?? '';
 

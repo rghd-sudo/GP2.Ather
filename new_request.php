@@ -93,11 +93,6 @@ if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
     }
 
 
-
-
-
-
-
     // إدخال الطلب
     if (!$message) {
         $sql = "INSERT INTO requests (user_id, major, course, professor_id, purpose, type, file_name, grades_file)
@@ -161,7 +156,156 @@ if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 <meta charset="utf-8">
 <title>Recommendation Request</title>
 <style>
-/* نفس التصميم بالكامل بدون أي تغيير عندك */
+
+/* تم نسخ التنسيقات من new_request.php لضمان التوافق */
+:root {
+  --bg-color: #fbf7f2;
+  --header-bg: #cfe7e8;
+  --input-bg: #fff;
+  --main-text: #2b2b2b;
+  --sub-text: #473d57;
+  --accent-color: #f07963;
+  --accent-hover: #d15a45;
+  --shadow: 0 4px 12px rgba(0,0,0,0.08);
+  --border-radius: 10px;
+  font-family: 'Arial','Tahoma',sans-serif;
+}
+
+body {
+  margin:0; padding:0;
+  background-color: var(--bg-color);
+  color: var(--main-text);
+  display:flex; justify-content:center;
+  direction: ltr; 
+}
+
+.container {
+  width:100%; max-width:720px;
+  margin:40px auto;
+  padding:20px;
+}
+
+.header-card {
+  background-color: var(--header-bg);
+  border-radius: var(--border-radius);
+  padding:20px 25px;
+  margin-bottom:25px;
+  box-shadow: var(--shadow);
+  display:grid;
+  grid-template-columns:60px 1fr 1fr;
+  gap:15px;
+  align-items:center;
+}
+
+.icon-container {
+  width:60px; height:60px;
+  background-color:#3b9196;
+  border-radius:50%;
+  display:flex; justify-content:center; align-items:center;
+}
+.icon-container::before {
+  content:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="30px" height="30px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+}
+
+.request-title {
+  font-size:22px;
+  font-weight:bold;
+  grid-column:2/3;
+  color:var(--main-text);
+}
+
+.student-info-section {
+  grid-column:3/4;
+  border-right:2px solid rgba(0,0,0,0.1);
+  padding-right:15px;
+}
+
+.student-info-title {
+  font-size:18px; font-weight:700;
+  color:var(--sub-text);
+  display:block; margin-bottom:10px;
+}
+
+.student-info-section input {
+  display:block; width:100%;
+  border:1px solid #ccc; border-radius:5px;
+  background:transparent; padding:6px 10px; margin-bottom:8px;
+  font-size:15px; color: var(--main-text);
+  outline:none;
+}
+.student-info-section input:focus {
+  border-color: var(--accent-color);
+  box-shadow:0 0 4px rgba(240,121,99,0.4);
+}
+
+/* التعديل لتمكين عمودين للحقول الرئيسية */
+.form-wrap {
+  display:grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap:20px;
+}
+.full-width {
+    grid-column: 1 / -1; /* لجعل حقل يمتد على عرض الصف الكامل */
+}
+
+.field { margin-bottom:20px; }
+.label { font-weight:700; margin-bottom:6px; display:block; color:var(--sub-text); }
+
+.input[type="text"], textarea, select {
+  width:100%; padding:12px; border-radius:5px;
+  border:1px solid #ccc; background-color: var(--input-bg);
+  font-size:15px; color:var(--main-text); box-sizing:border-box;
+}
+
+.input[type="text"]:focus, textarea:focus, select:focus {
+  border-color: var(--accent-color);
+  box-shadow:0 0 4px rgba(240,121,99,0.4);
+}
+
+.textarea { min-height:100px; resize:vertical; }
+.radios { display:flex; gap:20px; margin-top:5px; }
+.radios label { cursor:pointer; display:flex; align-items:center; font-size:15px; }
+.radios input[type="radio"]{ display:none; }
+.radios label span::before{
+  content:''; width:18px; height:18px; border-radius:50%; border:2px solid var(--sub-text);
+  margin-right:8px; display:inline-block; transition: all 0.2s;
+}
+.radios input[type="radio"]:checked + span::before{
+  background-color: var(--accent-color); border-color: var(--accent-color);
+  box-shadow: inset 0 0 0 4px white;
+}
+
+.submit-wrap { display:flex; justify-content:flex-start; margin-top:20px; }
+.btn {
+  background: var(--accent-color); color:white; padding:14px 35px;
+  border-radius:8px; border:none; font-size:18px; font-weight:700;
+  cursor:pointer; box-shadow: var(--shadow);
+  transition: background-color 0.3s;
+}
+.btn:hover { background-color: var(--accent-hover); }
+
+.status-message {
+  margin:20px 0;
+  padding:15px;
+  background-color:#f8d7da;
+  border:1px solid #f5c6cb;
+  color:#721c24;
+  border-radius:6px;
+  font-weight:bold;
+  text-align:center;
+}
+.success {
+    background-color:#d4edda;
+    border-color:#c3e6cb;
+    color:#155724;
+}
+.back_btn {
+    display: inline-block;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #03060a;
+    text-decoration: none;
+}
 </style>
 </head>
 <body>
