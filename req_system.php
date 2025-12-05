@@ -338,35 +338,46 @@ echo "<tr>
         <td>".$row['created_at']."</td>
         <td class='".$class."'>".$display_status."</td>
         <td class='actions'>";
+
         echo "<button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>";
+
+
 
 // إذا كانت الحالة "completed" يظهر زر تحميل فقط
 if ($status == "completed") {
     echo "<button class='load' onclick=\"loadRequest(".$row['id'].")\"> ⬇ Download</button>";
 }
+
 // إذا كانت الحالة "accepted" يظهر زر تحميل فقط (يمكن تعديل حسب الحاجة)
 elseif ($status == "accepted") {
     echo "<!-- accepted, لا يسمح بالتعديل -->";
 } 
 // إذا لم تكن الحالة completed أو accepted، يظهر زر التعديل والحذف
 else {
-    echo "<button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
-          ";
+    echo "<button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button> ";
+
+
+   // 3. زر التذكير (يظهر ثالثاً، وله شرط داخلي لـ 'pending' فقط)
+if ($status == "pending") {
+ echo "<button class='remind-btn' data-id='".$row['id']."' data-professor='".$professor_name."' style='background: #ffc107; color: #fff;'>
+ <i class='fas fa-bell'></i> </button>";
 }
+} // <--- إغلاق كتلة ELSE (هذا هو المكان الصحيح)
 
 echo "</td></tr>";
-        }
-    } else {
-        echo "<tr><td colspan='5'>No requests found.</td></tr>";
-    }
+ } // <--- إغلاق حلقة WHILE ($row = $result->fetch_assoc())
+
 } else {
-    echo "<tr><td colspan='5'>Error fetching requests.</td></tr>";
+echo "<tr><td colspan='5'>No requests found.</td></tr>";
+ }
+} else { // <--- إغلاق شرط IF ($result) وفتح ELSE
+ echo "<tr><td colspan='5'>Error fetching requests.</td></tr>";
 }
 ?>
 
-  </table>
+</table>
 </div>
-
+ 
 <script>
 // 🔸 Toggle sidebar
 const toggleBtn = document.getElementById("toggleBtn");
@@ -416,6 +427,41 @@ function deleteRequest(id, btn) {
   });
 
 }
+
+🔸 إضافة معالج ضغطة زر التذكير
+document.addEventListener('DOMContentLoaded', function() {
+    // الاستماع لجميع الأزرار التي تحمل الفئة remind-btn
+    document.querySelectorAll('.remind-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const requestId = this.getAttribute('data-id');
+            const professorName = this.getAttribute('data-professor'); 
+            
+            // طلب تأكيد من المستخدم
+            if (!confirm(`هل أنت متأكد من أنك تريد إرسال تذكير للدكتور ${professorName} بخصوص الطلب رقم ${requestId}؟`)) return;
+
+            // **🚀 إرسال طلب AJAX إلى ملف process_reminder.php**
+            fetch('process_reminder.php', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'request_id=' + requestId
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(`✅ ${data}`);
+                // تغيير لون الزر بعد الإرسال
+                this.style.background = '#007bff'; 
+            })
+            .catch((error) => {
+                alert('⚠️ فشل الاتصال بالسيرفر أو معالجة التذكير.');
+                console.error('Error:', error);
+            });
+        });
+    });
+});
+
+
 </script>
 </body>
 </html>
