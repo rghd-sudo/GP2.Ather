@@ -428,7 +428,7 @@ function deleteRequest(id, btn) {
 
 }
 
-🔸 إضافة معالج ضغطة زر التذكير
+
 document.addEventListener('DOMContentLoaded', function() {
     // الاستماع لجميع الأزرار التي تحمل الفئة remind-btn
     document.querySelectorAll('.remind-btn').forEach(button => {

@@ -117,9 +117,9 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
 /* ------------------ 6) Load professor notifications ------------------ */
 $notifications = [];
 
-$sql = "SELECT message, created_at 
+$sql = "SELECT message, created_at , status
         FROM notifications 
-        WHERE professor_id = ? 
+       WHERE user_id = ?  /* ✅✅ تم التعديل من professor_id إلى user_id */
         ORDER BY created_at DESC";
 
 if ($stmt = $conn->prepare($sql)) {
@@ -230,6 +230,12 @@ if ($stmt = $conn->prepare($sql)) {
     padding: 18px;
     text-align: center;
   }
+  /* 💡 نمط الإشعارات غير المقروءة */
+ .notification.unread {
+ background: #e6f7ff; /* لون أزرق فاتح جداً */
+ border-left: 4px solid #007bff; /* شريط أزرق على اليسار */
+ font-weight: 600; 
+}
   </style>
 </head>
 <body>
@@ -258,7 +264,9 @@ if ($stmt = $conn->prepare($sql)) {
   <h2>Notifications</h2>
 
   <?php if (!empty($notifications)): ?>
-      <?php foreach ($notifications as $n): ?>
+      <?php foreach ($notifications as $n): 
+        $status_class = (isset($n['status']) && strtolower($n['status']) == 'unread') ? 'unread' : '';
+        ?>
           <div class="notification">
               <div class="notification-icon">🔔</div>
               <div>
@@ -279,7 +287,21 @@ const sidebar = document.getElementById("sidebar");
 toggleBtn.addEventListener("click", () => {
   sidebar.classList.toggle("collapsed");
 });
-</script>
 
+
+// 💡 وظيفة تحديث حالة الإشعارات إلى 'مقروء' عند فتح الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('mark_as_read.php', { method: 'POST' })
+    .then(response => {
+        if (response.ok) {
+            console.log("Notifications marked as read.");
+        } else {
+            console.error("Failed to mark notifications as read.");
+        }
+    });
+});
+
+
+</script>
 </body>
 </html>
