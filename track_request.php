@@ -115,6 +115,7 @@ function match_step($trackStatus, $stepKey) {
 <style>
   body { margin:0; font-family:"Poppins",sans-serif; background:#fdfaf6; display:flex; direction:ltr; }
   .sidebar { background:#c8e4eb; width:230px; position:fixed; height:100vh; padding-top:20px; box-shadow:2px 0 5px rgba(0,0,0,0.1); left:0; display:flex; flex-direction:column; justify-content:space-between; }
+  
   .sidebar .logo img{ display:block; margin:0 auto 12px; width:80px; }
   .menu-item{ display:flex; align-items:center; padding:12px 20px; color:#333; text-decoration:none;}
   .menu-item i{ font-size:20px; margin-right:10px;}
