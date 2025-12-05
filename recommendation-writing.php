@@ -1,7 +1,6 @@
 <?php
 session_start();
 include 'index.php';
-
 require_once('tcpdf/tcpdf.php'); 
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
@@ -9,14 +8,16 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
     exit;
 }
 
-$request_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-if ($request_id <= 0) die("Invalid request ID.");
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("❌ Invalid request ID.");
+}
 
+$request_id = intval($_GET['id']);
+$professor_user_id = $_SESSION['user_id'];
 
 // ============================================================
 // 1) جلب بيانات الطلب والخريج
 // ============================================================
-
 $sql = "SELECT 
             g.graduate_id,
             r.id AS request_id,
@@ -39,7 +40,6 @@ $sql = "SELECT
         INNER JOIN users u ON r.user_id = u.id
         INNER JOIN graduates g ON u.id = g.user_id
         WHERE r.id = ?";
-
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $request_id);
 $stmt->execute();
@@ -53,29 +53,24 @@ if ($result && $result->num_rows > 0) {
     die("❌ Request not found or graduate not found.");
 }
 
-
 // ============================================================
 // 2) جلب معرف الدكتور الصحيح
 // ============================================================
-
 $get_prof = $conn->prepare("SELECT professor_id FROM professors WHERE user_id = ?");
-$get_prof->bind_param("i", $_SESSION['user_id']);
+$get_prof->bind_param("i", $professor_user_id);
 $get_prof->execute();
 $prof_result = $get_prof->get_result();
 $professor_id = $prof_result->fetch_assoc()['professor_id'];
 
-
 // ============================================================
-// 3) جلب مسودة سابقة إن وجدت
+// 3) جلب مسودة سابقة إن وجدت بناءً على request_id
 // ============================================================
-
 $recommendation = null;
-
 $rec_query = $conn->prepare("
     SELECT * FROM recommendations 
-    WHERE graduate_id = ? AND professor_id = ?
+    WHERE request_id = ? AND professor_id = ?
 ");
-$rec_query->bind_param("ii", $graduate_id, $professor_id);
+$rec_query->bind_param("ii", $request_id, $professor_id);
 $rec_query->execute();
 $rec_result = $rec_query->get_result();
 
@@ -85,16 +80,13 @@ if ($rec_result->num_rows > 0) {
 
 $message_alert = "";
 
-
 // ============================================================
 // 4) حفظ التوصية عند الإرسال
 // ============================================================
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $content_raw = $_POST['recommendation_text'];
     $status = $_POST['action'];
-    $request_id = $graduate['request_id'];
 
     // تنظيف النص من اضافات Word
     $clean = preg_replace('/<!--\[if.*?<!\[endif\]-->/is', '', $content_raw);
@@ -108,57 +100,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ========================================================
     // 4.1 توليد ملف PDF
     // ========================================================
+    $pdf = new TCPDF();
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('University of Baha');
+    $pdf->SetTitle('Recommendation Letter');
+    $pdf->SetSubject('Recommendation');
 
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+    $pdf->SetMargins(15, 15, 15);
+    $pdf->SetAutoPageBreak(TRUE, 15);
+    $pdf->SetFont('times', '', 14); // خط رسمي بالإنجليزية
 
-// تفعيل دعم العربية
-$pdf = new TCPDF();
-$pdf->SetCreator(PDF_CREATOR);
-$pdf->SetAuthor('Ather System');
-$pdf->SetTitle('Recommendation Letter');
-$pdf->SetSubject('Recommendation');
+    $pdf->AddPage();
+    $pdf->writeHTML($content, true, false, true, false, '');
 
-// عشان اللغه العربيه تظهر بشكل صحيح
-$pdf->setPrintHeader(false);
-$pdf->setPrintFooter(false);
-$pdf->SetMargins(15, 15, 15);
-$pdf->SetAutoPageBreak(TRUE, 15);
-$pdf->SetFont('dejavusans', '', 14, '', true);
+    $upload_dir = __DIR__ . "/uploads";
+    if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
 
-$pdf->AddPage();
-$pdf->writeHTML($content, true, false, true, false, '');
-
-// مسار الحفظ
-$upload_dir = __DIR__ . "/uploads";
-if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
-
-$pdf_path = $upload_dir . "/recommendation_" . time() . ".pdf";
-$pdf->Output($pdf_path, "F");
+    $pdf_path = $upload_dir . "/recommendation_" . time() . ".pdf";
+    $pdf->Output($pdf_path, "F");
 
     // ========================================================
-    // 4.2 INSERT / UPDATE
+    // 4.2 INSERT / UPDATE بناءً على request_id
     // ========================================================
-
     $check = $conn->prepare("
         SELECT recommendation_id 
         FROM recommendations 
-        WHERE graduate_id = ? AND professor_id = ?
+        WHERE request_id = ? AND professor_id = ?
     ");
-    $check->bind_param("ii", $graduate_id, $professor_id);
+    $check->bind_param("ii", $request_id, $professor_id);
     $check->execute();
     $exists = $check->get_result();
 
     if ($exists->num_rows > 0) {
-
         $update = $conn->prepare("
             UPDATE recommendations 
-            SET content=?, date_created=NOW(), pdf_path=?, request_id=? 
-            WHERE graduate_id=? AND professor_id=?
+            SET content=?, date_created=NOW(), pdf_path=? 
+            WHERE request_id=? AND professor_id=?
         ");
-        $update->bind_param("sssii", $content, $pdf_path, $request_id, $graduate_id, $professor_id);
+        $update->bind_param("ssii", $content, $pdf_path, $request_id, $professor_id);
         $update->execute();
-
     } else {
-
         $insert = $conn->prepare("
             INSERT INTO recommendations 
             (graduate_id, professor_id, content, pdf_path, date_created, request_id)
@@ -168,31 +151,21 @@ $pdf->Output($pdf_path, "F");
         $insert->execute();
     }
 
-
     // ========================================================
     // 4.3 تحديث حالة الطلب + إشعار الطالب
     // ========================================================
-
     if ($status === 'draft') {
-
         $req_update = $conn->prepare("UPDATE requests SET status='draft' WHERE id=?");
         $req_update->bind_param("i", $request_id);
         $req_update->execute();
-
         $message_alert = "✅ The recommendation has been saved as a draft.";
-
     } elseif ($status === 'completed') {
-
         $req_update = $conn->prepare("UPDATE requests SET status='completed' WHERE id=?");
         $req_update->bind_param("i", $request_id);
         $req_update->execute();
 
-        // إرسال إشعار
         $msg = "Your recommendation has been completed and sent.";
-        $notif = $conn->prepare("
-            INSERT INTO notifications (user_id, message, created_at) 
-            VALUES (?, ?, NOW())
-        ");
+        $notif = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
         $notif->bind_param("is", $student_user_id, $msg);
         $notif->execute();
 
