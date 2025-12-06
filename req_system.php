@@ -437,8 +437,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const professorName = this.getAttribute('data-professor'); 
             
             // طلب تأكيد من المستخدم
-            if (!confirm(`هل أنت متأكد من أنك تريد إرسال تذكير للدكتور ${professorName} بخصوص الطلب رقم ${requestId}؟`)) return;
-
+           if (!confirm(`Are you sure you want to send a reminder to Dr. ${professorName} regarding request number ${requestId}?`)) return;
             // **🚀 إرسال طلب AJAX إلى ملف process_reminder.php**
             fetch('process_reminder.php', { 
                 method: 'POST',
@@ -451,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 alert(`✅ ${data}`);
                 // تغيير لون الزر بعد الإرسال
-                this.style.background = '#007bff'; 
+                this.style.background = '#14d05cff'; 
             })
             .catch((error) => {
                 alert('⚠️ فشل الاتصال بالسيرفر أو معالجة التذكير.');
