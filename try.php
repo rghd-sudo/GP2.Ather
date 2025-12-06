@@ -128,3 +128,8 @@ if (isset($_SESSION['user_id'])) {
 <button class="btn edit" onclick="window.location.href='recommendation-writing.php?id=<?= $row['request_id']; ?>'">Edit</button>
        <button class="btn delete" onclick="deleteRequest(<?= $row['request_id']; ?>, this)">Delete</button>
        </td>
+
+
+
+       <button class="btn edit" onclick="window.location.href='recommendation-writing.php?id=<?= $row['request_id']; ?>'">Edit</button>
+<button class="btn delete" onclick="deleteRequest(<?= $row['request_id']; ?>, this)">Delete</button>

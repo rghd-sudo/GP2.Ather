@@ -145,7 +145,7 @@ width: 100%;
  overflow: hidden;
  table-layout: fixed; /* 💡 يضمن التزام الجدول بالحجم المحدد */
 }
-  /* ---- أزرار الإجراءات ---- */
+
 .btn {
  padding: 5px 12px;
  border: none;
@@ -157,24 +157,19 @@ width: 100%;
 ransition: all 0.2s ease;
 }
 
-/* زر التعديل */
-.btn.edit {
- background-color: #4a90e2; /* أزرق */
-  color: white;
-}
 
+.edit {
+  background: #a5d8f8;
+}
 .btn.edit:hover {
 background-color: #357abd; /* أزرق غامق عند المرور */
 }
 
-/* زر الحذف */
-.btn.delete {
-background-color: #e74c3c; /* أحمر */
-color: white;
+.delete {
+background: #f8a5a5;
 }
-
 .btn.delete:hover {
- background-color: #c0392b; /* أحمر غامق عند المرور */
+ background-color: #db8177ff; /* أحمر غامق عند المرور */
 }
 
 /* تحديد عرض الأعمدة (حسب الترتيب في الجدول) */
@@ -316,7 +311,7 @@ case 'rejected': $statusClass = 'status-rejected'; break;
 
     // 3. حالة الطلبات المكتملة (Completed) - (عرض)
     } elseif ($status === 'completed') {
-        echo '<button class="btn view" onclick="window.location.href=\'view-completed-request.php?id='.$requestId.'\'">👁️</button>';
+        echo '<button class="btn view" onclick="window.location.href=\'view-completed-request.php?id='.$requestId.'\'">👁️‍🗨️</button>';
       
         
     // 4. حالة الطلبات المرفوضة (Rejected) - (حذف فقط)
