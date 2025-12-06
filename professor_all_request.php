@@ -143,6 +143,7 @@ width: 100%;
  border-radius: 8px;
  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
  overflow: hidden;
+ table-layout: fixed; /* 💡 يضمن التزام الجدول بالحجم المحدد */
 }
   /* ---- أزرار الإجراءات ---- */
 .btn {
@@ -175,6 +176,20 @@ color: white;
 .btn.delete:hover {
  background-color: #c0392b; /* أحمر غامق عند المرور */
 }
+
+/* تحديد عرض الأعمدة (حسب الترتيب في الجدول) */
+.table th:nth-child(1), .table td:nth-child(1) { width: 5%; } 
+.table th:nth-2, .table td:nth-child(2) { width: 15%; } /* Full name */
+/* ... يمكنك ضبط الأعمدة الأخرى هنا ... */
+.table th:nth-child(5), .table td:nth-child(5) { 
+    width: 25%; /* عمود الغرض (Purpose) */
+    word-wrap: break-word; /* 💡 يمنع خروج الكلمات الطويلة */
+    overflow-wrap: break-word;
+}
+.table th:nth-child(7), .table td:nth-child(7) { width: 15%; } /* Actions */
+
+
+
 
  
  .thead { background-color: #4a6fa5; }
@@ -282,14 +297,39 @@ case 'rejected': $statusClass = 'status-rejected'; break;
  <?php echo ucfirst($row['status']); ?>
 </span>
 </td>
+
+
+
 <td>
+<?php 
+    $status = strtolower($row['status']); 
+    $requestId = (int)$row['request_id']; 
 
+    // 1. حالة الطلبات المعلقة (Pending) - (تعديل وحذف)
+    if ($status === 'pending') {
+        echo '<button class="btn edit" onclick="window.location.href=\'recommendation-writing.php?id='.$requestId.'\'">✏️ Edit</button>';
+        echo '<button class="btn delete" onclick="deleteRequest('.$requestId.', this)">❌ Delete</button>';
 
+    // 2. حالة الطلبات المقبولة (Accepted) أو المسودة (Draft) - (كتابة / تعديل)
+    } elseif ($status === 'accepted' || $status === 'draft') {
+        echo '<button class="btn edit" onclick="window.location.href=\'recommendation-writing.php?id='.$requestId.'\'">✍️ Write / Edit</button>';
 
+    // 3. حالة الطلبات المكتملة (Completed) - (عرض)
+    } elseif ($status === 'completed') {
+        echo '<button class="btn view" onclick="window.location.href=\'view-completed-request.php?id='.$requestId.'\'">👁️</button>';
+      
+        
+    // 4. حالة الطلبات المرفوضة (Rejected) - (حذف فقط)
+    } elseif ($status === 'rejected') {
+        echo '<button class="btn delete" onclick="deleteRequest('.$requestId.', this)">❌ Delete</button>';
+        
+    // 5. أي حالة أخرى (احتياطي)
+    } else {
+        echo '—'; 
+    }
+?>
+</td>
 
-<!-- عمود الأزرار -->
-<button class="btn edit" onclick="window.location.href='recommendation-writing.php?id=<?= $row['request_id']; ?>'">Edit</button>
-<button class="btn delete" onclick="deleteRequest(<?= $row['request_id']; ?>, this)">Delete</button>
 </td>
  </tr>
  <?php endforeach; ?>

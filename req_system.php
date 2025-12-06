@@ -244,7 +244,7 @@ background: #f8a5a5;
   background: #a5d8f8;
 }
 .load{
- background:green;
+background: #48f38aff;
 
 }
 /* 🔹 Responsive */
