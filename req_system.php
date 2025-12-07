@@ -349,7 +349,7 @@ if ($status == "completed") {
 }
 
 // إذا كانت الحالة "accepted" يظهر زر تحميل فقط (يمكن تعديل حسب الحاجة)
-elseif ($status == "accepted") {
+elseif ($status == "accepted" || $status === 'rejected') {
     echo "<!-- accepted, لا يسمح بالتعديل -->";
 } 
 // إذا لم تكن الحالة completed أو accepted، يظهر زر التعديل والحذف

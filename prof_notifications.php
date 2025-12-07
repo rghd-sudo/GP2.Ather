@@ -8,8 +8,8 @@ ini_set('display_errors', 1);
   - Show professor's notifications
   - LTR layout, left sidebar, Poppins + FontAwesome
 */
-
-/* ------------------ 1) DB connection ------------------ */
+include 'index.php';
+/* ------------------ 1) DB connection ------------------ 
 if (file_exists(__DIR__ . '/db.php')) {
     require_once __DIR__ . '/db.php'; // expects $conn (mysqli)
 } else {
@@ -22,7 +22,7 @@ if (file_exists(__DIR__ . '/db.php')) {
         die("Connection failed: " . $conn->connect_error);
     }
 }
-
+*/
 /* ------------------ 2) Check user role ------------------ */
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
     header("Location: login.php");

@@ -4,19 +4,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
     header("Location: login.php");
     exit;
 }
-
-// إعدادات قاعدة البيانات
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "agdb"; 
-
-// الاتصال بقاعدة البيانات
-$conn = new mysqli($host, $user, $pass, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
+include 'index.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST['action'])) {
     $request_id = intval($_POST['request_id']);
     $action = $_POST['action'];
