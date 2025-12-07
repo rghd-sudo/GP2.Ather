@@ -15,31 +15,18 @@ if (!isset($_SESSION['user_id'])) {
 $student_info = [
     'name' => '',
     'id_number' => '',
+    'department' => ' ',
 ];
 
 $user_id = $_SESSION['user_id'];
-$student_result = $conn->query("SELECT name, National_id FROM users WHERE id = $user_id");
+$student_result = $conn->query("SELECT name, National_id, department FROM users WHERE id = $user_id");
 
 if ($student_result && $student_result->num_rows > 0) {
     $student_data = $student_result->fetch_assoc();
     $student_info['name'] = $student_data['name'];
     $student_info['id_number'] = $student_data['National_id'] ?? '';
+    $student_info['department'] = $student_data['department'] ?? '';
 }
-
-// 3. إنشاء جدول الطلبات إذا لم يكن موجود
-$conn->query("
-CREATE TABLE IF NOT EXISTS requests (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    major VARCHAR(100),
-    course VARCHAR(50),
-    professor_id INT NOT NULL,
-    purpose TEXT,
-    type VARCHAR(50),
-    file_name VARCHAR(255),
-    grades_file VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)");
 
 $message = "";
 
@@ -64,9 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $file_name = NULL;
     $grades_file = NULL;
 
-  $uploadDir = __DIR__ . '/uploads/';
-if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-
+    $uploadDir = _DIR_ . '/uploads/';
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
     // CV optional
     if (!empty($_FILES['file']['name'])) {
@@ -92,72 +78,75 @@ if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
         $message = "❌ Grades file is required!";
     }
 
-
     // إدخال الطلب
-    if (!$message) {
-        $sql = "INSERT INTO requests (user_id, major, course, professor_id, purpose, type, file_name, grades_file)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare("
+        INSERT INTO requests (user_id, major, course, professor_id, purpose, type, file_name, grades_file)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ");
 
-         // ✅ أروى: فحص التحضير قبل bind_param
-         if (!$stmt) die("Prepare failed (requests): " . $conn->error);
+    $stmt->bind_param(
+        "ississss",
+        $user_id,
+        $major,
+        $course,
+        $professor_id,
+        $purpose,
+        $type,
+        $file_name,
+        $grades_file
+    );
 
-        $stmt->bind_param("ississss", $user_id, $major, $course, $professor_id, $purpose, $type, $file_name, $grades_file);
+    if ($stmt->execute()) {
 
-        if ($stmt->execute()) {
-            $newRequestId = $stmt->insert_id;
-            $stmt->close();
+        $newRequestId = $stmt->insert_id;
+        $stmt->close();
 
-            $message = "✅ Request submitted successfully!";
+        $message = "✅ Request submitted successfully!";
 
-            // ⬇️ أول خطوة تتبع للطلب
-            $status = 'Created';
-            $note = 'Student submitted the request';
-            $trackStmt = $conn->prepare("
-                INSERT INTO track_request (request_id, user_id, status, note)
-                VALUES (?, ?, ?, ?)
-            ");
-             if (!$trackStmt) die("Prepare failed (track_request): " . $conn->error); // ✅ فحص prepare
-            $trackStmt->bind_param("iiss", $newRequestId, $user_id, $status, $note);
-            $trackStmt->execute();
-            $trackStmt->close();
+        // ------------------------------------------------------
+        // ⭐⭐ أول خطوة تتبع — Created ⭐⭐
+        // ------------------------------------------------------
+        $status = 'Created';
+        $note = 'Student submitted the request';
 
-            // جلب إعدادات إشعارات الدكتور
-            $s = $conn->prepare("SELECT notify_new_request FROM notification_settings WHERE user_id = ? LIMIT 1");
-            $s->bind_param("i", $professor_id);
-            $s->execute();
-            $settings = $s->get_result()->fetch_assoc() ?? [];
-            $s->close();
+        $trackStmt = $conn->prepare("
+            INSERT INTO track_request (request_id, user_id, status, note)
+            VALUES (?, ?, ?, ?)
+        ");
 
-            // إرسال إشعار للدكتور إذا مفعل
-            if (!empty($settings['notify_new_request'])) {
-                $notifMessage = "You have a new recommendation request from " . ($student_data['name'] ?? 'Student');
-                $notifStmt = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
-                $notifStmt->bind_param("is", $professor_id, $notifMessage);
-                $notifStmt->execute();
-                $notifStmt->close();
-            }
+        $trackStmt->bind_param("iiss", $newRequestId, $user_id, $status, $note);
+        $trackStmt->execute();
+        $trackStmt->close();
 
-        } else {
-            $message = "❌ Error: " . $stmt->error;
+        // ------------------------------------------------------
+        // ⭐⭐ إشعار للدكتور ⭐⭐
+        // ------------------------------------------------------
+        $s = $conn->prepare("SELECT notify_new_request FROM notification_settings WHERE user_id = ? LIMIT 1");
+        $s->bind_param("i", $professor_id);
+        $s->execute();
+        $settings = $s->get_result()->fetch_assoc() ?? [];
+        $s->close();
+
+        if (!empty($settings['notify_new_request'])) {
+            $notifMessage = "You have a new recommendation request from " . ($student_data['name'] ?? 'Student');
+            $notifStmt = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
+            $notifStmt->bind_param("is", $professor_id, $notifMessage);
+            $notifStmt->execute();
+            $notifStmt->close();
         }
+
+    } else {
+        $message = "❌ Error: " . $stmt->error;
     }
 }
+
 ?>
-
-
-
-
-
-
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <title>Recommendation Request</title>
 <style>
-
-/* تم نسخ التنسيقات من new_request.php لضمان التوافق */
 :root {
   --bg-color: #fbf7f2;
   --header-bg: #cfe7e8;
@@ -208,8 +197,7 @@ body {
 }
 
 .request-title {
-  font-size:22px;
-  font-weight:bold;
+  font-size:22px;font-weight:bold;
   grid-column:2/3;
   color:var(--main-text);
 }
@@ -238,31 +226,31 @@ body {
   box-shadow:0 0 4px rgba(240,121,99,0.4);
 }
 
-/* التعديل لتمكين عمودين للحقول الرئيسية */
 .form-wrap {
   display:grid; 
   grid-template-columns: 1fr 1fr; 
   gap:20px;
 }
 .full-width {
-    grid-column: 1 / -1; /* لجعل حقل يمتد على عرض الصف الكامل */
+    grid-column: 1 / -1; 
 }
 
 .field { margin-bottom:20px; }
 .label { font-weight:700; margin-bottom:6px; display:block; color:var(--sub-text); }
 
-.input[type="text"], textarea, select {
+input[type="text"], textarea, select {
   width:100%; padding:12px; border-radius:5px;
   border:1px solid #ccc; background-color: var(--input-bg);
   font-size:15px; color:var(--main-text); box-sizing:border-box;
 }
 
-.input[type="text"]:focus, textarea:focus, select:focus {
+input[type="text"]:focus, textarea:focus, select:focus {
   border-color: var(--accent-color);
   box-shadow:0 0 4px rgba(240,121,99,0.4);
 }
 
-.textarea { min-height:100px; resize:vertical; }
+textarea { min-height:100px; resize:vertical; }
+
 .radios { display:flex; gap:20px; margin-top:5px; }
 .radios label { cursor:pointer; display:flex; align-items:center; font-size:15px; }
 .radios input[type="radio"]{ display:none; }
@@ -294,11 +282,6 @@ body {
   font-weight:bold;
   text-align:center;
 }
-.success {
-    background-color:#d4edda;
-    border-color:#c3e6cb;
-    color:#155724;
-}
 .back_btn {
     display: inline-block;
     margin-bottom: 20px;
@@ -320,6 +303,7 @@ body {
       <span class="student-info-title">Personal Information</span>
       <input type="text" value="<?= htmlspecialchars($student_info['name']); ?>" readonly>
       <input type="text" value="<?= htmlspecialchars($student_info['id_number']); ?>" readonly>
+      <input type="text" value="<?= htmlspecialchars($student_info['department']); ?>" readonly>
     </div>
   </div>
 
@@ -328,10 +312,6 @@ body {
   <?php endif; ?>
 
   <form id="reqform" class="form-wrap" method="post" enctype="multipart/form-data">
-    <div class="field">
-      <label>Major*</label>
-      <input type="text" name="major" required>
-    </div>
 
     <div class="field">
       <label>Course Name*</label>
