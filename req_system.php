@@ -243,7 +243,10 @@ background: #f8a5a5;
 .edit {
   background: #a5d8f8;
 }
+.load{
+background: #48f38aff;
 
+}
 /* 🔹 Responsive */
 @media (max-width: 768px) {
   .main-content {
@@ -329,35 +332,56 @@ if ($result) { // الاستعلام نجح
                 $display_status = ucfirst($row['status']);
                 $class = "completed";
             }
+echo "<tr> 
+        <td>".$row['id']."</td>
+        <td>".$professor_name."</td>
+        <td>".$row['created_at']."</td>
+        <td class='".$class."'>".$display_status."</td>
+        <td class='actions'>";
 
-            echo "<tr>
-                    <td>".$row['id']."</td>
-                    <td>".$professor_name."</td>
-                    <td>".$row['created_at']."</td>
-                    <td class='".$class."'>".$display_status."</td>
-                    <td class='actions'>
-                        <button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button>
-                        <button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>";
+        echo "<button class='delete' onclick=\"deleteRequest(".$row['id'].", this)\">🗑 Delete</button>";
 
-            if ($status == "completed") {
-                echo "<a href='download_recommendation.php?request_id=".$row['id']."'>⬇ Download</a>";
-            }
 
-            echo "</td></tr>";
-        }
-    } else {
-        echo "<tr><td colspan='5'>No requests found</td></tr>";
-    }
-} else { // الاستعلام فشل
-    echo "<tr><td colspan='5'>Error: " . $conn->error . "</td></tr>";
+
+// إذا كانت الحالة "completed" يظهر زر تحميل فقط
+if ($status == "completed") {
+echo  "<button class='download-btn' onclick=\"loadRequest(".$row['id'].")\" 
+    style='background: #28a745; color: #fff; border: none; padding: 5px 10px; border-radius: 5px;'>
+    <i class='fas fa-download'></i> 
+    </button>";
+   
+}
+
+// إذا كانت الحالة "accepted" يظهر زر تحميل فقط (يمكن تعديل حسب الحاجة)
+elseif ($status == "accepted" || $status === 'rejected') {
+    echo "<!-- accepted, لا يسمح بالتعديل -->";
+} 
+// إذا لم تكن الحالة completed أو accepted، يظهر زر التعديل والحذف
+else {
+    echo "<button class='edit' onclick=\"editRequest(".$row['id'].")\">✏️ Edit</button> ";
+
+
+   // 3. زر التذكير (يظهر ثالثاً، وله شرط داخلي لـ 'pending' فقط)
+if ($status == "pending") {
+ echo "<button class='remind-btn' data-id='".$row['id']."' data-professor='".$professor_name."' style='background: #ffc107; color: #fff;'>
+ <i class='fas fa-bell'></i> </button>";
+}
+} // <--- إغلاق كتلة ELSE (هذا هو المكان الصحيح)
+
+echo "</td></tr>";
+ } // <--- إغلاق حلقة WHILE ($row = $result->fetch_assoc())
+
+} else {
+echo "<tr><td colspan='5'>No requests found.</td></tr>";
+ }
+} else { // <--- إغلاق شرط IF ($result) وفتح ELSE
+ echo "<tr><td colspan='5'>Error fetching requests.</td></tr>";
 }
 ?>
 
-
-
-  </table>
+</table>
 </div>
-
+ 
 <script>
 // 🔸 Toggle sidebar
 const toggleBtn = document.getElementById("toggleBtn");
@@ -367,6 +391,11 @@ toggleBtn.addEventListener("click", () => {
 });
 
 // 🔸 Buttons (تم تفعيلها للتوجيه لملفات المعالجة)
+function loadRequest(id) {
+  // 🚀 توجيه لصفحة التحميل
+  window.location.href = "download_recommendation.php?request_id=" + id;
+}
+
 
 function editRequest(id) {
   // 🚀 يتم التوجيه لصفحة التعديل، يجب إنشاء ملف edit_request.php
@@ -402,6 +431,40 @@ function deleteRequest(id, btn) {
   });
 
 }
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // الاستماع لجميع الأزرار التي تحمل الفئة remind-btn
+    document.querySelectorAll('.remind-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const requestId = this.getAttribute('data-id');
+            const professorName = this.getAttribute('data-professor'); 
+            
+            // طلب تأكيد من المستخدم
+           if (!confirm(`Are you sure you want to send a reminder to Dr. ${professorName} regarding request number ${requestId}?`)) return;
+            // **🚀 إرسال طلب AJAX إلى ملف process_reminder.php**
+            fetch('process_reminder.php', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'request_id=' + requestId
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(`✅ ${data}`);
+                // تغيير لون الزر بعد الإرسال
+                this.style.background = '#14d05cff'; 
+            })
+            .catch((error) => {
+                alert('⚠️ فشل الاتصال بالسيرفر أو معالجة التذكير.');
+                console.error('Error:', error);
+            });
+        });
+    });
+});
+
+
 </script>
 </body>
 </html>
