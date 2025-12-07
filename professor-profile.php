@@ -22,6 +22,7 @@ $query = "
         users.email, 
         users.department, 
         users.university,
+        professors.specialization,
         professors.cv_path
     FROM professors
     JOIN users ON professors.user_id = users.id
@@ -42,25 +43,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $conn->real_escape_string($_POST['email']);
     $dept  = $conn->real_escape_string($_POST['department']);
     $univ  = $conn->real_escape_string($_POST['university']);
+    $spec  = $conn->real_escape_string($_POST['specialization']);
 
     $cv_path = $professor['cv_path'] ?? null;
 
     // رفع أو تحديث الـCV
-    if (!empty($_FILES['cv_path']['name'])) {
-        $upload_dir = "uploads/";
-        if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+    if (isset($_FILES['cv_path']) && $_FILES['cv_path']['error'] === 0) {
 
-        $cv_name = time() . "_" . basename($_FILES['cv_path']['name']);
-        $cv_path = $upload_dir . $cv_name;
-
-        move_uploaded_file($_FILES['cv_path']['tmp_name'], $cv_path);
+    $upload_dir = "uploads/";
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0777, true);
     }
 
+    $ext = pathinfo($_FILES['cv_path']['name'], PATHINFO_EXTENSION);
+    $cv_name = "CV_" . $user_id . "_" . time() . "." . $ext;
+    $cv_path = $upload_dir . $cv_name;
+
+    move_uploaded_file($_FILES['cv_path']['tmp_name'], $cv_path);
+}
+
+
     // تحديث بيانات المستخدم
-    $conn->query("UPDATE users SET name='$name', email='$email' WHERE id=$user_id");
+    $conn->query("UPDATE users SET name='$name', email='$email', department='$dept', university='$univ' WHERE id=$user_id");
 
     // تحديث بيانات البروفسور
-    $conn->query("UPDATE professors SET cv_path='$cv_path' WHERE user_id=$user_id");
+    $conn->query("UPDATE professors SET cv_path='$cv_path', specialization='$spec' WHERE user_id=$user_id");
 
     $professor['cv_path'] = $cv_path;
 
@@ -298,50 +305,213 @@ form input {
   <div class="top-icons">
     <button class="icon-btn"title="Notifications" onclick="window.location.href='prof_notifications.php'"><i class="fas fa-bell"></i></button>
     <button class="icon-btn" title="Logout"onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
-  </div>
+  </div><!-- ====== TOP PROFILE SUMMARY CARD (MATCHED WITH YOUR THEME) ====== -->
+<div class="top-profile-card">
+    <h2>
+        <?= htmlspecialchars($professor['name'] ?? 'Professor Name') ?>
+    </h2>
 
-  <div class="profile-card">
-    <?php if (!empty($success_message)): ?>
-      <div class="success-message" id="successMessage"><?= htmlspecialchars($success_message) ?></div>
+    <p>
+        <i class="fa-solid fa-envelope"></i> 
+        <?= htmlspecialchars($professor['email'] ?? 'email@example.com') ?>
+    </p>
+
+    <p>
+        <i class="fa-solid fa-building-columns"></i> 
+        <?= htmlspecialchars($professor['university'] ?? 'University') ?>
+    </p>
+</div>
+
+
+<style>
+/* === Matched Profile Summary Card === */
+.profile-summary {
+    background: linear-gradient(135deg, #7DAAFB, #003366);
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+    margin-top: 110px;
+    margin-bottom: 25px;
+    width: 80%;
+    max-width: 850px;
+}
+
+.profile-summary h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.profile-summary p {
+    margin: 4px 0;
+    font-size: 14px;
+    opacity: 0.95;
+}
+
+
+
+/* === FORM MATCHING YOUR PAGE === */
+.prof-form {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    width: 95%;
+    max-width: 850px;
+}
+
+.prof-form label {
+    font-weight: 600;
+    color: #003366;
+}
+
+.prof-form input {
+    width: 80%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #cdd6e2;
+    background: #fafafa;
+    font-size: 15px;
+}
+
+/* Fields layout */
+.prof-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+/* Buttons */
+.prof-actions {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.prof-actions button {
+    padding: 10px 25px;
+    border-radius: 10px;
+    font-weight: bold;
+    border: none;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.prof-save {
+    background: #7DAAFB;
+    color: white;
+}
+
+.prof-reset {
+    background: white;
+    border: 1px solid #ccc;
+    color: #555;
+}
+.top-profile-card {
+  width: 95%;
+    background: #c8e4eb; /* نفس لون السايد بار */
+    padding: 25px 18px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    margin: 8px auto 20px ; /* بدون مسافة فوق */
+    margin-top: 25px; 
+    border-left: 6px solid #003366; /* لمسة احترافية */
+}
+
+.top-profile-card h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #003366;
+}
+
+.top-profile-card p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #003366;
+    opacity: 0.9;
+}
+.spec{
+
+    grid-column: span 2;
+    width: 100%;
+}
+/* Responsive */
+@media (max-width: 768px) {
+    .prof-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<!-- =================== PROFESSIONAL FORM =================== -->
+<form method="POST" enctype="multipart/form-data" class="prof-form">
+
+    <div class="prof-grid">
+        <!-- Full Name -->
+        <div>
+            <label>Full Name</label>
+            <input type="text" name="name"
+                value="<?= htmlspecialchars($professor['name'] ?? '') ?>">
+        </div>
+
+        <!-- Email -->
+        <div>
+            <label>Email</label>
+            <input type="email" name="email"
+                value="<?= htmlspecialchars($professor['email'] ?? '') ?>">
+        </div>
+
+        <!-- Department -->
+        <div>
+            <label>Department</label>
+            <input type="text" name="department"
+                value="<?= htmlspecialchars($professor['department'] ?? '') ?>">
+        </div>
+
+        <!-- University -->
+        <div>
+            <label>University</label>
+            <input type="text" name="university"
+                value="<?= htmlspecialchars($professor['university'] ?? '') ?>">
+        </div>
+    
+        <!-- University -->
+        <div class="spec">
+            <label>specialization</label>
+            <input type="text" name="specialization"
+                value="<?= htmlspecialchars($professor['specialization'] ?? '') ?>">
+        </div>
+    </div>
+
+    <!-- CV UPLOAD -->
+    <!-- Upload CV -->
+    <div style="margin-top: 18px;">
+        <label>Upload CV</label>
+        <input type="file" name="cv_path" accept=".pdf,.doc,.docx">
+    </div>
+
+    <?php if (!empty($professor['cv_path'])): ?>
+        <a href="<?= htmlspecialchars($professor['cv_path']) ?>" target="_blank"
+           style="
+               display:inline-block;
+               margin-top:10px;
+               background:#003366;
+               color:white;
+               padding:8px 15px;
+               border-radius:8px;
+               font-weight:600;
+               text-decoration:none;">
+            <i class="fa-solid fa-file-lines"></i> View Current CV
+        </a>
     <?php endif; ?>
 
-    <form method="POST" enctype="multipart/form-data">
-      <label>Full Name</label>
-      <input type="text" name="name" value="<?= htmlspecialchars($professor['name'] ?? '') ?>">
 
-      <label>Email</label>
-      <input type="email" name="email" value="<?= htmlspecialchars($professor['email'] ?? '') ?>">
-
-      <label>Department</label>
-      <input type="text" name="department" value="<?= htmlspecialchars($professor['department'] ?? '') ?>">
-
-      <label>University</label>
-      <input type="text" name="university" value="<?= htmlspecialchars($professor['university'] ?? '') ?>">
-
-      <!-- CV Upload Section -->
-      <label>CV:</label>
-      <input type="file" name="cv_path" accept=".pdf,.doc,.docx">
-
-      <?php if (!empty($professor['cv_path'])): ?>
-        <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
-          <a href="<?= htmlspecialchars($professor['cv_path']) ?>" target="_blank" 
-            style="text-decoration: none; background: #7DAAFB; color: white; padding: 8px 14px; border-radius: 8px; font-weight: 500;">
-            <i class="fa-solid fa-file-lines"></i> View CV
-          </a>
-        </div>
-      <?php else: ?>
-        <div style="margin-top: 10px;">
-          <span style="color: #999;">No CV uploaded yet.</span>
-        </div>
-      <?php endif; ?>
-
-      <div class="actions">
-        <button type="submit" class="save-btn">Save changes</button>
-        <button type="reset" class="reset-btn">Reset</button>
-      </div>
-    </form>
-  </div>
-</div>
+    <div class="prof-actions">
+        <button class="prof-save">Save Changes</button>
+        <button type="reset" class="prof-reset">Reset</button>
+    </div>
+</form>
 
 <script>
 const toggleBtn = document.getElementById("toggleBtn");
