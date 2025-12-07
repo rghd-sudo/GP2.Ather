@@ -51,10 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $file_name = NULL;
     $grades_file = NULL;
 
+    // مجلد رفع الملفات
     $uploadDir = _DIR_ . '/uploads/';
     if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
-    // CV optional
+    // CV اختياري
     if (!empty($_FILES['file']['name'])) {
         $safeName = time() . "_" . basename($_FILES['file']['name']);
         $target = $uploadDir . $safeName;
@@ -64,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Grades required
+    // سجل الدرجات إجباري
     if (!empty($_FILES['grades']['name'])) {
         $safeGradesName = time() . "grades" . basename($_FILES['grades']['name']);
         $targetGrades = $uploadDir . $safeGradesName;
@@ -78,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = "❌ Grades file is required!";
     }
 
-    // إدخال الطلب
+    // إدخال الطلب في جدول requests
     $stmt = $conn->prepare("
         INSERT INTO requests (user_id, major, course, professor_id, purpose, type, file_name, grades_file)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -103,9 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $message = "✅ Request submitted successfully!";
 
-        // ------------------------------------------------------
-        // ⭐⭐ أول خطوة تتبع — Created ⭐⭐
-        // ------------------------------------------------------
+        // ⭐ أول خطوة تتبع — Created
         $status = 'Created';
         $note = 'Student submitted the request';
 
@@ -118,9 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $trackStmt->execute();
         $trackStmt->close();
 
-        // ------------------------------------------------------
-        // ⭐⭐ إشعار للدكتور ⭐⭐
-        // ------------------------------------------------------
+        // ⭐ إشعار للدكتور لو إعداد التنبيهات مفعّل
         $s = $conn->prepare("SELECT notify_new_request FROM notification_settings WHERE user_id = ? LIMIT 1");
         $s->bind_param("i", $professor_id);
         $s->execute();
