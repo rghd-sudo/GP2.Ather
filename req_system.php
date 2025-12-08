@@ -345,11 +345,15 @@ echo "<tr>
 
 // إذا كانت الحالة "completed" يظهر زر تحميل فقط
 if ($status == "completed") {
-    echo "<button class='load' onclick=\"loadRequest(".$row['id'].")\"> ⬇ Download</button>";
+echo  "<button class='download-btn' onclick=\"loadRequest(".$row['id'].")\" 
+    style='background: #28a745; color: #fff; border: none; padding: 5px 10px; border-radius: 5px;'>
+    <i class='fas fa-download'></i> 
+    </button>";
+   
 }
 
 // إذا كانت الحالة "accepted" يظهر زر تحميل فقط (يمكن تعديل حسب الحاجة)
-elseif ($status == "accepted") {
+elseif ($status == "accepted" || $status === 'rejected') {
     echo "<!-- accepted, لا يسمح بالتعديل -->";
 } 
 // إذا لم تكن الحالة completed أو accepted، يظهر زر التعديل والحذف
