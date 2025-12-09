@@ -32,7 +32,11 @@ $message = "";
 
 // 4. جلب الدكاترة
 $professors = [];
-$prof_result = $conn->query("SELECT p.professor_id, u.name FROM professors p JOIN users u ON p.user_id = u.id");
+$prof_result = $conn->query("
+    SELECT p.professor_id, u.id AS user_id, u.name
+    FROM professors p 
+    JOIN users u ON p.user_id = u.id
+");
 if($prof_result && $prof_result->num_rows > 0){
     while($p = $prof_result->fetch_assoc()){
         $professors[] = $p;
@@ -42,19 +46,19 @@ if($prof_result && $prof_result->num_rows > 0){
 // 5. معالجة النموذج
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $major = $conn->real_escape_string($_POST['major'] ?? '');
-    $course = $conn->real_escape_string($_POST['course'] ?? '');
+    $major        = $conn->real_escape_string($_POST['major'] ?? '');
+    $course       = $conn->real_escape_string($_POST['course'] ?? '');
     $professor_id = intval($_POST['professor_id'] ?? 0);
-    $purpose = $conn->real_escape_string($_POST['purpose'] ?? '');
-    $type = $conn->real_escape_string($_POST['type'] ?? '');
+    $purpose      = $conn->real_escape_string($_POST['purpose'] ?? '');
+    $type         = $conn->real_escape_string($_POST['type'] ?? '');
 
-    $file_name = NULL;
+    $file_name   = NULL;
     $grades_file = NULL;
 
-    $uploadDir = __DIR__. '/uploads/';
+    $uploadDir = _DIR_ . '/uploads/';
     if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
-    // CV optional
+    // CV اختياري
     if (!empty($_FILES['file']['name'])) {
         $safeName = time() . "_" . basename($_FILES['file']['name']);
         $target = $uploadDir . $safeName;
@@ -64,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Grades required
+    // سجل الدرجات إجباري
     if (!empty($_FILES['grades']['name'])) {
         $safeGradesName = time() . "grades" . basename($_FILES['grades']['name']);
         $targetGrades = $uploadDir . $safeGradesName;
@@ -77,6 +81,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $message = "❌ Grades file is required!";
     }
+
+    // ⭐ أهم تعديل — جلب user_id الخاص بالدكتور
+    $pstmt = $conn->prepare("SELECT user_id FROM professors WHERE professor_id = ? LIMIT 1");
+    $pstmt->bind_param("i", $professor_id);
+    $pstmt->execute();
+    $pRow = $pstmt->get_result()->fetch_assoc();
+    $prof_user_id = $pRow['user_id'] ?? 0;   // هذا هو المستخدم اللي لازم يوصله الإشعار
+    $pstmt->close();
 
     // إدخال الطلب
     $stmt = $conn->prepare("
@@ -103,11 +115,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $message = "✅ Request submitted successfully!";
 
-        // ------------------------------------------------------
-        // ⭐⭐ أول خطوة تتبع — Created ⭐⭐
-        // ------------------------------------------------------
+        // ⭐ أول خطوة تتبع — Created
         $status = 'Created';
-        $note = 'Student submitted the request';
+        $note   = 'Student submitted the request';
 
         $trackStmt = $conn->prepare("
             INSERT INTO track_request (request_id, user_id, status, note)
@@ -118,19 +128,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $trackStmt->execute();
         $trackStmt->close();
 
-        // ------------------------------------------------------
-        // ⭐⭐ إشعار للدكتور ⭐⭐
-        // ------------------------------------------------------
+        // ⭐ جلب إعدادات الدكتور
         $s = $conn->prepare("SELECT notify_new_request FROM notification_settings WHERE user_id = ? LIMIT 1");
-        $s->bind_param("i", $professor_id);
+        $s->bind_param("i", $prof_user_id);
         $s->execute();
         $settings = $s->get_result()->fetch_assoc() ?? [];
         $s->close();
 
+        // ⭐ إرسال إشعار للدكتور باستخدام user_id (التعديل الأساسي)
         if (!empty($settings['notify_new_request'])) {
+
             $notifMessage = "You have a new recommendation request from " . ($student_data['name'] ?? 'Student');
-            $notifStmt = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
-            $notifStmt->bind_param("is", $professor_id, $notifMessage);
+
+            $notifStmt = $conn->prepare("
+                INSERT INTO notifications (user_id, message, created_at)
+                VALUES (?, ?, NOW())
+            ");
+
+            $notifStmt->bind_param("is", $prof_user_id, $notifMessage);
             $notifStmt->execute();
             $notifStmt->close();
         }
@@ -146,185 +161,149 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="utf-8">
 <title>Recommendation Request</title>
+
 <style>
+:root {
+  --bg-color: #fbf7f2;
+  --header-bg: #cfe7e8;
+  --input-bg: #fff;
+  --main-text: #2b2b2b;
+  --sub-text: #473d57;
+  --accent-color: #f07963;
+  --accent-hover: #d15a45;
+  --shadow: 0 4px 12px rgba(0,0,0,0.08);
+  --border-radius: 10px;
+  font-family: 'Arial','Tahoma',sans-serif;
+}
+
 body {
-  margin: 0;
-  font-family: "Poppins", sans-serif;
-  background: #fdfaf6;
-  display: flex;
-  justify-content: center;
+  margin:0; padding:0;
+  background-color: var(--bg-color);
+  color: var(--main-text);
+  display:flex; justify-content:center;
+  direction: ltr; 
 }
 
 .container {
-  max-width: 720px;
-  width: 95%;
-  margin: 40px 0;
-  padding: 25px;
-  background: #ffffffff;
-  border-radius: 15px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  width:100%; max-width:720px;
+  margin:40px auto;
+  padding:20px;
 }
 
-/* Header Card */
 .header-card {
-  display: grid;
-  grid-template-columns: 60px 1fr 1fr;
-  gap: 15px;
-  align-items: center;
-  background: #c8e4eb;
-  padding: 20px 25px;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  background-color: var(--header-bg);
+  border-radius: var(--border-radius);
+  padding:20px 25px;
+  margin-bottom:25px;
+  box-shadow: var(--shadow);
+  display:grid;
+  grid-template-columns:60px 1fr 1fr;
+  gap:15px;
+  align-items:center;
 }
 
 .icon-container {
-  width: 60px;
-  height: 60px;
-  background-color: #3b9196;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width:60px; height:60px;
+  background-color:#3b9196;
+  border-radius:50%;
+  display:flex; justify-content:center; align-items:center;
 }
-
 .icon-container::before {
-  content: "🎓"; /* رمز بديل للتوصية */
-  font-size: 28px;
+  content:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="30px" height="30px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
 }
 
 .request-title {
-  font-size: 22px;
-  font-weight: bold;
-  color: #003366;
+  font-size:22px;font-weight:bold;
+  grid-column:2/3;
+  color:var(--main-text);
 }
 
 .student-info-section {
-  grid-column: 3/4;
-  border-right: 2px solid rgba(0,0,0,0.1);
-  padding-right: 15px;
+  grid-column:3/4;
+  border-right:2px solid rgba(0,0,0,0.1);
+  padding-right:15px;
 }
 
 .student-info-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #555;
-  margin-bottom: 10px;
-  display: block;
+  font-size:18px; font-weight:700;
+  color:var(--sub-text);
+  display:block; margin-bottom:10px;
 }
 
 .student-info-section input {
-  width: 100%;
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  outline: none;
+  display:block; width:100%;
+  border:1px solid #ccc; border-radius:5px;
+  background:transparent; padding:6px 10px; margin-bottom:8px;
+  font-size:15px; color: var(--main-text);
+  outline:none;
 }
-
 .student-info-section input:focus {
-  border-color:  #f07963;
-  box-shadow: 0 0 4px rgba(240,121,99,0.4);
+  border-color: var(--accent-color);
+  box-shadow:0 0 4px rgba(240,121,99,0.4);
 }
 
-/* Form Fields */
 .form-wrap {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-top: 20px;
+  display:grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap:20px;
+}
+.full-width {
+    grid-column: 1 / -1; 
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
+.field { margin-bottom:20px; }
+.label { font-weight:700; margin-bottom:6px; display:block; color:var(--sub-text); }
+
+input[type="text"], textarea, select {
+  width:100%; padding:12px; border-radius:5px;
+  border:1px solid #ccc; background-color: var(--input-bg);
+  font-size:15px; color:var(--main-text); box-sizing:border-box;
 }
 
-.label {
-  font-weight: 500;
-  margin-bottom: 8px;
-  color: #333;
+input[type="text"]:focus, textarea:focus, select:focus {
+  border-color: var(--accent-color);
+  box-shadow:0 0 4px rgba(240,121,99,0.4);
 }
 
-input[type="text"], select, textarea, input[type="file"] {
-  width:95%;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-}
+textarea { min-height:100px; resize:vertical; }
 
-input[type="text"]:focus, select:focus, textarea:focus, input[type="file"]:focus {
-  border-color: #f07963;
-  box-shadow: 0 0 4px rgba(240,121,99,0.4);
+.radios { display:flex; gap:20px; margin-top:5px; }
+.radios label { cursor:pointer; display:flex; align-items:center; font-size:15px; }
+.radios input[type="radio"]{ display:none; }
+.radios label span::before{
+  content:''; width:18px; height:18px; border-radius:50%; border:2px solid var(--sub-text);
+  margin-right:8px; display:inline-block; transition: all 0.2s;
 }
-
-textarea { min-height: 100px; resize: vertical; }
-
-.radios {
-  display: flex;
-  gap: 15px;
-  margin-top: 5px;
-}
-.radios input[type="radio"] { display: none; }
-.radios label {
-  display: flex; align-items: center; cursor: pointer; font-size: 15px;
-}
-.radios label span::before {
-  content: '';
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  border: 2px solid #333;
-  margin-right: 6px;
-  display: inline-block;
-  transition: all 0.2s;
-}
-.radios input[type="radio"]:checked + span::before {
-  background-color: #f07963;
-  border-color: #f07963B;
+.radios input[type="radio"]:checked + span::before{
+  background-color: var(--accent-color); border-color: var(--accent-color);
   box-shadow: inset 0 0 0 4px white;
 }
-.field.full-width {
-  grid-column: 1 / -1;
-}
-/* Submit Button */
-.submit-wrap {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
+
+.submit-wrap { display:flex; justify-content:flex-start; margin-top:20px; }
 .btn {
-  background: #f07963;
-  color: #fff;
-  padding: 12px 30px;
-  border-radius: 8px;
-  border: none;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.3s;
+  background: var(--accent-color); color:white; padding:14px 35px;
+  border-radius:8px; border:none; font-size:18px; font-weight:700;
+  cursor:pointer; box-shadow: var(--shadow);
+  transition: background-color 0.3s;
 }
-.btn:hover { background: #f07963; }
+.btn:hover { background-color: var(--accent-hover); }
 
-/* Status Message */
 .status-message {
-  background: #d1f7d6;
-  color: #2d7a32;
-  border: 1px solid #9de5a2;
-  padding: 10px 15px;
-  border-radius: 8px;
-  text-align: center;
-  font-weight: bold;
-  margin-bottom: 15px;
+  margin:20px 0;
+  padding:15px;
+  background-color:#f8d7da;
+  border:1px solid #f5c6cb;
+  color:#721c24;
+  border-radius:6px;
+  font-weight:bold;
+  text-align:center;
 }
-
 .back_btn {
     display: inline-block;
     margin-bottom: 20px;
     font-size: 24px;
     color: #03060a;
     text-decoration: none;
-    font-weight: bold;
-
 }
 </style>
 </head>
