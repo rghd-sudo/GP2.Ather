@@ -64,6 +64,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         $track->close();
 
         echo $newStatus;
+        // ✨ إرسال إشعار للدكتور عند رفض الطلب
+$prof_user_id = $_SESSION['user_id']; // ID الدكتور
+
+$profMsg = "A ".$student_name." request ". $purpose ." was rejected.";
+
+$sendProf = $conn->prepare("
+    INSERT INTO notifications (user_id, message, created_at)
+    VALUES (?, ?, NOW())
+");
+$sendProf->bind_param("is", $prof_user_id, $profMsg);
+$sendProf->execute();
+$sendProf->close();
+
         exit;
     }
 }

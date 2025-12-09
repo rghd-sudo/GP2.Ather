@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pdf->AddPage();
     $pdf->writeHTML($content, true, false, true, false, '');
 
-    $upload_dir = _DIR_ . "/uploads";
+    $upload_dir = __DIR__. "/uploads";
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0777, true);
     }
