@@ -1,8 +1,15 @@
 <?php
 session_start();
-// Include the database connection file
-// NOTE: Ensure 'index.php' correctly establishes the $conn variable
-include 'index.php'; 
+
+//include 'index.php';  
+
+// 🌟🌟 الشرط الأساسي: التحقق مما إذا كان الزائر قد مر بصفحة 3D.php
+if (!isset($_SESSION['splashed_complete']) || $_SESSION['splashed_complete'] !== true) {
+    // إذا لم يمر بصفحة 3D.php، يتم تحويله إليها فوراً
+    header('Location: 3D.php');
+    exit();
+}
+
 
 // Fetch statistics
 try {
