@@ -282,6 +282,7 @@ form input {
 </head>
 <body>
 
+
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
   <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>

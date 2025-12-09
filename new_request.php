@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $file_name = NULL;
     $grades_file = NULL;
 
-    $uploadDir = _DIR_ . '/uploads/';
+    $uploadDir = __DIR__. '/uploads/';
     if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
     // CV optional
@@ -139,155 +139,192 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = "❌ Error: " . $stmt->error;
     }
 }
-
 ?>
+
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <title>Recommendation Request</title>
 <style>
-:root {
-  --bg-color: #fbf7f2;
-  --header-bg: #cfe7e8;
-  --input-bg: #fff;
-  --main-text: #2b2b2b;
-  --sub-text: #473d57;
-  --accent-color: #f07963;
-  --accent-hover: #d15a45;
-  --shadow: 0 4px 12px rgba(0,0,0,0.08);
-  --border-radius: 10px;
-  font-family: 'Arial','Tahoma',sans-serif;
-}
-
 body {
-  margin:0; padding:0;
-  background-color: var(--bg-color);
-  color: var(--main-text);
-  display:flex; justify-content:center;
-  direction: ltr; 
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #fdfaf6;
+  display: flex;
+  justify-content: center;
 }
 
 .container {
-  width:100%; max-width:720px;
-  margin:40px auto;
-  padding:20px;
+  max-width: 720px;
+  width: 95%;
+  margin: 40px 0;
+  padding: 25px;
+  background: #ffffffff;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
 }
 
+/* Header Card */
 .header-card {
-  background-color: var(--header-bg);
-  border-radius: var(--border-radius);
-  padding:20px 25px;
-  margin-bottom:25px;
-  box-shadow: var(--shadow);
-  display:grid;
-  grid-template-columns:60px 1fr 1fr;
-  gap:15px;
-  align-items:center;
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr;
+  gap: 15px;
+  align-items: center;
+  background: #c8e4eb;
+  padding: 20px 25px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .icon-container {
-  width:60px; height:60px;
-  background-color:#3b9196;
-  border-radius:50%;
-  display:flex; justify-content:center; align-items:center;
+  width: 60px;
+  height: 60px;
+  background-color: #3b9196;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+
 .icon-container::before {
-  content:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="30px" height="30px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+  content: "🎓"; /* رمز بديل للتوصية */
+  font-size: 28px;
 }
 
 .request-title {
-  font-size:22px;font-weight:bold;
-  grid-column:2/3;
-  color:var(--main-text);
+  font-size: 22px;
+  font-weight: bold;
+  color: #003366;
 }
 
 .student-info-section {
-  grid-column:3/4;
-  border-right:2px solid rgba(0,0,0,0.1);
-  padding-right:15px;
+  grid-column: 3/4;
+  border-right: 2px solid rgba(0,0,0,0.1);
+  padding-right: 15px;
 }
 
 .student-info-title {
-  font-size:18px; font-weight:700;
-  color:var(--sub-text);
-  display:block; margin-bottom:10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 10px;
+  display: block;
 }
 
 .student-info-section input {
-  display:block; width:100%;
-  border:1px solid #ccc; border-radius:5px;
-  background:transparent; padding:6px 10px; margin-bottom:8px;
-  font-size:15px; color: var(--main-text);
-  outline:none;
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
 }
+
 .student-info-section input:focus {
-  border-color: var(--accent-color);
-  box-shadow:0 0 4px rgba(240,121,99,0.4);
+  border-color:  #f07963;
+  box-shadow: 0 0 4px rgba(240,121,99,0.4);
 }
 
+/* Form Fields */
 .form-wrap {
-  display:grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap:20px;
-}
-.full-width {
-    grid-column: 1 / -1; 
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 20px;
 }
 
-.field { margin-bottom:20px; }
-.label { font-weight:700; margin-bottom:6px; display:block; color:var(--sub-text); }
-
-input[type="text"], textarea, select {
-  width:100%; padding:12px; border-radius:5px;
-  border:1px solid #ccc; background-color: var(--input-bg);
-  font-size:15px; color:var(--main-text); box-sizing:border-box;
+.field {
+  display: flex;
+  flex-direction: column;
 }
 
-input[type="text"]:focus, textarea:focus, select:focus {
-  border-color: var(--accent-color);
-  box-shadow:0 0 4px rgba(240,121,99,0.4);
+.label {
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #333;
 }
 
-textarea { min-height:100px; resize:vertical; }
-
-.radios { display:flex; gap:20px; margin-top:5px; }
-.radios label { cursor:pointer; display:flex; align-items:center; font-size:15px; }
-.radios input[type="radio"]{ display:none; }
-.radios label span::before{
-  content:''; width:18px; height:18px; border-radius:50%; border:2px solid var(--sub-text);
-  margin-right:8px; display:inline-block; transition: all 0.2s;
+input[type="text"], select, textarea, input[type="file"] {
+  width:95%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
 }
-.radios input[type="radio"]:checked + span::before{
-  background-color: var(--accent-color); border-color: var(--accent-color);
+
+input[type="text"]:focus, select:focus, textarea:focus, input[type="file"]:focus {
+  border-color: #f07963;
+  box-shadow: 0 0 4px rgba(240,121,99,0.4);
+}
+
+textarea { min-height: 100px; resize: vertical; }
+
+.radios {
+  display: flex;
+  gap: 15px;
+  margin-top: 5px;
+}
+.radios input[type="radio"] { display: none; }
+.radios label {
+  display: flex; align-items: center; cursor: pointer; font-size: 15px;
+}
+.radios label span::before {
+  content: '';
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid #333;
+  margin-right: 6px;
+  display: inline-block;
+  transition: all 0.2s;
+}
+.radios input[type="radio"]:checked + span::before {
+  background-color: #f07963;
+  border-color: #f07963B;
   box-shadow: inset 0 0 0 4px white;
 }
-
-.submit-wrap { display:flex; justify-content:flex-start; margin-top:20px; }
+.field.full-width {
+  grid-column: 1 / -1;
+}
+/* Submit Button */
+.submit-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
 .btn {
-  background: var(--accent-color); color:white; padding:14px 35px;
-  border-radius:8px; border:none; font-size:18px; font-weight:700;
-  cursor:pointer; box-shadow: var(--shadow);
-  transition: background-color 0.3s;
+  background: #f07963;
+  color: #fff;
+  padding: 12px 30px;
+  border-radius: 8px;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
 }
-.btn:hover { background-color: var(--accent-hover); }
+.btn:hover { background: #f07963; }
 
+/* Status Message */
 .status-message {
-  margin:20px 0;
-  padding:15px;
-  background-color:#f8d7da;
-  border:1px solid #f5c6cb;
-  color:#721c24;
-  border-radius:6px;
-  font-weight:bold;
-  text-align:center;
+  background: #d1f7d6;
+  color: #2d7a32;
+  border: 1px solid #9de5a2;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 15px;
 }
+
 .back_btn {
     display: inline-block;
     margin-bottom: 20px;
     font-size: 24px;
     color: #03060a;
     text-decoration: none;
+    font-weight: bold;
+
 }
 </style>
 </head>
@@ -311,15 +348,13 @@ textarea { min-height:100px; resize:vertical; }
   <p class="status-message"><?= htmlspecialchars($message); ?></p>
   <?php endif; ?>
 
-  <form id="reqform" class="form-wrap" method="post" enctype="multipart/form-data">
-
+  <form class="form-wrap" method="post" enctype="multipart/form-data">
     <div class="field">
-      <label>Course Name*</label>
+      <label class="label">Course Name*</label>
       <input type="text" name="course" required>
     </div>
-
     <div class="field">
-      <label>Professor*</label>
+      <label class="label">Professor*</label>
       <select name="professor_id" required>
         <option value="">-- Select Professor --</option>
         <?php foreach($professors as $p): ?>
@@ -327,33 +362,39 @@ textarea { min-height:100px; resize:vertical; }
         <?php endforeach; ?>
       </select>
     </div>
-
-    <div class="field">
-      <label>Purpose*</label>
+    <div class="field full-width">
+      <label class="label">Purpose of Recommendation*</label>
       <textarea name="purpose" required></textarea>
     </div>
-
-    <div class="field full-width">
-      <label>Recommendation Type</label>
-      <label><input type="radio" name="type" value="Academic" checked> Academic</label>
-      <label><input type="radio" name="type" value="Professional"> Professional</label>
+    <div class="field">
+      <label class="label">Recommendation Type</label>
+      <div class="radios">
+        <label><input type="radio" name="type" value="Academic" checked><span>Academic</span></label>
+        <label><input type="radio" name="type" value="Professional"><span>Professional</span></label>
+      </div>
     </div>
-
-    <div class="field full-width">
-      <label>Upload CV (optional)</label>
+    <div class="field">
+      <label class="label">Upload CV (optional)</label>
       <input type="file" name="file" accept=".pdf,.doc,.docx">
     </div>
-
     <div class="field full-width">
-      <label>Upload Grades*</label>
+      <label class="label">Upload Grades*</label>
       <input type="file" name="grades" accept=".pdf,.png,.jpg,.jpeg" required>
     </div>
 
     <div class="submit-wrap full-width">
-      <button type="submit" class="btn">Submit</button>
+      <button type="submit" class="btn">Submit Request</button>
     </div>
   </form>
+</div>
 
+<script>
+  document.getElementById('cvFile').addEventListener('change', function() {
+    document.getElementById('cvFileName').textContent = this.files[0]?.name || '';
+  });
+  document.getElementById('gradesFile').addEventListener('change', function() {
+    document.getElementById('gradesFileName').textContent = this.files[0]?.name || '';
+  });
+</script>
 </div>
 </body>
-</html>
