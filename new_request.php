@@ -55,9 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $file_name   = NULL;
     $grades_file = NULL;
 
-    // مجلد رفع الملفات
-    $uploadDir = _DIR_ . '/uploads/';
-    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+   // مجلد رفع الملفات
+$uploadDir = __DIR__ . '/uploads/'; // ✅ تم التصحيح
+if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
     // CV اختياري
     if (!empty($_FILES['file']['name'])) {
