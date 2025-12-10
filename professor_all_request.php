@@ -156,7 +156,12 @@ width: 100%;
  margin-right: 5px; /* مسافة بسيطة بين الأزرار */
 ransition: all 0.2s ease;
 }
-
+.back_btn {
+    display: inline-block;
+    font-size: 24px;
+    color: #03060a;
+    text-decoration: none;
+}
 
 .edit {
   background: #a5d8f8;
@@ -181,12 +186,7 @@ background: #f8a5a5;
     word-wrap: break-word; /* 💡 يمنع خروج الكلمات الطويلة */
     overflow-wrap: break-word;
 }
-.table th:nth-child(7), .table td:nth-child(7) { width: 15%; } /* Actions */
-
-
-
-
- 
+.table th:nth-child(7), .table td:nth-child(7) { width: 15%; } /* Actions */ 
  .thead { background-color: #4a6fa5; }
  .thead th { padding: 15px; text-align: right; font-size: 15px; font-weight: 600; }
  tbody td { padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: right; font-size: 14px; color: #333; }
@@ -197,7 +197,17 @@ background: #f8a5a5;
 .status-pending { background-color: #fff3cd; color: #856404; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
 .status-draft { background-color: #e2e3e5; color: #383d41; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
 .status-rejected { background-color: #f8d7da; color: #721c24; padding: 5px 12px; border-radius: 20px; text-align: center; font-weight: 500; display: inline-block; min-width: 70px; }
- 
+ 🔹 Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 70px;
+  }
+  .sidebar {
+    width: 70px;
+  }
+  .menu-text {
+    display: none;
+  }}
 
 </style>
 </head>
