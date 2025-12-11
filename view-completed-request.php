@@ -80,7 +80,7 @@ if ($result && mysqli_num_rows($result) > 0) {
     <?php else: ?>
         <h2>Completed Request Details #<?php echo $request_data['request_id']; ?></h2>
 
-        <h3>Student Information</h3>
+        <h3>Personal Information</h3>
         <div class="detail-row">
             <span class="detail-label">Name:</span>
             <span class="detail-value"><?php echo htmlspecialchars($request_data['graduate_name']); ?></span>

@@ -22,11 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $notify_pending = isset($_POST['notify_pending']) ? 1 : 0;
     $notify_rejected = isset($_POST['notify_rejected']) ? 1 : 0;
     $notify_uploaded = isset($_POST['notify_uploaded']) ? 1 : 0;
-    $notify_admin = isset($_POST['notify_admin']) ? 1 : 0;
-    $via_email = isset($_POST['via_email']) ? 1 : 0;
-    $via_in_app = isset($_POST['via_in_app']) ? 1 : 0;
-    $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 3;
-// 📝 تحقق إذا يوجد سجل مسبق للطالب
+   // 📝 تحقق إذا يوجد سجل مسبق للطالب
     $check = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'");
     if (mysqli_num_rows($check) > 0) {
         // تحديث السجل
@@ -34,11 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             notify_new_request='$notify_new_request',
             notify_pending='$notify_pending',
             notify_rejected='$notify_rejected',
-            notify_uploaded='$notify_uploaded',
-            notify_admin_announcement='$notify_admin',
-            via_email='$via_email',
-            via_in_app='$via_in_app',
-            reminder_days='$reminder_days'
+            notify_uploaded='$notify_uploaded'
+            
             WHERE user_id='$user_id'");
     } else {
           // إدخال سجل جديد

@@ -31,7 +31,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
 
 $user_id = intval($_SESSION['user_id']);
 
-/* ------------------ 3) Ensure settings table exists ------------------ */
+/* ------------------ 3) Ensure settings table exists ------------------
 $create_sql = "
 CREATE TABLE IF NOT EXISTS notification_settings (
   user_id INT NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS notification_settings (
   PRIMARY KEY (user_id, role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ";
-$conn->query($create_sql); // ignore errors here
+$conn->query($create_sql); // ignore errors here */
 
 /* ------------------ 4) Handle POST (save settings) ------------------ */
 $success_msg = '';
@@ -58,10 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notify_pending = isset($_POST['notify_pending']) ? 1 : 0;
     $notify_rejected = isset($_POST['notify_rejected']) ? 1 : 0;
     $notify_uploaded = isset($_POST['notify_uploaded']) ? 1 : 0;
-    $via_email = isset($_POST['via_email']) ? 1 : 0;
-    $via_in_app = isset($_POST['via_in_app']) ? 1 : 0;
-    $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 2;
-
+   
     $sql = "INSERT INTO notification_settings 
         (user_id, role, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
         VALUES (?, 'professor', ?, ?, ?, ?, ?, ?, ?)
@@ -69,13 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           notify_new_request = VALUES(notify_new_request),
           notify_pending = VALUES(notify_pending),
           notify_rejected = VALUES(notify_rejected),
-          notify_uploaded = VALUES(notify_uploaded),
-          via_email = VALUES(via_email),
-          via_in_app = VALUES(via_in_app),
-          reminder_days = VALUES(reminder_days)";
-
+          notify_uploaded = VALUES(notify_uploaded)
+         ";
     if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param("iiiiiiii", $user_id, $notify_new_request, $notify_pending, $notify_rejected, $notify_uploaded, $via_email, $via_in_app, $reminder_days);
+        $stmt->bind_param("iiiii", $user_id, $notify_new_request, $notify_pending, $notify_rejected, $notify_uploaded);
         if ($stmt->execute()) {
             $success_msg = "Settings saved successfully.";
         } else {
@@ -93,12 +87,10 @@ $settings = [
     'notify_pending' => 1,
     'notify_rejected' => 1,
     'notify_uploaded' => 1,
-    'via_email' => 0,
-    'via_in_app' => 1,
-    'reminder_days' => 2
+    
 ];
 
-if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days FROM notification_settings WHERE user_id = ? ")) {
+if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_rejected, notify_uploaded FROM notification_settings WHERE user_id = ? ")) {
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -107,9 +99,7 @@ if ($stmt = $conn->prepare("SELECT notify_new_request, notify_pending, notify_re
         $settings['notify_pending'] = intval($row['notify_pending']);
         $settings['notify_rejected'] = intval($row['notify_rejected']);
         $settings['notify_uploaded'] = intval($row['notify_uploaded']);
-        $settings['via_email'] = intval($row['via_email']);
-        $settings['via_in_app'] = intval($row['via_in_app']);
-        $settings['reminder_days'] = intval($row['reminder_days']);
+      
     }
     $stmt->close();
 }
@@ -133,7 +123,6 @@ if ($stmt = $conn->prepare($sql)) {
 
     $stmt->close();
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -198,6 +187,11 @@ if ($stmt = $conn->prepare($sql)) {
   }
   .icon-btn { background: none; border: none; cursor: pointer; font-size: 20px; color: #333; }
 
+/* Bottom Section */
+.bottom-section {
+  margin-bottom: 20px;
+}
+
   .main-content {
     margin-left: 230px;
     margin-top: 70px;
@@ -236,22 +230,36 @@ if ($stmt = $conn->prepare($sql)) {
  border-left: 4px solid #007bff; /* شريط أزرق على اليسار */
  font-weight: 600; 
 }
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 70px;
+  }
+  .sidebar {
+    width: 70px;
+  }
+  .menu-text {
+    display: none;
+  }}
+
   </style>
 </head>
 <body>
 
 <div class="sidebar" id="sidebar">
-    <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
-    <div>
-      <div class="logo"><img src="LOGObl.PNG" alt="Logo"></div>
+  <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
+
+  <div>
+    <div class="logo">
+      <img src="LOGObl.PNG" alt="Logo">
+    </div>
+
       <a href="requests.php" class="menu-item"><i class="fas fa-file-circle-plus"></i><span class="menu-text">New Request</span></a>
       <a href="professor_all_request.php" class="menu-item"><i class="fas fa-list"></i><span class="menu-text">All Requests</span></a>
       <a href="professor-profile.php" class="menu-item"><i class="fas fa-user"></i><span class="menu-text">Profile</span></a>
     </div>
-
-    <div class="bottom-section">
-      <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
-    </div>
+   <div class="bottom-section">
+    <a href="setting_D.php" class="menu-item"><i class="fas fa-gear"></i><span class="menu-text">Notification Settings</span></a>
+  </div>
 </div>
 
 

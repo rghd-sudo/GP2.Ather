@@ -301,7 +301,6 @@ textarea { min-height:100px; resize:vertical; }
 }
 .back_btn {
     display: inline-block;
-    margin-bottom: 20px;
     font-size: 24px;
     color: #03060a;
     text-decoration: none;
