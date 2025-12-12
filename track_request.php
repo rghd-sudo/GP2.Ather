@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 $user_id = intval($_SESSION['user_id']);
 
-// ------------------ DB connection (تعويض مؤقت لو db.php غير موجود) ------------------
+// ------------------ DB connection ------------------
 if (!isset($conn)) {
     $host = "localhost";
     $user = "root";
@@ -24,7 +24,7 @@ if (!isset($conn)) {
 }
 
 // ------------------ Ensure minimal tables exist ------------------
-$create_requests_sql = "
+$conn->query("
 CREATE TABLE IF NOT EXISTS requests (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -33,10 +33,9 @@ CREATE TABLE IF NOT EXISTS requests (
   status VARCHAR(100) DEFAULT 'Created',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-";
-$conn->query($create_requests_sql);
+");
 
-$create_track_sql = "
+$conn->query("
 CREATE TABLE IF NOT EXISTS track_request (
   id INT AUTO_INCREMENT PRIMARY KEY,
   request_id INT NOT NULL,
@@ -47,8 +46,7 @@ CREATE TABLE IF NOT EXISTS track_request (
   INDEX (request_id),
   INDEX (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-";
-$conn->query($create_track_sql);
+");
 
 // ------------------ Fetch user's requests ------------------
 $requests = [];
@@ -65,12 +63,16 @@ if (!$requests) $requests = [];
 
 // ------------------ Helpers ------------------
 function safe($s) { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
-function fmt_dt($dt) { return safe($dt); }
+function fmt_dt($dt) {
+    if (empty($dt)) return '';
+    $timestamp = strtotime($dt);
+    return date('Y-m-d H:i:s', $timestamp);
+}
 
 // ------------------ Steps order ------------------
 $steps_order = [
     'Created'             => 'Created',
-    'Under Review'        => 'Under Review',
+    'Request is being reviewed by' => 'Under Review',
     'Professor Response'  => 'Professor Response',
     'Recommendation Sent' => 'Recommendation Sent'
 ];
@@ -83,19 +85,15 @@ function match_step($trackStatus, $stepKey) {
     if ($k === 'created') {
         return (strpos($t, 'create') !== false);
     }
-
     if ($k === 'under review') {
         return (strpos($t, 'under') !== false || strpos($t, 'review') !== false || strpos($t, 'pending') !== false);
     }
-
     if ($k === 'professor response') {
         return (strpos($t, 'prof') !== false || strpos($t, 'approve') !== false || strpos($t, 'reject') !== false);
     }
-
     if ($k === 'recommendation sent') {
         return (strpos($t, 'sent') !== false || strpos($t, 'completed') !== false);
     }
-
     return false;
 }
 ?>
@@ -107,7 +105,7 @@ function match_step($trackStatus, $stepKey) {
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 <style>
-/* Your existing styles (sidebar, main-content, timeline, step, circle, etc.) remain unchanged */
+/* styles remain unchanged */
 body { margin:0; font-family:"Poppins", sans-serif; background:#fdfaf6; display:flex; }
 .sidebar { background-color:#c8e4eb; width:230px; transition:0.3s; height:100vh; padding-top:20px; box-shadow:2px 0 5px rgba(0,0,0,0.1); position:fixed; display:flex; flex-direction:column; justify-content:space-between; }
 .sidebar.collapsed { width:70px; }
@@ -164,101 +162,196 @@ body { margin:0; font-family:"Poppins", sans-serif; background:#fdfaf6; display:
 </div>
 
 <div class="main-content">
-<h2>Track Requests</h2>
+    <h2>Track Requests</h2>
 
-<?php if (empty($requests)): ?>
-    <div class="no-requests">No requests yet.</div>
-<?php else: ?>
-    <?php foreach ($requests as $req):
-        $reqId = intval($req['id']);
-        $reqTitle = $req['purpose'] ?: "Request #{$reqId}";
-        $reqCreated = $req['created_at'];
-        $current = $req['current_status'] ?? '';
+    <?php if (empty($requests)): ?>
+        <div class="no-requests">No requests yet.</div>
+    <?php else: ?>
+        <?php foreach ($requests as $req):
 
-        // clone steps per request
-        $steps_order_per_request = $steps_order;
-        if (strtolower($current) === 'rejected') {
-            unset($steps_order_per_request['Recommendation Sent']);
-        }
+            $reqId      = intval($req['id']);
+            $reqTitle   = $req['purpose'] ?: "Request #{$reqId}";
+            $reqCreated = $req['created_at'];
+            $current    = $req['current_status'] ?? '';
 
-        // fetch track entries
-        $tracks = [];
-        if ($s2 = $conn->prepare("SELECT status, note, created_at FROM track_request WHERE request_id = ? ORDER BY created_at ASC")) {
-            $s2->bind_param("i", $reqId);
-            $s2->execute();
-            $r2 = $s2->get_result();
-            while ($row = $r2->fetch_assoc()) $tracks[] = $row;
-            $s2->close();
-        }
+            $steps_order_per_request = $steps_order;
+            if (strtolower($current) === 'rejected') {
+                unset($steps_order_per_request['Recommendation Sent']);
+            }
 
-        // build map
-        $map = [];
-        foreach ($tracks as $tr) {
-            foreach ($steps_order_per_request as $stepKey => $label) {
-                if (!isset($map[$label]) && match_step($tr['status'], $stepKey)) {
-                    $map[$label] = ['time'=>$tr['created_at'] ?? '', 'note'=>$tr['note'] ?? '', 'raw'=>$tr['status']];
+            // fetch track entries
+            $tracks = [];
+            if ($s2 = $conn->prepare("SELECT status, note, created_at FROM track_request WHERE request_id = ? ORDER BY created_at ASC")) {
+                $s2->bind_param("i", $reqId);
+                $s2->execute();
+                $r2 = $s2->get_result();
+                while ($row = $r2->fetch_assoc()) { $tracks[] = $row; }
+                $s2->close();
+            }
+
+            // build map
+            $map = [];
+            foreach ($tracks as $tr) {
+                foreach ($steps_order_per_request as $stepKey => $label) {
+                    if (!isset($map[$label]) && match_step($tr['status'], $stepKey)) {
+                        $map[$label] = [
+                            'time' => $tr['created_at'] ?? '',
+                            'note' => $tr['note'] ?? '',
+                            'raw'  => $tr['status']
+                        ];
+                    }
                 }
             }
-        }
 
-        // determine current step
-        $currentStep = null;
-        foreach ($steps_order_per_request as $stepKey => $label) {
-            if ($current && match_step($current, $stepKey)) { $currentStep = $label; break; }
-        }
-        if (!$currentStep && !empty($tracks)) {
-            $lastTrack = end($tracks);
-            foreach ($steps_order_per_request as $stepKey => $label) {
-                if (match_step($lastTrack['status'], $stepKey)) { $currentStep = $label; break; }
+            // current step
+            $currentStep = null;
+            if ($current) {
+                foreach ($steps_order_per_request as $stepKey => $label) {
+                    if (match_step($current, $stepKey)) {
+                        $currentStep = $label; break;
+                    }
+                }
             }
-        }
-    ?>
-    <div class="request-card">
-        <div class="request-header">
-            <div>
-                <div class="req-title"><?php echo safe($reqTitle); ?></div>
-                <div class="req-meta">Created at: <?php echo fmt_dt($reqCreated); ?></div>
-            </div>
-            <div class="req-meta">Current status: <strong><?php echo safe($current ?: 'N/A'); ?></strong></div>
-        </div>
+            if (!$currentStep && !empty($tracks)) {
+                $lastTrack = end($tracks);
+                foreach ($steps_order_per_request as $stepKey => $label) {
+                    if (match_step($lastTrack['status'], $stepKey)) {
+                        $currentStep = $label; break;
+                    }
+                }
+            }
 
-        <div class="timeline">
-            <?php foreach ($steps_order_per_request as $stepKey => $label):
-                $completed = isset($map[$label]);
-                $is_current = ($currentStep === $label);
-
-                if ($label === 'Professor Response' && $completed) {
-                    $colorClass = (stripos($map[$label]['raw'], 'reject') !== false) ? 'red' : 'green';
+            // ------------------ Under Review Duration ------------------
+            $underReviewDuration = '';
+            if (isset($map['Created'])) {
+                $t1 = strtotime($map['Created']['time']);
+                if (isset($map['Professor Response'])) {
+                    $t2 = strtotime($map['Professor Response']['time']);
+                } elseif (!empty($tracks)) {
+                    $lastTrack = end($tracks);
+                    $t2 = strtotime($lastTrack['created_at']);
                 } else {
-                    $colorClass = $completed ? 'green' : 'red';
+                    $t2 = time();
                 }
+                $diff = $t2 - $t1;
+                if ($diff > 0) {
+                    $days  = floor($diff / 86400);
+                    $hours = floor(($diff % 86400) / 3600);
+                    if ($days > 0)  $underReviewDuration .= $days . " days ";
+                    if ($hours > 0) $underReviewDuration .= $hours . " hours";
+                    $underReviewDuration = trim($underReviewDuration);
+                }
+            }
 
-                if (!$completed && stripos($label, 'Under Review') !== false) $colorClass = 'yellow';
-                $circleClass = "circle {$colorClass}" . ($is_current ? ' current' : '');
-            ?>
-            <div class="step">
-                <div class="<?php echo $circleClass; ?>"><?php echo $completed ? '✓' : ''; ?></div>
+        ?>
+
+        <div class="request-card">
+            <div class="request-header">
                 <div>
-                    <div class="status-text"><?php echo safe($label); ?></div>
-                    <div class="status-time"><?php echo $completed ? fmt_dt($map[$label]['time']) . (!empty($map[$label]['note']) ? ' • ' . safe($map[$label]['note']) : '') : 'Not yet'; ?></div>
+                    <div class="req-title"><?php echo safe($reqTitle); ?></div>
+                    <div class="req-meta">Created at: <?php echo fmt_dt($reqCreated); ?></div>
+                </div>
+                <div class="req-meta">
+                    Current status: <strong><?php echo safe($current ?: 'N/A'); ?></strong>
                 </div>
             </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-    <?php endforeach; ?>
-<?php endif; ?>
 
-<button class="btn" onclick="location.href='req_system.php'">Back to Home</button>
+            <div class="timeline">
+                <?php foreach ($steps_order_per_request as $stepKey => $label):
+$underReviewDuration = '';
+if (isset($map['Created'])) {
+    $startTime = strtotime($map['Created']['time']);
+    $endTime = null;
+
+    // إذا وجد Professor Response نستخدمه كبداية النهاية
+    if (isset($map['Professor Response'])) {
+        $endTime = strtotime($map['Professor Response']['time']);
+    } elseif (!empty($tracks)) {
+        $endTime = strtotime(end($tracks)['created_at']);
+    } else {
+        $endTime = time();
+    }
+
+    $diff = $endTime - $startTime;
+
+    if ($diff > 0) {
+        $days = floor($diff / 86400);
+        $hours = floor(($diff % 86400) / 3600);
+        $minutes = floor(($diff % 3600) / 60);
+
+        $underReviewDuration = '';
+        if ($days > 0) $underReviewDuration .= $days . ' days ';
+        if ($hours > 0) $underReviewDuration .= $hours . ' hours ';
+        if ($minutes > 0) $underReviewDuration .= $minutes . ' minutes';
+
+        $underReviewDuration = trim($underReviewDuration);
+    }
+}
+                  $completed = isset($map[$label]);
+
+// اجعل Under Review مكتملة إذا في رد من الأستاذ
+if ($label === 'Under Review' && isset($map['Created'])) {
+    if (isset($map['Professor Response'])) {
+        $completed = true;
+    }
+}
+
+                    $is_current = ($currentStep === $label);
+
+                    // color
+                    if ($label === 'Professor Response' && $completed) {
+                        $colorClass = (stripos($map[$label]['raw'], 'reject') !== false) ? 'red' : 'green';
+                    } else {
+                        $colorClass = $completed ? 'green' : 'red';
+                    }
+
+                    if (!$completed && stripos($label, 'Under Review') !== false) {
+                        $colorClass = 'yellow';
+                    }
+
+                    $circleClass = "circle {$colorClass}" . ($is_current ? ' current' : '');
+                ?>
+
+                <div class="step">
+                    <div class="<?php echo $circleClass; ?>">
+                        <?php echo $completed ? '✓' : ''; ?>
+                    </div>
+                    <div>
+                        <div class="status-text"><?php echo safe($label); ?></div>
+                        <div class="status-time">
+                            
+                        <?php
+                       if ($label === 'Under Review') {
+    echo !empty($underReviewDuration) ? "⏳ Took: $underReviewDuration" : "Not yet";
+}
+ else {
+                            if ($completed && isset($map[$label])) {
+                                echo fmt_dt($map[$label]['time']);
+                                if (!empty($map[$label]['note'])) echo " • " . safe($map[$label]['note']);
+                            } else {
+                                echo "Not yet";
+                            }
+                        }
+                        ?>
+                        </div>
+                    </div>
+                </div>
+
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+    <button class="btn" onclick="location.href='req_system.php'">Back to Home</button>
 </div>
 
 <script>
 // Toggle sidebar
 const toggleBtn = document.getElementById("toggleBtn");
 const sidebar = document.getElementById("sidebar");
-toggleBtn.addEventListener("click", () => {
-  sidebar.classList.toggle("collapsed");
-});
+toggleBtn.addEventListener("click", () => { sidebar.classList.toggle("collapsed"); });
 </script>
 </body>
 </html>

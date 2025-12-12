@@ -5,80 +5,77 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
     exit;
 }
 include 'index.php';
-
+// التحقق من POST لمعالجة قبول/رفض التوصية
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST['action'])) {
     $request_id = intval($_POST['request_id']);
-    $action = $_POST['action'];
+    $action = $_POST['action']; // accept أو reject
 
-    if ($action === 'accept' || $action === 'reject') {
+    if ($action !== 'accept' && $action !== 'reject') exit;
 
-        // تحديث حالة الطلب في جدول requests
-        $newStatus = ($action === 'accept') ? 'accepted' : 'rejected';
+// -------------------- تحديث حالة الطلب --------------------
+    $newStatus = ($action === 'accept') ? 'accepted' : 'rejected';
+    $stmt = $conn->prepare("UPDATE requests SET status=? WHERE id=?");
+    $stmt->bind_param("si", $newStatus, $request_id);
+    $stmt->execute();
+    $stmt->close();
 
-        $stmt = $conn->prepare("UPDATE requests SET status = ? WHERE id = ?");
-        $stmt->bind_param("si", $newStatus, $request_id);
-        $stmt->execute();
-        $stmt->close();
+// -------------------- جلب بيانات الطالب --------------------
+    $res = $conn->prepare("
+        SELECT u.id AS student_user_id, u.name AS student_name, r.purpose
+        FROM requests r
+        JOIN users u ON r.user_id = u.id
+        WHERE r.id=?
+    ");
+    $res->bind_param("i", $request_id);
+    $res->execute();
+    $row = $res->get_result()->fetch_assoc();
+    $student_user_id = $row['student_user_id'];
+    $student_name    = $row['student_name'];
+    $purpose         = $row['purpose'];
+    $res->close();
 
-        // جلب user_id للطالب + الاسم
-        $res = $conn->prepare("SELECT u.id AS student_user_id, u.name AS student_name, r.purpose 
-                               FROM requests r 
-                               JOIN users u ON r.user_id = u.id 
-                               WHERE r.id = ?");
-        $res->bind_param("i", $request_id);
-        $res->execute();
-        $row = $res->get_result()->fetch_assoc();
-        $student_user_id = $row['student_user_id'];
-        $student_name = $row['student_name'];
-        $purpose = $row['purpose'];
-        $res->close();
+// -------------------- إرسال إشعار للطالب --------------------
+    $studentSettings = mysqli_fetch_assoc(mysqli_query($conn, "
+        SELECT notify_uploaded, notify_pending, notify_rejected
+        FROM notification_settings WHERE user_id='$student_user_id'
+    "));
 
-        // إرسال إشعار للطالب
-        $message = "Your request " . $purpose . " has been " . $newStatus . " by the professor.";
-        $notif = $conn->prepare("INSERT INTO notifications (user_id, message, created_at) VALUES (?, ?, NOW())");
-        $notif->bind_param("is", $student_user_id, $message);
-        $notif->execute();
-        $notif->close();
-
-        /* ⭐⭐ تسجيل التتبع الصحيح ⭐⭐ */
-
-        $profUserId = $_SESSION['user_id'];
-
-        if ($action === 'accept') {
-            // قبول التوصية
-            $statusTrack = 'Professor Approval';
-            $noteTrack   = 'Approved by Professor';
-
-        } elseif ($action === 'reject') {
-            // رفض التوصية ➜ يظهر كـ Recommendation Sent (Rejected)
-            $statusTrack = 'Professor Response';
-            $noteTrack   = 'Recommendation Sent (Rejected)';
-        }
-
-        $track = $conn->prepare("
-            INSERT INTO track_request (request_id, user_id, status, note)
-            VALUES (?, ?, ?, ?)
-        ");
-        $track->bind_param("iiss", $request_id, $profUserId, $statusTrack, $noteTrack);
-        $track->execute();
-        $track->close();
-
-        echo $newStatus;
-        // ✨ إرسال إشعار للدكتور عند رفض الطلب
-$prof_user_id = $_SESSION['user_id']; // ID الدكتور
-
-$profMsg = "A ".$student_name." request ". $purpose ." was rejected.";
-
-$sendProf = $conn->prepare("
-    INSERT INTO notifications (user_id, message, created_at)
-    VALUES (?, ?, NOW())
-");
-$sendProf->bind_param("is", $prof_user_id, $profMsg);
-$sendProf->execute();
-$sendProf->close();
-
-        exit;
+    if ($action === 'accept' && !empty($studentSettings['notify_uploaded'])) {
+        $msg = "Your recommendation \"$purpose\" has been completed and sent.";
+        mysqli_query($conn, "INSERT INTO notifications (user_id, message, created_at) VALUES ('$student_user_id', '$msg', NOW())");
     }
+
+    if ($action === 'reject' && !empty($studentSettings['notify_rejected'])) {
+        $msg = "Your request \"$purpose\" was rejected by the professor.";
+        mysqli_query($conn, "INSERT INTO notifications (user_id, message, created_at) VALUES ('$student_user_id', '$msg', NOW())");
+    }
+
+// -------------------- تسجيل التتبع --------------------
+    $profUserId = $_SESSION['user_id'];
+    $statusTrack = ($action === 'accept') ? 'Professor Approval' : 'Professor Response';
+    $noteTrack   = ($action === 'accept') ? 'Approved by Professor' : 'Recommendation Sent (Rejected)';
+
+    $track = $conn->prepare("
+        INSERT INTO track_request (request_id, user_id, status, note)
+        VALUES (?, ?, ?, ?)
+    ");
+    $track->bind_param("iiss", $request_id, $profUserId, $statusTrack, $noteTrack);
+    $track->execute();
+    $track->close();
+
+// -------------------- إشعار للدكتور --------------------
+    $profSettings = mysqli_fetch_assoc(mysqli_query($conn, "
+        SELECT notify_rejected
+        FROM notification_settings WHERE user_id='$profUserId'
+    "));
+
+    if (!empty($profSettings['notify_rejected'])) {
+        $msg = "You have rejected a recommendation for \"$student_name\" regarding \"$purpose\".";
+        mysqli_query($conn, "INSERT INTO notifications (user_id, message, created_at) VALUES ('$profUserId', '$msg', NOW())");
+    }
+
+    echo $newStatus;
+    exit;
 }
 
 // جلب قائمة الطلبات الخاصة بالبروفيسور

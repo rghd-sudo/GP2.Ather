@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notify_uploaded = isset($_POST['notify_uploaded']) ? 1 : 0;
    
     $sql = "INSERT INTO notification_settings 
-        (user_id, role, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
+        (user_id, role, notify_new_request, notify_pending, notify_rejected, notify_uploaded)
         VALUES (?, 'professor', ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           notify_new_request = VALUES(notify_new_request),

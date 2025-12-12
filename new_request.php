@@ -118,7 +118,7 @@ if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
         // ⭐ أول خطوة تتبع — Created
         $status = 'Created';
-        $note   = 'Student submitted the request';
+        $note   = 'you submitted the request';
 
         $trackStmt = $conn->prepare("
             INSERT INTO track_request (request_id, user_id, status, note)
@@ -128,28 +128,32 @@ if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
         $trackStmt->bind_param("iiss", $newRequestId, $user_id, $status, $note);
         $trackStmt->execute();
         $trackStmt->close();
+// ⭐ جلب إعدادات الدكتور
+$s = $conn->prepare("
+    SELECT notify_new_request 
+    FROM notification_settings 
+    WHERE user_id = ? 
+    LIMIT 1
+");
+$s->bind_param("i", $prof_user_id);
+$s->execute();
+$settings = $s->get_result()->fetch_assoc() ?? [];
+$s->close();
 
-        // ⭐ جلب إعدادات الدكتور
-        $s = $conn->prepare("SELECT notify_new_request FROM notification_settings WHERE user_id = ? LIMIT 1");
-        $s->bind_param("i", $prof_user_id);
-        $s->execute();
-        $settings = $s->get_result()->fetch_assoc() ?? [];
-        $s->close();
+// ⭐ إرسال إشعار للدكتور فقط إذا مفعّل في الإعدادات
+if (!empty($settings['notify_new_request'])) {
 
-        // ⭐ إرسال إشعار للدكتور باستخدام user_id (التعديل الأساسي)
-        if (!empty($settings['notify_new_request'])) {
+    $notifMessage = "You have a new recommendation request from " . ($student_data['name'] ?? 'Student');
 
-            $notifMessage = "You have a new recommendation request from " . ($student_data['name'] ?? 'Student');
+    $notifStmt = $conn->prepare("
+        INSERT INTO notifications (user_id, message, created_at)
+        VALUES (?, ?, NOW())
+    ");
+    $notifStmt->bind_param("is", $prof_user_id, $notifMessage);
+    $notifStmt->execute();
+    $notifStmt->close();
+}
 
-            $notifStmt = $conn->prepare("
-                INSERT INTO notifications (user_id, message, created_at)
-                VALUES (?, ?, NOW())
-            ");
-
-            $notifStmt->bind_param("is", $prof_user_id, $notifMessage);
-            $notifStmt->execute();
-            $notifStmt->close();
-        }
 
     } else {
         $message = "❌ Error: " . $stmt->error;
@@ -292,9 +296,9 @@ textarea { min-height:100px; resize:vertical; }
 .status-message {
   margin:20px 0;
   padding:15px;
-  background-color:#f8d7da;
-  border:1px solid #f5c6cb;
-  color:#721c24;
+  background-color: #a4db74ff;
+  border:1px solid #dcf5c6ff;
+  color:#03060a;
   border-radius:6px;
   font-weight:bold;
   text-align:center;

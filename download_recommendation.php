@@ -59,23 +59,20 @@ if ($result && $result->num_rows > 0) {
         // محتوى PDF بالإنجليزية
         $html = '
         <table width="100%">
-        <tr>
-        <td width="30%"><img src="uniba_logo.png" width="100"></td>
-        <td width="70%" style="text-align:center;">
-        <h1>Recommendation Letter</h1>
-        <p>University of Baha</p>
-        </td>
-        </tr>
+        
+       <h1>Recommendation Letter</h1>
+       او الطالب اسم الجامعة<p>University of Baha</p>
+        
         </table>
         <hr>
         <div style="line-height:1.8; font-size:14px; text-align:left;">
-        <p>Dear Sir/Madam,</p>
+        <p>To Whom It May Concern,</p>
         <p>' . nl2br($recommendation_content) . '</p>
         <p>We wish the student continued success in their academic journey.</p>
         </div>
         <br><br>
         <div style="text-align:left;">
-        <p>Prepared by: Academic Office</p>
+        <p>Prepared by: Ather graduet Office</p>
         <p>Date: ' . date("d/m/Y") . '</p>
         </div>
         ';

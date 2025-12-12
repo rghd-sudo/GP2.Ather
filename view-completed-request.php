@@ -22,6 +22,7 @@ SELECT
     r.id AS request_id,
     u.name AS graduate_name,
     u.email AS graduate_email,
+    u.department,
     r.major,
     r.course,
     r.purpose,
@@ -93,7 +94,7 @@ if ($result && mysqli_num_rows($result) > 0) {
         <h3>Recommendation Request Details</h3>
         <div class="detail-row">
             <span class="detail-label">Major:</span>
-            <span class="detail-value"><?php echo htmlspecialchars($request_data['major']); ?></span>
+            <span class="detail-value"><?php echo htmlspecialchars($request_data['department']); ?></span>
         </div>
         <div class="detail-row">
             <span class="detail-label">Course:</span>
