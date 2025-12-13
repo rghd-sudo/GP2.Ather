@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         mysqli_query($conn, "INSERT INTO notification_settings 
             (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded)
             VALUES 
-            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded')");
+            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded'");
     }
 
     $message = "Settings saved successfully!";
@@ -79,7 +79,7 @@ $settings = mysqli_fetch_assoc($result);
         <h3>New Request Submitted</h3>
         <p class="desc">Notify when a new recommendation request is submitted</p>
         <label class="switch">
-            <input type="checkbox" name="notify_new_request" value="1" <?= isset($settings['notify_new_request']) && $settings['notify_new_request'] ? 'checked' : '' ?>>
+           <input type="checkbox" name="notify_new_request" value="1" <?= ($settings['notify_new_request'] ?? 0) ? 'checked' : '' ?>>
             <span class="slider"></span>
         </label>
     </div>
