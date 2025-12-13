@@ -186,26 +186,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $req_update->bind_param("i", $request_id);
         $req_update->execute();
         $req_update->close();
+// -------------------- إعدادات إشعار الطالب --------------------
+$studentSettings = mysqli_fetch_assoc(mysqli_query($conn, "
+    SELECT notify_uploaded
+    FROM notification_settings 
+    WHERE user_id='$student_user_id'
+"));
 
-        // 🔔 إشعار للطالب
-        $msg_student = "Your recommendation has been completed and sent.";
-        $notif_stu   = $conn->prepare("
-            INSERT INTO notifications (user_id, message, created_at) 
-            VALUES (?, ?, NOW())
-        ");
-        $notif_stu->bind_param("is", $student_user_id, $msg_student);
-        $notif_stu->execute();
-        $notif_stu->close();
+if (!empty($studentSettings['notify_uploaded'])) {
+    $msg_student = "Your recommendation has been completed and sent.";
+    $notif_stu = $conn->prepare("
+        INSERT INTO notifications (user_id, message, created_at) 
+        VALUES (?, ?, NOW())
+    ");
+    $notif_stu->bind_param("is", $student_user_id, $msg_student);
+    $notif_stu->execute();
+    $notif_stu->close();
+}
 
-        // 🔔 إشعار للدكتور بأنه أرسل توصية
-        $msg_prof = "You have sent a recommendation for " . ($graduate['name'] ?? 'the student') . ".";
-        $notif_pr = $conn->prepare("
-            INSERT INTO notifications (user_id, message, created_at) 
-            VALUES (?, ?, NOW())
-        ");
-        $notif_pr->bind_param("is", $professor_user_id, $msg_prof);
-        $notif_pr->execute();
-        $notif_pr->close();
+
 
         // 🕒 إضافة سجل في جدول تتبع الطلبات (Recommendation Sent)
         $profUserId  = $professor_user_id;
@@ -222,6 +221,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $message_alert = "✅ The recommendation has been sent successfully!";
     }
+    $profSettings = mysqli_fetch_assoc(mysqli_query($conn, "
+    SELECT notify_uploaded
+    FROM notification_settings 
+    WHERE user_id='$profUserId'
+"));
+
+if (!empty($profSettings['notify_uploaded'])) {
+   $msg_prof = "You have sent a recommendation for \"{$graduate['name']}\" regarding \"{$graduate['purpose']}\".";
+ $notif_pr = $conn->prepare("
+        INSERT INTO notifications (user_id, message, created_at) 
+        VALUES (?, ?, NOW())
+    ");
+    $notif_pr->bind_param("is", $profUserId, $msg_prof);
+    $notif_pr->execute();
+    $notif_pr->close();
+}
+
 }
 ?>
 <!DOCTYPE html>

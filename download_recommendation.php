@@ -56,26 +56,60 @@ if ($result && $result->num_rows > 0) {
 
         $pdf->AddPage();
 
-        // محتوى PDF بالإنجليزية
         $html = '
-        <table width="100%">
-        
-       <h1>Recommendation Letter</h1>
-       او الطالب اسم الجامعة<p>University of Baha</p>
-        
-        </table>
-        <hr>
-        <div style="line-height:1.8; font-size:14px; text-align:left;">
-        <p>To Whom It May Concern,</p>
-        <p>' . nl2br($recommendation_content) . '</p>
-        <p>We wish the student continued success in their academic journey.</p>
-        </div>
-        <br><br>
-        <div style="text-align:left;">
-        <p>Prepared by: Ather graduet Office</p>
-        <p>Date: ' . date("d/m/Y") . '</p>
-        </div>
-        ';
+<style>
+    .header {
+        text-align: center;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .sub-header {
+        text-align: center;
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+    .content {
+        font-size: 14px;
+        line-height: 1.8;
+        text-align: justify;
+    }
+    .footer {
+        margin-top: 40px;
+        font-size: 13px;
+        text-align: left;
+    }
+</style>
+
+<div class="header">
+    Recommendation Letter
+</div>
+
+
+<hr>
+
+<div class="content">
+    <p>To Whom It May Concern,</p>
+
+    <p>' . nl2br(htmlspecialchars($recommendation_content)) . '</p>
+
+    <p>
+        This letter is issued upon the request of the student for academic
+        and professional purposes. We wish the student continued success
+        in their future academic and career endeavors.
+    </p>
+</div>
+
+<div class="footer">
+    <p>Sincerely,</p>
+    <p>
+        Graduate Office<br>
+       Athar Graduate <br>
+      
+    </p>
+    <p>Date: ' . date("d/m/Y") . '</p>
+</div>
+';
+
 
         $pdf->writeHTML($html, true, false, true, false, '');
         $pdf->Output('recommendation_' . $request_id . '.pdf', 'D'); // تحميل PDF

@@ -70,11 +70,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
         SELECT notify_rejected
         FROM notification_settings WHERE user_id='$profUserId'
     "));
+if ($action === 'reject' && !empty($profSettings['notify_rejected'])) {
+    $msg = "You have rejected a recommendation for \"$student_name\" regarding \"$purpose\".";
+    mysqli_query($conn, "
+        INSERT INTO notifications (user_id, message, created_at) 
+        VALUES ('$profUserId', '$msg', NOW())
+    ");
+}
 
-    if (!empty($profSettings['notify_rejected'])) {
-        $msg = "You have rejected a recommendation for \"$student_name\" regarding \"$purpose\".";
-        mysqli_query($conn, "INSERT INTO notifications (user_id, message, created_at) VALUES ('$profUserId', '$msg', NOW())");
-    }
 
     echo $newStatus;
     exit;
