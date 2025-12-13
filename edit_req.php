@@ -159,7 +159,16 @@ textarea { min-height:100px; resize:vertical; }
 .submit-wrap { display:flex; justify-content:flex-start; margin-top:20px; }
 .btn { background: var(--accent-color); color:white; padding:14px 35px; border-radius:8px; border:none; font-size:18px; font-weight:700; cursor:pointer; box-shadow: var(--shadow); transition: background-color 0.3s; }
 .btn:hover { background-color: var(--accent-hover); }
-.status-message { margin:20px 0; padding:15px; background-color:#f8d7da; border:1px solid #f5c6cb; color:#721c24; border-radius:6px; font-weight:bold; text-align:center; }
+.status-message {
+  margin:20px 0;
+  padding:15px;
+  background-color: #a4db74ff;
+  border:1px solid #dcf5c6ff;
+  color:#03060a;
+  border-radius:6px;
+  font-weight:bold;
+  text-align:center;
+}
 .back_btn { display: inline-block; font-size: 24px; color: #03060a; text-decoration: none; }
 </style>
 </head>

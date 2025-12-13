@@ -444,10 +444,10 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
         <div class="info-box">
             <div class="info-item"><b>Name:</b> <?= htmlspecialchars($graduate['name']) ?></div>
             <div class="info-item"><b>National ID:</b> <?= htmlspecialchars($graduate['National_ID']) ?></div>
-            <div class="info-item"><b>Department:</b> <?= htmlspecialchars($graduate['department']) ?></div>
+            <div class="info-item"><b>Email:</b> <?= htmlspecialchars($graduate['email']) ?></div>
             <div class="info-item"><b>Graduation Year:</b> <?= htmlspecialchars($graduate['graduation_year']) ?></div>
             <div class="info-item"><b>GPA:</b> <?= htmlspecialchars($graduate['gpa']) ?></div>
-            <div class="info-item"><b>Major:</b> <?= htmlspecialchars($graduate['major']) ?></div>
+            <div class="info-item"><b>Major:</b> <?= htmlspecialchars($graduate['department']) ?></div>
             <div class="info-item"><b>Purpose:</b> <?= htmlspecialchars($graduate['purpose']) ?></div>
             <div class="info-item"><b>Recommendation Type:</b> <?= htmlspecialchars($graduate['recommendation_type']) ?></div>
             <div class="info-item"><b>CV:</b>

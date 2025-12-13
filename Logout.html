@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logout Successful</title>
+
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: "Poppins", Arial, sans-serif;
             background-color: #f7f3ed;
             display: flex;
             justify-content: center;
@@ -15,48 +16,94 @@
             margin: 0;
             flex-direction: column;
             text-align: center;
+            animation: fadeIn 1.2s ease-in-out;
         }
 
+        /* Logo Section */
         .logo-container {
             position: absolute;
-            top: 50px;
-            left: 50px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            top: 40px;
+            left: 40px;
+            text-align: center;
         }
 
         .logo {
-            width: 80px;
+            width: 100px;
             height: auto;
             margin-bottom: 5px;
         }
 
-        .logo-text {
+        .logo-text p {
+            margin: 0;
             font-size: 10px;
             color: #555;
-            text-align: center;
+            font-weight: bold;
+            letter-spacing: 0.5px;
         }
 
+        /* Main Text */
         h1 {
-            font-size: 32px;
-            color: #333;
-            margin-bottom: 10px;
-            margin-top: 20px;
-            font-weight: bolder;
+            font-size: 34px;
+            color: #2e2e2e;
+            margin: 5px 0;
+            font-weight: 800;
+        }
+
+        /* Button */
+        .btn {
+            margin-top: 25px;
+            padding: 12px 25px;
+            background-color: #003366;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            display: inline-block;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #005599;
+            transform: scale(1.05);
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 600px) {
+            .logo-container {
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            .logo {
+                width: 70px;
+            }
         }
     </style>
 </head>
+
 <body>
+
+    <!-- Logo -->
     <div class="logo-container">
-        <img src="logo.jpg" alt="Athar Graduate Logo" class="logo">
+        <img src="logobl.PNG" alt="Athar Graduate Logo" class="logo">
         <div class="logo-text">
-            <p>ATHER GRADUATE</p>
-            <p>ONE CLICK. ONE REQUEST.</p>
-            <p>ENDLESS POSSIBILITIES.</p>
+           
+          
         </div>
     </div>
+
+    <!-- Main Content -->
     <h1>Logout successful.</h1>
     <h1>Have a great day!</h1>
+
+    <!-- Button -->
+    <a href="login.php" class="btn">Login Again</a>
+
 </body>
 </html>

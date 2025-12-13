@@ -251,8 +251,13 @@ h2 {
   </div>
 </div>
 
-<!-- Main Content -->
 <div class="main-content">
+  <div class="top-icons">
+    <button class="icon-btn" title="Notifications" onclick="window.location.href='notifications.php'"><i class="fas fa-bell"></i></button>
+    <button class="icon-btn" title="Logout" onclick="window.location.href='logout.html'"><i class="fas fa-arrow-right-from-bracket"></i></button>
+  </div>
+<!-- Main Content -->
+
     <h2>Notifications</h2>
 
     <?php if (count($notifications) > 0): ?>

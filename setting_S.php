@@ -31,10 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $notify_pending = isset($_POST['notify_pending']) ? 1 : 0;
     $notify_rejected = isset($_POST['notify_rejected']) ? 1 : 0;
     $notify_uploaded = isset($_POST['notify_uploaded']) ? 1 : 0;
-    $via_email = isset($_POST['via_email']) ? 1 : 0;
-    $via_in_app = isset($_POST['via_in_app']) ? 1 : 0;
-    $reminder_days = isset($_POST['reminder_days']) ? intval($_POST['reminder_days']) : 0;
-
+   
     // تحقق إذا عنده سجل
     $check = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'")
         or die("Database error (check): " . mysqli_error($conn));
@@ -44,17 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             notify_new_request='$notify_new_request',
             notify_pending='$notify_pending',
             notify_rejected='$notify_rejected',
-            notify_uploaded='$notify_uploaded',
-            via_email='$via_email',
-            via_in_app='$via_in_app',
-            reminder_days='$reminder_days'
+            notify_uploaded='$notify_uploaded'
             WHERE user_id='$user_id'")
             or die("Update error: " . mysqli_error($conn));
     } else {
         mysqli_query($conn, "INSERT INTO notification_settings 
-            (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, via_email, via_in_app, reminder_days)
+            (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded)
             VALUES 
-            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', '$via_email', '$via_in_app', '$reminder_days')")
+            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded')")
             or die("Insert error: " . mysqli_error($conn));
     }
 
@@ -67,8 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $result = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'")
     or die("Database error (settings): " . mysqli_error($conn));
 
-$settings = mysqli_fetch_assoc($result) ?: [];
-
+$settings = mysqli_fetch_assoc($result) ?: []
 
 
 

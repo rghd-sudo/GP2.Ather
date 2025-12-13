@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-//include 'index.php';  
+include 'index.php';  
 
 // 🌟🌟 الشرط الأساسي: التحقق مما إذا كان الزائر قد مر بصفحة 3D.php
 if (!isset($_SESSION['splashed_complete']) || $_SESSION['splashed_complete'] !== true) {
@@ -567,12 +567,7 @@ margin-bottom: 20px;
             <a href="#faq">FAQ</a>
             <a href="login.php">Login</a>
         </div>
-        <div class="footer-col">
-            <h4>Support & Legal</h4>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Use</a>
-            <a href="#">Help Center</a>
-        </div>
+       
         <div class="footer-col">
             <h4>Connect With Us</h4>
             <div class="social-icons">
