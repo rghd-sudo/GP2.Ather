@@ -36,9 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
           // إدخال سجل جديد
         mysqli_query($conn, "INSERT INTO notification_settings 
-            (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, notify_admin_announcement, via_email, via_in_app, reminder_days)
+            (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded, )
             VALUES 
-            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', '$notify_admin', '$via_email', '$via_in_app', '$reminder_days')");
+            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded', )");
     }
 
     $message = "Settings saved successfully!";
