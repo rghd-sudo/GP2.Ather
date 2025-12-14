@@ -94,6 +94,32 @@ $message_alert = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $content_raw = $_POST['recommendation_text'] ?? '';
+
+// --------------------------------------------------------
+//7) رفع قالب التوصيه بعد التعديل
+// --------------------------------------------------------
+if (!empty($_FILES['recommendation_file']['name'])) {
+
+    $word_tmp  = $_FILES['recommendation_file']['tmp_name'];
+    $word_name = time() . "_" . basename($_FILES['recommendation_file']['name']);
+
+    $word_dir = __DIR__ . "/uploads/word_files";
+    if (!is_dir($word_dir)) { mkdir($word_dir, 0777, true); }
+    $word_path = $word_dir . "/" . $word_name;
+    move_uploaded_file($word_tmp, $word_path);
+   
+    // يقرا محتوى ملف الوورد
+    require_once 'vendor/autoload.php';
+    $phpWord = \PhpOffice\PhpWord\IOFactory::load($word_path);
+
+    $word_content = '';
+    foreach ($phpWord->getSections() as $section) {
+        foreach ($section->getElements() as $element) {
+            if (method_exists($element, 'getText')) {  $word_content .= $element->getText() . "<br>";} } }
+
+    // يسخدم الملف بدال ما يكتب نص
+    $content_raw = $word_content;}
+
     $status      = $_POST['action']              ?? 'draft';
 
     // تنظيف النص من إضافات Word
@@ -167,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // --------------------------------------------------------
-    // 6.3 تحديث حالة الطلب + الإشعارات + التتبع
+    //8)تحديث حالة الطلب + الإشعارات + التتبع
     // --------------------------------------------------------
     if ($status === 'draft') {
 
@@ -478,12 +504,20 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
             </div>
         </div>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <textarea name="recommendation_text"><?= htmlspecialchars($recommendation['content'] ?? '') ?></textarea>
 
             <button type="button" onclick="history.back()" class="cancel-btn">Cancel</button>
             <button type="submit" name="action" value="draft" class="draft-btn">Save Draft</button>
             <button type="submit" name="action" value="completed" class="send-btn">Send Recommendation</button>
+            <!-- قالب التوصيه  -->
+          <div style="margin-top:15px; display:flex; align-items:center; gap:15px;">
+           <!-- زر تحميل قالب التوصية -->
+           <a href="templates/Letter_of_Recommendation_Template.docx"
+           class="draft-btn" download>
+         <i class="fa fa-download"></i> Recommendation Template</a>
+           <!-- خانة إرفاق ملف Word -->
+          <input type="file" name="recommendation_file" accept=".doc,.docx" style="padding:8px;"> </div>
 
             <?php if (!empty($recommendation['pdf_path']) && file_exists($recommendation['pdf_path'])): ?>
                 <div style="margin-top:15px;">
