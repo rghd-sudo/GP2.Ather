@@ -94,33 +94,29 @@ $message_alert = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $content_raw = $_POST['recommendation_text'] ?? '';
-
-// --------------------------------------------------------
-//7) رفع قالب التوصيه بعد التعديل
-// --------------------------------------------------------
-if (!empty($_FILES['recommendation_file']['name'])) {
-
-    $word_tmp  = $_FILES['recommendation_file']['tmp_name'];
-    $word_name = time() . "_" . basename($_FILES['recommendation_file']['name']);
-
-    $word_dir = __DIR__ . "/uploads/word_files";
-    if (!is_dir($word_dir)) { mkdir($word_dir, 0777, true); }
-    $word_path = $word_dir . "/" . $word_name;
-    move_uploaded_file($word_tmp, $word_path);
-   
-    // يقرا محتوى ملف الوورد
-    require_once 'vendor/autoload.php';
-    $phpWord = \PhpOffice\PhpWord\IOFactory::load($word_path);
-
-    $word_content = '';
-    foreach ($phpWord->getSections() as $section) {
-        foreach ($section->getElements() as $element) {
-            if (method_exists($element, 'getText')) {  $word_content .= $element->getText() . "<br>";} } }
-
-    // يسخدم الملف بدال ما يكتب نص
-    $content_raw = $word_content;}
-
     $status      = $_POST['action']              ?? 'draft';
+    $pdf_path = null;
+
+// رفع قالب التوصيه بعد التعديل
+
+    if (!empty($_FILES['recommendation_file']['name'])) {
+    $ext = pathinfo($_FILES['recommendation_file']['name'], PATHINFO_EXTENSION);
+    if (!in_array($ext, ['doc', 'docx'])) { die("Invalid file type");}
+
+    $upload_dir = __DIR__ . "/uploads/recommendations";
+    if (!is_dir($upload_dir)) { mkdir($upload_dir, 0777, true);}
+
+    // حفظ ملف الوورد مؤقتًا
+    $word_path = $upload_dir . "/word_" . uniqid() . "." . $ext;
+    move_uploaded_file($_FILES['recommendation_file']['tmp_name'], $word_path);
+
+    // تحويل ملف الوورد الى PDF
+    $pdf_path = $upload_dir . "/recommendation_" . uniqid() . ".pdf";
+    $command = "libreoffice --headless --convert-to pdf --outdir "
+             . escapeshellarg($upload_dir) . " "
+             . escapeshellarg($word_path); shell_exec($command);}
+   
+
 
     // تنظيف النص من إضافات Word
     $clean = preg_replace('/<!--\[if.*?<!\[endif\]-->/is', '', $content_raw);
@@ -492,6 +488,7 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
             <div class="info-item"><b>Major:</b> <?= htmlspecialchars($graduate['department']) ?></div>
             <div class="info-item"><b>Purpose:</b> <?= htmlspecialchars($graduate['purpose']) ?></div>
             <div class="info-item"><b>Recommendation Type:</b> <?= htmlspecialchars($graduate['recommendation_type']) ?></div>
+            <div class="info-item"><b>Course Name:</b> <?= htmlspecialchars($graduate['course']) ?></div>
             <div class="info-item"><b>CV:</b>
                 <?php if (!empty($graduate['cv_path'])): ?>
                     <a href="<?= htmlspecialchars($graduate['cv_path']) ?>" target="_blank">View CV</a>
