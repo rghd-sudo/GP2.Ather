@@ -513,7 +513,7 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
             <!-- قالب التوصيه  -->
           <div style="margin-top:15px; display:flex; align-items:center; gap:15px;">
            <!-- زر تحميل قالب التوصية -->
-           <a href="templates/Letter_of_Recommendation_Template.docx"
+           <a href="Letter_of_Recommendation_Template.docx"
            class="draft-btn" download>
          <i class="fa fa-download"></i> Recommendation Template</a>
            <!-- خانة إرفاق ملف Word -->

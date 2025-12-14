@@ -54,216 +54,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet" href=>
     <link rel="stylesheet" href="tyle.css">
-    <style>
-         :root {
-            --light-peach:#fdfaf5;
-            --coral: #ff7f50;
-            --dark-gray: #333;
-            --light-gray: #777;
-            --white: #fff;
-        }
- body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f3ed;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            position: relative;
-        }
-
-        .login-container {
-            text-align: center;
-            padding: 40px;
-            width: 400px;
-        }
-
-        h1 {
-            font-size: 48px;
-            color: #333;
-            margin-bottom: 40px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            text-align: left;
-            margin-bottom: 5px;
-            color: #555;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            background-color: #e0d9d3;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        .btn {
-            background-color: #ef8b78;
-            color: #fff;
-            padding: 15px 50px;
-            border: none;
-            border-radius: 30px;
-            font-size: 20px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-
-        .link-text {
-            font-size: 14px;
-            margin-top: 20px;
-            color: #555;
-        }
-
-        .link-text a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .shapes {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 40%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
-        }
-
-        .shape {
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            border-radius: 50px;
-            transform: rotate(-30deg);
-        }
-
-        .shape1 {
-            background-color: #63b999;
-            top: -100px;
-            left: -70px;
-        }
-
-        .shape2 {
-            background-color: #adc0d9;
-            top: 50px;
-            left: -50px;
-        }
-
-        .shape3 {
-            background-color:  #f27360;
-            top: 200px;
-            left: -150px;
-        }
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        .btn-primary {
-  background: #f27360;
-  color: white;
-  border: none;
-  border-radius: 25px;
-  padding: 10px 25px;
-  cursor: pointer;
-  font-size: 16px;
+<style>
+body{
+    font-family:'Poppins',sans-serif;
+    background:#fdfaf5;
+    margin:0;
+    padding:0;
 }
 
-.btn-primary:hover {
-  background: #dd5d4aff;
+/* Background shapes */
+.shapes{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    z-index:-1;
 }
-      
-        /* --- Header & Navigation Bar --- */
-        .header {
-            background-color: var(--white);
-            padding: 15px 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+.shape{
+    position:absolute;
+    width:300px;
+    height:300px;
+    border-radius:50px;
+    transform:rotate(-30deg);
+}
+.shape1{background:#63b999;top:-100px;left:-70px;}
+.shape2{background:#adc0d9;top:50px;left:-50px;}
+.shape3{background:#f27360;top:200px;left:-150px;}
 
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo img {
-            height: 40px;
-        }
-
-        .logo-text {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--coral);
-        }
-         .nav-links {
-            list-style: none;
-            display: flex;
-            gap: 30px;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--dark-gray);
-            font-weight: 400;
-            transition: color 0.3s ease;
-        }
-
-        .nav-links a:hover {
-            color: var(--coral);
-        }
-        .small-text {
-  font-size: 12px;
-  color: gray;
+/* Card container */
+.container{
+    max-width:500px;
+    margin:80px auto;
+    padding:20px;
+    position:relative;
+}
+.card{
+    background:#fff;
+    border-radius:15px;
+    padding:30px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.08);
 }
 
-        </style>
+/* Form */
+h2{
+    font-size:2rem;
+    text-align:center;
+    margin-bottom:25px;
+    color:#2c3e50;
+}
+.input-group{
+    margin-bottom:15px;
+}
+.input-group label{
+    display:block;
+    margin-bottom:5px;
+    color:#555;
+    font-weight:600;
+}
+.input-group input{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#e0d9d3;
+    font-size:16px;
+    box-sizing:border-box;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    background:#ff7f50;
+    color:#fff;
+    border:none;
+    border-radius:50px;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    transition:0.3s;
+}
+button:hover{
+    background:#e6603d;
+    transform:translateY(-2px);
+}
+
+.small-text{
+    font-size:12px;
+    color:gray;
+    text-align:center;
+    margin-top:15px;
+}
+
+.message{
+    margin-top:15px;
+    text-align:center;
+    color:red;
+    font-size:0.9rem;
+}
+
+@media(max-width:576px){
+    .container{margin:30px 15px;}
+}</style>
 </head>
 <body>
-  <!--  <header class="header">
-        <div class="container">
-            <nav class="navbar">
-                <div class="logo">
-                    <img src="logo.jpg" alt="Athar Logo">
-                    <span class="logo-text">Athar Graduate</span>
-                </div>
-                <ul class="nav-links">
-                    <li><a href="#statistics">Statistics</a></li>
-                    <li><a href="#services">Services</a></li>
-                    <li><a href="#about">About Us</a></li>
-                    <li><a href="#faq">FAQ</a></li>
-                    <li><a href="#contact">Contact Us</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>-->
      <div class="shapes">
         <div class="shape shape1"></div>
         <div class="shape shape2"></div>
         <div class="shape shape3"></div>
     </div>
-    <div class="login-container">
-        <h1>Login</h1>
+    
+<div class="container">
+    <div class="card">
+        <h2>Login</h2>
+
         <form action="login.php" method="POST">
             <div class="input-group">
             <label for="email">Email:</label>
@@ -282,5 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="message"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
     </div>
+</div>
+
 </body>
 </html>
