@@ -258,6 +258,12 @@ body {
 
 .field { margin-bottom:20px; }
 .label { font-weight:700; margin-bottom:6px; display:block; color:var(--sub-text); }
+.hint {
+  display:none;
+  color:#e74c3c;
+  font-size:13px;
+  margin-top:5px;
+}
 
 input[type="text"], textarea, select {
   width:100%; padding:12px; border-radius:5px;
@@ -333,9 +339,19 @@ textarea { min-height:100px; resize:vertical; }
 
   <form class="form-wrap" method="post" enctype="multipart/form-data">
     <div class="field">
-      <label class="label">Course Name*</label>
-      <input type="text" name="course" required>
-    </div>
+  <label class="label">Course Name*</label>
+  <input 
+    type="text" 
+    name="course" 
+    id="courseInput"
+    placeholder="Enter up to 3 courses separated by commas , e.g., Math 101, Physics 201"
+    required
+  >
+  <small id="courseHint" class="hint">
+    Maximum 3 courses allowed
+  </small>
+</div>
+
     <div class="field">
       <label class="label">Professor*</label>
       <select name="professor_id" required>
@@ -370,6 +386,23 @@ textarea { min-height:100px; resize:vertical; }
     </div>
   </form>
 </div>
+<script>
+const courseInput = document.getElementById('courseInput');
+const courseHint  = document.getElementById('courseHint');
+
+courseInput.addEventListener('input', () => {
+  const courses = courseInput.value
+    .split(',')
+    .map(c => c.trim())
+    .filter(c => c !== '');
+
+  if (courses.length > 3) {
+    courseHint.style.display = 'block';
+  } else {
+    courseHint.style.display = 'none';
+  }
+});
+</script>
 
 <script>
   document.getElementById('cvFile').addEventListener('change', function() {
