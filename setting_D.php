@@ -23,25 +23,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $notify_rejected = isset($_POST['notify_rejected']) ? 1 : 0;
     $notify_uploaded = isset($_POST['notify_uploaded']) ? 1 : 0;
    // 📝 تحقق إذا يوجد سجل مسبق للطالب
-    $check = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'");
+   
+    // تحقق إذا عنده سجل
+    $check = mysqli_query($conn, "SELECT * FROM notification_settings WHERE user_id='$user_id'")
+        or die("Database error (check): " . mysqli_error($conn));
+
     if (mysqli_num_rows($check) > 0) {
-        // تحديث السجل
         mysqli_query($conn, "UPDATE notification_settings SET 
             notify_new_request='$notify_new_request',
             notify_pending='$notify_pending',
             notify_rejected='$notify_rejected',
             notify_uploaded='$notify_uploaded'
-            
-            WHERE user_id='$user_id'");
+            WHERE user_id='$user_id'")
+            or die("Update error: " . mysqli_error($conn));
     } else {
-          // إدخال سجل جديد
         mysqli_query($conn, "INSERT INTO notification_settings 
             (user_id, notify_new_request, notify_pending, notify_rejected, notify_uploaded)
             VALUES 
-            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded'");
+            ('$user_id', '$notify_new_request', '$notify_pending', '$notify_rejected', '$notify_uploaded')")
+            or die("Insert error: " . mysqli_error($conn));
     }
 
-    $message = "Settings saved successfully!";
+    // إعادة تحميل نظيفة
+    header("Location: " . $_SERVER['PHP_SELF'] . "?saved=1");
+    exit();
 }
 
 // 📝 جلب الإعدادات الحالية للعرض

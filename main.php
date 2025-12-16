@@ -550,7 +550,7 @@ margin-bottom: 20px;
             </div>
             <div class="faq-item">
                 <button class="faq-question">Will I receive notifications? <i class="fas fa-chevron-down"></i></button>
-                <div class="faq-answer"><p>Absolutely. You will receive instant notifications via the platform and email regarding any changes in your request status.</p></div>
+                <div class="faq-answer"><p>Absolutely. You will receive instant notifications via the platform regarding any changes in your request status.</p></div>
             </div>
         </div>
     </section>

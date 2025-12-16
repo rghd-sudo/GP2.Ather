@@ -95,41 +95,125 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $content_raw = $_POST['recommendation_text'] ?? '';
     $status      = $_POST['action']              ?? 'draft';
+  $pdf_path = null;
 
-    // تنظيف النص من إضافات Word
+/* ==============================
+   الحالة (1): رفع ملف Word
+================================ */
+if (!empty($_FILES['recommendation_file']['name'])) {
+
+    if ($_FILES['recommendation_file']['error'] !== 0) {
+        die("❌ Upload error: " . $_FILES['recommendation_file']['error']);
+    }
+
+    $ext = strtolower(pathinfo($_FILES['recommendation_file']['name'], PATHINFO_EXTENSION));
+    if (!in_array($ext, ['doc', 'docx'])) {
+        die("❌ Invalid file type");
+    }
+
+    $upload_dir = __DIR__ . "/uploads/recommendations";
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0777, true);
+    }
+
+    $word_file = "recommendation_" . uniqid() . "." . $ext;
+    $word_path = $upload_dir . "/" . $word_file;
+
+    if (!move_uploaded_file($_FILES['recommendation_file']['tmp_name'], $word_path)) {
+        die("❌ Failed to upload Word file");
+    }
+
+    // ✅ نحفظ مسار ملف Word (نسبي)
+    $pdf_path = "uploads/recommendations/" . $word_file;
+
+    // محتوى وصفي فقط
+    $content = "Recommendation uploaded as Word file";
+}
+
+
+/* ==============================
+   الحالة (2): كتابة نص فقط
+================================ */
+else {
+
+    $content_raw = $_POST['recommendation_text'] ?? '';
+
+    // تنظيف النص
     $clean = preg_replace('/<!--\[if.*?<!\[endif\]-->/is', '', $content_raw);
-    $clean = preg_replace('/<v:.?<\/v:.?>/is', '', $clean);
-    $clean = preg_replace('/<o:p>\s*<\/o:p>/is', '', $clean);
-    $clean = preg_replace('/<span[^>]mso-[^>]>/is', '<span>', $clean);
-    $clean = preg_replace('/<p[^>]>\s<\/p>/is', '', $clean);
-
     $content = mb_convert_encoding($clean, 'UTF-8', 'auto');
 
-    // --------------------------------------------------------
-    // 6.1 توليد ملف PDF وحفظه في مجلد uploads
-    // --------------------------------------------------------
-    $pdf = new TCPDF();
-    $pdf->SetCreator(PDF_CREATOR);
-    $pdf->SetAuthor('University of Baha');
-    $pdf->SetTitle('Recommendation Letter');
-    $pdf->SetSubject('Recommendation');
+    require_once('tcpdf/tcpdf.php');
 
+    $pdf = new TCPDF();
     $pdf->setPrintHeader(false);
     $pdf->setPrintFooter(false);
-    $pdf->SetMargins(15, 15, 15);
-    $pdf->SetAutoPageBreak(true, 15);
+    $pdf->SetMargins(15, 20, 15);
     $pdf->SetFont('times', '', 14);
 
     $pdf->AddPage();
-    $pdf->writeHTML($content, true, false, true, false, '');
 
-    $upload_dir = __DIR__. "/uploads";
+     $html = '
+<style>
+    .header {
+        text-align: center;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .sub-header {
+        text-align: center;
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+    .content {
+        font-size: 14px;
+        line-height: 1.8;
+        text-align: justify;
+    }
+    .footer {
+        margin-top: 40px;
+        font-size: 13px;
+        text-align: left;
+    }
+</style>
+
+<div class="header">
+    Recommendation Letter
+</div>
+
+
+<hr>
+
+<div class="content">
+    <p>To Whom It May Concern,</p>
+
+    <p>' . nl2br(htmlspecialchars($recommendation_content)) . '</p>
+
+    <p>
+        This letter is issued upon the request of the student for academic
+        and professional purposes. We wish the student continued success
+        in their future academic and career endeavors.
+    </p>
+</div>
+<div class="footer">
+    <p>Sincerely,</p>
+    <p>
+        Graduate Office<br>
+       Athar Graduate <br>
+      
+    </p>
+    <p>Date: ' . date("d/m/Y") . '</p>
+</div>
+';
+    $pdf->writeHTML($html, true, false, true, false, '');
+
+    $upload_dir = __DIR__ . "/uploads/recommendations";
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0777, true);
     }
 
     $pdf_path = $upload_dir . "/recommendation_" . time() . ".pdf";
     $pdf->Output($pdf_path, "F");
+}
 
     // --------------------------------------------------------
     // 6.2 INSERT أو UPDATE في جدول recommendations
@@ -167,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // --------------------------------------------------------
-    // 6.3 تحديث حالة الطلب + الإشعارات + التتبع
+    //8)تحديث حالة الطلب + الإشعارات + التتبع
     // --------------------------------------------------------
     if ($status === 'draft') {
 
@@ -186,26 +270,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $req_update->bind_param("i", $request_id);
         $req_update->execute();
         $req_update->close();
+// -------------------- إعدادات إشعار الطالب --------------------
+$studentSettings = mysqli_fetch_assoc(mysqli_query($conn, "
+    SELECT notify_uploaded
+    FROM notification_settings 
+    WHERE user_id='$student_user_id'
+"));
 
-        // 🔔 إشعار للطالب
-        $msg_student = "Your recommendation has been completed and sent.";
-        $notif_stu   = $conn->prepare("
-            INSERT INTO notifications (user_id, message, created_at) 
-            VALUES (?, ?, NOW())
-        ");
-        $notif_stu->bind_param("is", $student_user_id, $msg_student);
-        $notif_stu->execute();
-        $notif_stu->close();
+if (!empty($studentSettings['notify_uploaded'])) {
+    $msg_student = "Your recommendation has been completed and sent.";
+    $notif_stu = $conn->prepare("
+        INSERT INTO notifications (user_id, message, created_at) 
+        VALUES (?, ?, NOW())
+    ");
+    $notif_stu->bind_param("is", $student_user_id, $msg_student);
+    $notif_stu->execute();
+    $notif_stu->close();
+}
 
-        // 🔔 إشعار للدكتور بأنه أرسل توصية
-        $msg_prof = "You have sent a recommendation for " . ($graduate['name'] ?? 'the student') . ".";
-        $notif_pr = $conn->prepare("
-            INSERT INTO notifications (user_id, message, created_at) 
-            VALUES (?, ?, NOW())
-        ");
-        $notif_pr->bind_param("is", $professor_user_id, $msg_prof);
-        $notif_pr->execute();
-        $notif_pr->close();
+
 
         // 🕒 إضافة سجل في جدول تتبع الطلبات (Recommendation Sent)
         $profUserId  = $professor_user_id;
@@ -222,6 +305,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $message_alert = "✅ The recommendation has been sent successfully!";
     }
+    $profSettings = mysqli_fetch_assoc(mysqli_query($conn, "
+    SELECT notify_uploaded
+    FROM notification_settings 
+    WHERE user_id='$profUserId'
+"));
+
+if (!empty($profSettings['notify_uploaded'])) {
+   $msg_prof = "You have sent a recommendation for \"{$graduate['name']}\" regarding \"{$graduate['purpose']}\".";
+ $notif_pr = $conn->prepare("
+        INSERT INTO notifications (user_id, message, created_at) 
+        VALUES (?, ?, NOW())
+    ");
+    $notif_pr->bind_param("is", $profUserId, $msg_prof);
+    $notif_pr->execute();
+    $notif_pr->close();
+}
+
 }
 ?>
 <!DOCTYPE html>
@@ -462,12 +562,20 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
             </div>
         </div>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <textarea name="recommendation_text"><?= htmlspecialchars($recommendation['content'] ?? '') ?></textarea>
 
             <button type="button" onclick="history.back()" class="cancel-btn">Cancel</button>
             <button type="submit" name="action" value="draft" class="draft-btn">Save Draft</button>
             <button type="submit" name="action" value="completed" class="send-btn">Send Recommendation</button>
+            <!-- قالب التوصيه  -->
+          <div style="margin-top:15px; display:flex; align-items:center; gap:15px;">
+           <!-- زر تحميل قالب التوصية -->
+           <a href="Letter_of_Recommendation_Template.docx"
+           class="draft-btn" download>
+         <i class="fa fa-download"></i> Recommendation Template</a>
+           <!-- خانة إرفاق ملف Word -->
+          <input type="file" name="recommendation_file" accept=".doc,.docx" style="padding:8px;"> </div>
 
             <?php if (!empty($recommendation['pdf_path']) && file_exists($recommendation['pdf_path'])): ?>
                 <div style="margin-top:15px;">

@@ -353,7 +353,7 @@ echo  "<button class='download-btn' onclick=\"loadRequest(".$row['id'].")\"
 }
 
 // إذا كانت الحالة "accepted" يظهر زر تحميل فقط (يمكن تعديل حسب الحاجة)
-elseif ($status == "accepted" || $status === 'rejected') {
+elseif ($status == "accepted" || $status === 'rejected' || $status === 'draft' ) {
     echo "<!-- accepted, لا يسمح بالتعديل -->";
 } 
 // إذا لم تكن الحالة completed أو accepted، يظهر زر التعديل والحذف

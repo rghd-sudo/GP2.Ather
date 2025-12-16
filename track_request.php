@@ -137,7 +137,19 @@ body { margin:0; font-family:"Poppins", sans-serif; background:#fdfaf6; display:
 .current{ box-shadow:0 0 0 4px rgba(122,219,162,0.12); }
 .no-requests{ text-align:center; padding:26px; background:#fff; border-radius:8px; border:1px dashed #cfd8dc; color:#777; }
 .btn{ background:#7adba2; color:#fff; padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
-@media (max-width:768px){ .main-content{ margin-left:70px; } .sidebar{ width:70px; } }
+/* 🔹 Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 70px;
+  }
+  .sidebar {
+    width: 70px;
+  }
+  .menu-text {
+    display: none;
+  }
+}
+
 </style>
 </head>
 <body>
