@@ -180,7 +180,12 @@ button:hover{
             </div>
 
             <button class="btn-primary" type="submit">Login</button>
+            <p class="small-text" style="text-align: right; margin-top: 10px;">
+                <a href="forgot_password.php">Forgot Password?</a>
+            </p>
            <br> <p class="small-text">Don't have an account? <a href="register.php">Register here</a></p>
+
+
         </form>
 
         <?php if(!empty($message)): ?>
