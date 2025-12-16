@@ -51,7 +51,7 @@ $reset_link = "http://localhost/GP2.ATHER/reset_password.php?token=" . urlencode
             
             // *للاختبار المحلي فقط*
              $message_type = "success";
-             $message = " password reset link has been sent to your email : <a href='{$reset_link}'>Click</a>)";
+        $message = "Password reset request successful. Click the link to set your new password: <a href='{$reset_link}'>Reset Password</a>";
             
         } else {
                     $message_type = "success";
@@ -121,7 +121,7 @@ $reset_link = "http://localhost/GP2.ATHER/reset_password.php?token=" . urlencode
 
         /* 2. تنسيق الرابط نفسه */
         p.small-text a {
-            color: #2f50bb; /* تغيير لون الرابط */
+            color: #bb672fff; /* تغيير لون الرابط */
             text-decoration: none; /* إزالة الخط السفلي */
             font-weight: bold; 
             padding: 5px; 
