@@ -34,14 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_id'], $_POST[
     $purpose         = $row['purpose'];
     $res->close();
 
-/*
-
-    if ($action === 'accept' && !empty($studentSettings['notify_uploaded'])) {
-        $msg = "Your recommendation \"$purpose\" has been completed and sent.";
-        mysqli_query($conn, "INSERT INTO notifications (user_id, message, created_at) VALUES ('$student_user_id', '$msg', NOW())");
-    }
-
- -------------------- إرسال إشعار للطالب --------------------*/
+/* -------------------- إرسال إشعار للطالب --------------------*/
     $studentSettings = mysqli_fetch_assoc(mysqli_query($conn, "
         SELECT notify_uploaded, notify_pending, notify_rejected
         FROM notification_settings WHERE user_id='$student_user_id'
