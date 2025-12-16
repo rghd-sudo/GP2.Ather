@@ -95,63 +95,125 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $content_raw = $_POST['recommendation_text'] ?? '';
     $status      = $_POST['action']              ?? 'draft';
-    $pdf_path = null;
+  $pdf_path = null;
 
-// رفع قالب التوصيه بعد التعديل
+/* ==============================
+   الحالة (1): رفع ملف Word
+================================ */
+if (!empty($_FILES['recommendation_file']['name'])) {
 
-    if (!empty($_FILES['recommendation_file']['name'])) {
-    $ext = pathinfo($_FILES['recommendation_file']['name'], PATHINFO_EXTENSION);
-    if (!in_array($ext, ['doc', 'docx'])) { die("Invalid file type");}
+    if ($_FILES['recommendation_file']['error'] !== 0) {
+        die("❌ Upload error: " . $_FILES['recommendation_file']['error']);
+    }
+
+    $ext = strtolower(pathinfo($_FILES['recommendation_file']['name'], PATHINFO_EXTENSION));
+    if (!in_array($ext, ['doc', 'docx'])) {
+        die("❌ Invalid file type");
+    }
 
     $upload_dir = __DIR__ . "/uploads/recommendations";
-    if (!is_dir($upload_dir)) { mkdir($upload_dir, 0777, true);}
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0777, true);
+    }
 
-    // حفظ ملف الوورد مؤقتًا
-    $word_path = $upload_dir . "/word_" . uniqid() . "." . $ext;
-    move_uploaded_file($_FILES['recommendation_file']['tmp_name'], $word_path);
+    $word_file = "recommendation_" . uniqid() . "." . $ext;
+    $word_path = $upload_dir . "/" . $word_file;
 
-    // تحويل ملف الوورد الى PDF
-    $pdf_path = $upload_dir . "/recommendation_" . uniqid() . ".pdf";
-    $command = "libreoffice --headless --convert-to pdf --outdir "
-             . escapeshellarg($upload_dir) . " "
-             . escapeshellarg($word_path); shell_exec($command);}
-   
+    if (!move_uploaded_file($_FILES['recommendation_file']['tmp_name'], $word_path)) {
+        die("❌ Failed to upload Word file");
+    }
+
+    // ✅ نحفظ مسار ملف Word (نسبي)
+    $pdf_path = "uploads/recommendations/" . $word_file;
+
+    // محتوى وصفي فقط
+    $content = "Recommendation uploaded as Word file";
+}
 
 
-    // تنظيف النص من إضافات Word
+/* ==============================
+   الحالة (2): كتابة نص فقط
+================================ */
+else {
+
+    $content_raw = $_POST['recommendation_text'] ?? '';
+
+    // تنظيف النص
     $clean = preg_replace('/<!--\[if.*?<!\[endif\]-->/is', '', $content_raw);
-    $clean = preg_replace('/<v:.?<\/v:.?>/is', '', $clean);
-    $clean = preg_replace('/<o:p>\s*<\/o:p>/is', '', $clean);
-    $clean = preg_replace('/<span[^>]mso-[^>]>/is', '<span>', $clean);
-    $clean = preg_replace('/<p[^>]>\s<\/p>/is', '', $clean);
-
     $content = mb_convert_encoding($clean, 'UTF-8', 'auto');
 
-    // --------------------------------------------------------
-    // 6.1 توليد ملف PDF وحفظه في مجلد uploads
-    // --------------------------------------------------------
-    $pdf = new TCPDF();
-    $pdf->SetCreator(PDF_CREATOR);
-    $pdf->SetAuthor('University of Baha');
-    $pdf->SetTitle('Recommendation Letter');
-    $pdf->SetSubject('Recommendation');
+    require_once('tcpdf/tcpdf.php');
 
+    $pdf = new TCPDF();
     $pdf->setPrintHeader(false);
     $pdf->setPrintFooter(false);
-    $pdf->SetMargins(15, 15, 15);
-    $pdf->SetAutoPageBreak(true, 15);
+    $pdf->SetMargins(15, 20, 15);
     $pdf->SetFont('times', '', 14);
 
     $pdf->AddPage();
-    $pdf->writeHTML($content, true, false, true, false, '');
 
-    $upload_dir = __DIR__. "/uploads";
+     $html = '
+<style>
+    .header {
+        text-align: center;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .sub-header {
+        text-align: center;
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+    .content {
+        font-size: 14px;
+        line-height: 1.8;
+        text-align: justify;
+    }
+    .footer {
+        margin-top: 40px;
+        font-size: 13px;
+        text-align: left;
+    }
+</style>
+
+<div class="header">
+    Recommendation Letter
+</div>
+
+
+<hr>
+
+<div class="content">
+    <p>To Whom It May Concern,</p>
+
+    <p>' . nl2br(htmlspecialchars($recommendation_content)) . '</p>
+
+    <p>
+        This letter is issued upon the request of the student for academic
+        and professional purposes. We wish the student continued success
+        in their future academic and career endeavors.
+    </p>
+</div>
+<div class="footer">
+    <p>Sincerely,</p>
+    <p>
+        Graduate Office<br>
+       Athar Graduate <br>
+      
+    </p>
+    <p>Date: ' . date("d/m/Y") . '</p>
+</div>
+';
+    $pdf->writeHTML($html, true, false, true, false, '');
+
+    $upload_dir = __DIR__ . "/uploads/recommendations";
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0777, true);
     }
 
     $pdf_path = $upload_dir . "/recommendation_" . time() . ".pdf";
     $pdf->Output($pdf_path, "F");
+}
 
     // --------------------------------------------------------
     // 6.2 INSERT أو UPDATE في جدول recommendations
@@ -488,7 +550,6 @@ button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 6px;
             <div class="info-item"><b>Major:</b> <?= htmlspecialchars($graduate['department']) ?></div>
             <div class="info-item"><b>Purpose:</b> <?= htmlspecialchars($graduate['purpose']) ?></div>
             <div class="info-item"><b>Recommendation Type:</b> <?= htmlspecialchars($graduate['recommendation_type']) ?></div>
-            <div class="info-item"><b>Course Name:</b> <?= htmlspecialchars($graduate['course']) ?></div>
             <div class="info-item"><b>CV:</b>
                 <?php if (!empty($graduate['cv_path'])): ?>
                     <a href="<?= htmlspecialchars($graduate['cv_path']) ?>" target="_blank">View CV</a>
