@@ -68,9 +68,47 @@ if (empty($token)) {
         .container{max-width:500px; margin:80px auto; padding:20px;}
         .card{background:#fff; border-radius:15px; padding:30px; box-shadow:0 4px 15px rgba(0,0,0,0.08);}
         .input-group input{width:100%; padding:12px; border:none; border-radius:10px; background:#e0d9d3;}
-        button{width:100%; padding:15px; background:#ff7f50; color:#fff; border-radius:50px;}
+        button{width:100%; padding:15px; background:#ff7f50; color:#fff; border-radius:50px; font-weight: bold; }
         .message{margin-top:15px; text-align:center; color:red;}
         .message.success{color:green;}
+        .card h2 {
+         text-align: center;
+         font-weight: bold;
+         }
+         /* هذا الجزء هو المسؤول عن تنسيق الليبلات */
+        .input-group label {
+            font-weight: bold; /* يجعل الخط غامقاً (Bold) */
+            font-size: 0.9em;  /* يصغر حجم الخط */
+            display: block;    /* يجعل الليبل يأخذ سطراً كاملاً */
+            margin-bottom: 5px; /* يضيف مسافة صغيرة أسفل الليبل */
+        }
+        .input-group {
+        margin-bottom: 20px; /* القيمة الحالية */
+         }
+ /* 1. تنسيق الفقرة الحاوية للرابط */
+p.small-text {
+    /* المسافة العلوية */
+    margin-top: 15px; 
+    /* توسيط الرابط أفقياً */
+    text-align: center; 
+    /* يمكنك إزالة السطر التالي إذا لم يكن له تأثير واضح */
+    font-size: 0.9em; 
+}
+
+/* 2. تنسيق الرابط نفسه */
+p.small-text a {
+    color: #ff7f50; 
+    text-decoration: none; /* إزالة الخط السفلي */
+    font-weight: bold; 
+    padding: 5px; /* مسافة حول النص (اختياري) */
+    display: inline-block; /* لضمان تطبيق البادينج بشكل صحيح */
+}
+
+/* 3. تأثير عند مرور الماوس (اختياري) */
+p.small-text a:hover {
+    text-decoration: underline; 
+    color: #d1643c; 
+}
     </style>
 </head>
 <body>
@@ -100,7 +138,9 @@ if (empty($token)) {
                 </form>
             <?php endif; ?>
             
-            <p class="small-text" style="margin-top: 15px;"><a href="login.php">Back to Login</a></p>
+        <p class="small-text"> 
+         <a href="login.php">Login</a>
+        </p>
         </div>
     </div>
 </body>

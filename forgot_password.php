@@ -1,5 +1,5 @@
 <?php
-include 'index.php'; // يفترض أن هذا الملف يحتوي على $conn للاتصال بقاعدة البيانات
+include 'index.php'; 
 $conn->set_charset("utf8mb4");
 $message = "";
 
@@ -47,21 +47,20 @@ $reset_link = "http://localhost/GP2.ATHER/reset_password.php?token=" . urlencode
             $body = "Hello,\n\nYou requested a password reset. Click the link below to set a new password:\n\n{$reset_link}\n\nThis link will expire in one hour.";
             $headers = 'From: noreply@yourdomain.com';
 
-            // إذا كنت على localhost، لن يتم الإرسال فعلياً إلا إذا أعددت خادم بريد
-            // للبيئة المحلية: يمكنك تخطي هذا وعرض الرابط كرسالة
-            // mail($email, $subject, $body, $headers); 
+            
             
             // *للاختبار المحلي فقط*
              $message_type = "success";
-             $message = "تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني. (الرابط: <a href='{$reset_link}'>اضغط هنا</a>)";
+             $message = " password reset link has been sent to your email : <a href='{$reset_link}'>Click</a>)";
             
         } else {
-            // نقطة أمان: رسالة موحدة لتجنب الكشف عن وجود الإيميل
-            $message_type = "success";
-            $message = "إذا كان هذا البريد الإلكتروني مسجلاً لدينا، سيتم إرسال رابط إعادة التعيين إليه.";
+                    $message_type = "success";
+            $message = "If this email is registered with us, a password reset link will be sent to it."; // ✅ تم إضافة ";
+            } // هذا القوس صحيح، يغلق الشرط السابق
         }
     }
-}
+
+
 ?>
 <!DOCTYPE html>
 <html lang="ar">
@@ -69,16 +68,72 @@ $reset_link = "http://localhost/GP2.ATHER/reset_password.php?token=" . urlencode
     <meta charset="UTF-8">
     <title>Forgot Password</title>
     <style>
-        /* (نسخ أنماط body, .shapes, .container, .card, .input-group, button, .message من login.php) */
-        /* للمحافظة على التنسيق الموحد */
-        /* سأختصر CSS هنا لعدم تكرار الأكواد، ولكن يجب أن تكون موجودة فعلياً */
+       
         body{font-family:'Poppins',sans-serif; background:#fdfaf5;}
         .container{max-width:500px; margin:80px auto; padding:20px;}
-        .card{background:#fff; border-radius:15px; padding:30px; box-shadow:0 4px 15px rgba(0,0,0,0.08);}
+            .card{
+            background:#fff; 
+            border-radius:15px; 
+            padding:30px; 
+            box-shadow:0 4px 15px rgba(8, 31, 78, 0.08);
+            }
+         .card h2 {
+        text-align: center;
+          }   
+         
+            .input-group label {
+                font-weight: bold; 
+                font-size: 0.9em; 
+                display: block; 
+                margin-bottom: 5px; 
+            }
+            
+            button{
+                width:100%; 
+                padding:15px; 
+                background:#ff7f50; 
+                color:#fff; 
+                border-radius:50px; 
+                border: none; 
+                cursor: pointer;
+                /* 💡 تم إضافة هذا السطر */
+                font-weight: bold; 
+            }
         .input-group input{width:100%; padding:12px; border:none; border-radius:10px; background:#e0d9d3;}
-        button{width:100%; padding:15px; background:#ff7f50; color:#fff; border-radius:50px;}
+      
         .message{margin-top:15px; text-align:center; color:red;}
         .message.success{color:green;}
+        .input-group {
+        margin-bottom: 20px; /* مسافة 20 بكسل أسفل مجموعة الإدخال */
+            }
+      .input-group input{width:100%; padding:12px; border:none; border-radius:10px; background:#e0d9d3;}
+        button{width:100%; padding:15px; background:#ff7f50; color:#fff; border-radius:50px;}
+
+        /* 1. تنسيق الفقرة الحاوية للرابط */
+        p.small-text {
+            /* المسافة العلوية */
+            margin-top: 15px; 
+            /* 💡 هذا هو السطر المسؤول عن التوسيط */
+            text-align: center; 
+            /* يمكنك إزالة السطر التالي إذا لم يكن له تأثير واضح */
+            font-size: 0.9em; 
+        }
+
+        /* 2. تنسيق الرابط نفسه */
+        p.small-text a {
+            color: #2f50bb; /* تغيير لون الرابط */
+            text-decoration: none; /* إزالة الخط السفلي */
+            font-weight: bold; 
+            padding: 5px; 
+            display: inline-block; 
+        }
+
+        /* 3. تأثير عند مرور الماوس (اختياري) */
+        p.small-text a:hover {
+            text-decoration: underline; 
+            color: #d1643c; 
+        }
+  
     </style>
 </head>
 <body>
@@ -87,11 +142,12 @@ $reset_link = "http://localhost/GP2.ATHER/reset_password.php?token=" . urlencode
             <h2>Forgot Password</h2>
 
             <form action="forgot_password.php" method="POST">
+
                 <div class="input-group">
                     <label for="email">Enter your Email:</label>
                     <input type="email" id="email" name="email" required>
                 </div>
-                <button type="submit">Send Reset Link</button>
+                <button type="submit">Reset Password</button>
             </form>
             
             <?php if(!empty($message)): ?>
@@ -99,8 +155,8 @@ $reset_link = "http://localhost/GP2.ATHER/reset_password.php?token=" . urlencode
                     <?= $message ?>
                 </div>
                     <?php endif; ?>
-             <p class="small-text" style="margin-top: 15px;">
-            <a href="login.php">&#x2190; </a>
+              <p class="small-text"> 
+         <a href="login.php">Login</a>
              </p>
         </div>
     </div>
