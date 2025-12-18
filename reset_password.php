@@ -4,12 +4,11 @@ $conn->set_charset("utf8mb4");
 $message = "";
 $token = $_GET['token'] ?? '';
 
-// 1. التحقق من وجود الرمز في الرابط (GET)
 if (empty($token)) {
     $message = " Missing reset token in the URL.";
 } else {
     
-  // هذا تعديل مؤقت لاختبار الرمز فقط - غير آمن في بيئة الإنتاج
+ 
     $stmt = $conn->prepare("
         SELECT id FROM users 
         WHERE reset_token = ? 
@@ -24,7 +23,7 @@ if (empty($token)) {
         $user = $result->fetch_assoc();
         $user_id = $user['id'];
 
-        // 3. معالجة تحديث كلمة المرور (عند إرسال النموذج)
+    
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $new_password = $_POST['paasword'] ?? '';
             $confirm_password = $_POST['confirm_paasword'] ?? '';
