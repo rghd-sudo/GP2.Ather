@@ -40,13 +40,16 @@ if ($row = $result->fetch_assoc()) {
         $ext = strtolower(pathinfo($full_path, PATHINFO_EXTENSION));
 
         // تحديد نوع الملف
-        if ($ext === 'docx') {
-            $contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        } elseif ($ext === 'doc') {
-            $contentType = 'application/msword';
-        } else {
-            die("❌ Unsupported file type.");
-        }
+        if ($ext === 'pdf') {
+    $contentType = 'application/pdf';
+} elseif ($ext === 'docx') {
+    $contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+} elseif ($ext === 'doc') {
+    $contentType = 'application/msword';
+} else {
+    die("❌ Unsupported file type.");
+}
+
 
         header('Content-Type: ' . $contentType);
         header('Content-Disposition: attachment; filename="recommendation.' . $ext . '"');

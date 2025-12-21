@@ -136,11 +136,18 @@ if (!empty($_FILES['recommendation_file']['name'])) {
 ================================ */
 else {
 
-    $content_raw = $_POST['recommendation_text'] ?? '';
+ $content_raw = $_POST['recommendation_text'] ?? '';
 
-    // تنظيف النص
-    $clean = preg_replace('/<!--\[if.*?<!\[endif\]-->/is', '', $content_raw);
-    $content = mb_convert_encoding($clean, 'UTF-8', 'auto');
+// إزالة تعليقات Word وخصائص TinyMCE
+$content = preg_replace('/<!--\[if.*?<!\[endif\]-->/is', '', $content_raw);
+$content = preg_replace('/data-start="[^"]*"|data-end="[^"]*"/', '', $content);
+
+// السماح بتنسيق آمن فقط
+$content = strip_tags($content, '<p><b><strong><i><u><br><ul><ol><li>');
+
+// ترميز صحيح
+$content = mb_convert_encoding($content, 'UTF-8', 'auto');
+
 
     require_once('tcpdf/tcpdf.php');
 
@@ -186,7 +193,7 @@ else {
 <div class="content">
     <p>To Whom It May Concern,</p>
 
-    <p>' . nl2br(htmlspecialchars($recommendation_content)) . '</p>
+    <p>' . $content . '</p>
 
     <p>
         This letter is issued upon the request of the student for academic
@@ -211,8 +218,17 @@ else {
         mkdir($upload_dir, 0777, true);
     }
 
-    $pdf_path = $upload_dir . "/recommendation_" . time() . ".pdf";
-    $pdf->Output($pdf_path, "F");
+  $filename = "recommendation_" . time() . ".pdf";
+
+/* المسار الفعلي للحفظ */
+$full_pdf_path = __DIR__ . "/uploads/recommendations/" . $filename;
+
+/* المسار النسبي للتخزين في قاعدة البيانات */
+$pdf_path = "uploads/recommendations/" . $filename;
+
+/* حفظ الملف */
+$pdf->Output($full_pdf_path, "F");
+
 }
 
     // --------------------------------------------------------
