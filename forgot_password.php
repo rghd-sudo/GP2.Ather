@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $update_stmt->execute();
             $update_stmt->close();
             $reset_link = "http://localhost/GP2.ATHER/reset_password.php?token=" . 
-            ئurlencode($token);
+            urlencode($token);
             $subject = "Password Reset Request";
             $body = "Hello,\n\nYou requested a password reset. Click the link below to set a new password:\n\n{$reset_link}\n\nThis link will expire in one hour.";
             $headers = 'From: noreply@yourdomain.com';
