@@ -9,24 +9,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($email)) {
         $message = "⚠️ Please enter your email address.";
     } else {
-        // 1. البحث عن المستخدم
+     
         $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
-        $result = $stmt->get_result();
-
-        // 2. معالجة الإرسال (بغض النظر عن وجود الإيميل - للأمان)
+        $result = $stmt->get_result();    
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
             $user_id = $user['id'];
-            
-            // 3. توليد الرمز (Token)
             $token = bin2hex(random_bytes(32)); 
-            
-            // 4. تحديد انتهاء الصلاحية (بعد ساعة واحدة من الآن)
             $expiry_time = date("Y-m-d H:i:s", time() + 3600); 
-
-            // 5. حفظ الرمز وانتهاء الصلاحية في قاعدة البيانات
             $update_stmt = $conn->prepare("
                 UPDATE users 
                 SET reset_token = ?, token_expiry = ? 
@@ -35,14 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $update_stmt->bind_param("ssi", $token, $expiry_time, $user_id);
             $update_stmt->execute();
             $update_stmt->close();
-
-            // 6. إعداد رابط إعادة التعيين
-            // تأكد من أن reset_password.php هو العنوان الصحيح
-           // 6. إعداد رابط إعادة التعيين
-// تم تعديل الرابط ليشمل مسار المجلد الصحيح (GP2.ATHER)
-$reset_link = "http://localhost/GP2.ATHER/reset_password.php?token=" . urlencode($token);
-            
-            // 7. إرسال البريد الإلكتروني (محاكاة)
+            $reset_link = "http://localhost/GP2.ATHER/reset_password.php?token=" . 
+            ئurlencode($token);
             $subject = "Password Reset Request";
             $body = "Hello,\n\nYou requested a password reset. Click the link below to set a new password:\n\n{$reset_link}\n\nThis link will expire in one hour.";
             $headers = 'From: noreply@yourdomain.com';
@@ -109,13 +95,13 @@ $reset_link = "http://localhost/GP2.ATHER/reset_password.php?token=" . urlencode
       .input-group input{width:100%; padding:12px; border:none; border-radius:10px; background:#e0d9d3;}
         button{width:100%; padding:15px; background:#ff7f50; color:#fff; border-radius:50px;}
 
-        /* 1. تنسيق الفقرة الحاوية للرابط */
+        
         p.small-text {
             /* المسافة العلوية */
             margin-top: 15px; 
             /* 💡 هذا هو السطر المسؤول عن التوسيط */
             text-align: center; 
-            /* يمكنك إزالة السطر التالي إذا لم يكن له تأثير واضح */
+          
             font-size: 0.9em; 
         }
 
